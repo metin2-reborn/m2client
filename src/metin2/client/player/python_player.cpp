@@ -1314,7 +1314,6 @@ namespace metin2::inline client::inline player {
 
     void python_player::set_mobile_flag(bool flag) {
         mobile_flag_ = flag;
-        py_call_class_member_func(ppy_game_window_, "RefreshMobile", Py_BuildValue("()"));
     }
 
     auto python_player::has_mobile_phone_number() -> bool {

@@ -65,7 +65,6 @@ namespace metin2::inline client::inline protocol {
 
         std::string addr_;
         int port_;
-        bool is_wait_key_;
 
         PyObject *handler_;
 

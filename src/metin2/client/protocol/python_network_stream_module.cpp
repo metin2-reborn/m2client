@@ -332,18 +332,6 @@ namespace metin2::inline client::inline protocol {
         return py_build_none();
     }
 
-    auto net_send_china_matrix_card_packet(PyObject *self, PyObject *args) -> PyObject * {
-        return py_build_none();
-    }
-
-    auto net_send_runup_matrix_card_packet(PyObject *self, PyObject *args) -> PyObject * {
-        return py_build_none();
-    }
-
-    auto net_send_newcibn_passpod_answer_packet(PyObject *self, PyObject *args) -> PyObject * {
-        return py_build_none();
-    }
-
     auto net_direct_enter(PyObject *self, PyObject *args) -> PyObject * {
         int chr_slot;
         if (!py_tuple_get_integer(args, 0, &chr_slot))
@@ -1388,9 +1376,6 @@ namespace metin2::inline client::inline protocol {
                 {"ConnectUDP", net_connect_udp, METH_VARARGS},
                 {"ConnectToAccountServer", net_connect_to_account_server, METH_VARARGS},
 
-                {"SendChinaMatrixCardPacket", net_send_china_matrix_card_packet, METH_VARARGS},
-                {"SendRunupMatrixCardPacket", net_send_runup_matrix_card_packet, METH_VARARGS},
-                {"SendNEWCIBNPasspodAnswerPacket", net_send_newcibn_passpod_answer_packet, METH_VARARGS},
                 {"SendSelectEmpirePacket", net_send_select_empire_packet, METH_VARARGS},
                 {"SendSelectCharacterPacket", net_send_select_character_packet, METH_VARARGS},
                 {"SendChangeNamePacket", net_send_change_name_packet, METH_VARARGS},

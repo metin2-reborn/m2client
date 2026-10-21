@@ -349,14 +349,6 @@ namespace metin2::inline client::inline protocol {
     }
 
     void account_connector::on_remote_disconnect() {
-        // If the connection closes after the matrix card number was sent, the client exits.
-        if (is_wait_key_) {
-            if (handler_) {
-                py_call_class_member_func(handler_, "OnExit", Py_BuildValue("()"));
-                return;
-            }
-        }
-
         offline_state_set();
     }
 
@@ -366,7 +358,6 @@ namespace metin2::inline client::inline protocol {
 
     void account_connector::inialize() {
         state_value_ = STATE_OFFLINE;
-        is_wait_key_ = false;
     }
 
     account_connector::account_connector() {

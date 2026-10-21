@@ -328,8 +328,6 @@ namespace metin2::inline client::inline protocol {
         } else if (!strcasecmp(cmd, "nosms")) {
             abstract_player &player = get_abstract_player();
             player.set_mobile_flag(false);
-        } else if (!strcasecmp(cmd, "mobile_auth")) {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnMobileAuthority", Py_BuildValue("()"));
         } else if (!strcasecmp(cmd, "messenger_auth")) {
             const std::string &name = token_vector[1].c_str();
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnMessengerAddFriendQuestion", Py_BuildValue("(s)", name.c_str()));
