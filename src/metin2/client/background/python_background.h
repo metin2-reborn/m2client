@@ -8,7 +8,6 @@ namespace metin2::inline client::inline characters {
 }
 
 namespace metin2::inline client::inline background {
-
     class python_background : public map_manager {
       public:
         enum {
@@ -40,10 +39,10 @@ namespace metin2::inline client::inline background {
             float far_clip;
             math::vector3 sky_box_scale;
         };
-        using tviewdistanceset = sviewdistanceset;
 
       public:
         python_background();
+
         ~python_background() override;
 
         void initialize();
@@ -137,7 +136,7 @@ namespace metin2::inline client::inline background {
         uint32_t base_x_;
         uint32_t base_y_;
 
-        tviewdistanceset view_distance_set_[NUM_DISTANCE_SET];
+        sviewdistanceset view_distance_set_[NUM_DISTANCE_SET];
 
         std::set<int> set_showing_portal_id_;
         std::set<std::string> set_dungeon_map_name_;
@@ -147,17 +146,22 @@ namespace metin2::inline client::inline background {
             int ilx;
             int ily;
         };
+
         std::map<uint32_t, reserve_target_effect> map_id_reserve_target_effect_;
 
         struct find_warp_map_name_fn {
             uint32_t x, y;
+
             find_warp_map_name_fn(uint32_t x_value, uint32_t y_value) {
                 x = x_value;
                 y = y_value;
             }
+
             auto operator()(map_info &map_info) -> bool {
-                if (x < map_info.base_x || x >= map_info.end_x || y < map_info.base_y || y >= map_info.end_y)
+                if (x < map_info.base_x || x >= map_info.end_x || y < map_info.base_y || y >= map_info.end_y) {
                     return false;
+                }
+
                 return true;
             }
         };
@@ -165,6 +169,7 @@ namespace metin2::inline client::inline background {
 
     inline auto get_python_background() -> python_background & {
         static python_background instance;
+
         return instance;
     }
 }

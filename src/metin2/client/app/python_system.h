@@ -2,7 +2,6 @@
 #include <metin2/script/python_header.h>
 
 namespace metin2::inline client::inline app {
-
     class python_system {
       public:
         enum window {
@@ -80,6 +79,7 @@ namespace metin2::inline client::inline app {
 
       public:
         python_system();
+
         ~python_system();
 
         void clear();
@@ -146,6 +146,7 @@ namespace metin2::inline client::inline app {
 
     inline auto get_python_system() -> python_system & {
         static python_system instance;
+
         return instance;
     }
 }

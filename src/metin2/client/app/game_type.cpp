@@ -3,7 +3,6 @@
 #include <metin2/graphics/resource_manager.h>
 
 namespace metin2::inline client::inline app {
-
     std::string resource_path = "d:/ymir work/";
     std::string image_path = "d:/ymir work/ui/";
 
@@ -21,8 +20,9 @@ namespace metin2::inline client::inline app {
     }
 
     void default_font_cleanup() {
-        if (default_font)
+        if (default_font) {
             default_font->release();
+        }
     }
 
     void default_font_set_name(const char *font_name) {
@@ -30,8 +30,10 @@ namespace metin2::inline client::inline app {
         default_font_name += ".fnt";
 
         default_italic_font_name = font_name;
-        if (strchr(font_name, ':'))
+        if (strchr(font_name, ':')) {
             default_italic_font_name += "i";
+        }
+
         default_italic_font_name += ".fnt";
 
         is_reload_default_font = true;
@@ -44,28 +46,36 @@ namespace metin2::inline client::inline app {
 
         resource *new_font = res_mgr.resource_pointer(default_font_name.c_str());
         new_font->add_reference();
-        if (default_font)
+        if (default_font) {
             default_font->release();
+        }
+
         default_font = new_font;
 
         resource *new_italic_font = res_mgr.resource_pointer(default_italic_font_name.c_str());
         new_italic_font->add_reference();
-        if (default_italic_font)
+        if (default_italic_font) {
             default_italic_font->release();
+        }
+
         default_italic_font = new_italic_font;
 
         return true;
     }
 
     auto default_font_get_resource() -> resource * {
-        if (!default_font || is_reload_default_font)
+        if (!default_font || is_reload_default_font) {
             reload_default_fonts();
+        }
+
         return default_font;
     }
 
     auto default_italic_font_get_resource() -> resource * {
-        if (!default_italic_font || is_reload_default_font)
+        if (!default_italic_font || is_reload_default_font) {
             reload_default_fonts();
+        }
+
         return default_italic_font;
     }
 
@@ -96,9 +106,10 @@ namespace metin2::inline client::inline app {
     };
 
     auto slot_type_to_inven_type(uint8_t slot_type_value) -> uint8_t {
-        if (slot_type_value >= SLOT_TYPE_MAX)
+        if (slot_type_value >= SLOT_TYPE_MAX) {
             return RESERVED_WINDOW;
-        else
-            return inven_type_by_slot_type[slot_type_value];
+        }
+
+        return inven_type_by_slot_type[slot_type_value];
     }
 }

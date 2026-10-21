@@ -8,7 +8,7 @@
 
 The Metin2 game client, ported to Linux and cleaned up to the same standard as the server. It builds
 with Clang or GCC and CMake, renders through its own renderer interface on OpenGL, plays sound through
-OpenAL Soft and runs the original Python 2.7 game scripts unchanged.
+OpenAL Soft and runs the Python 2.7 game scripts maintained in the `m2game` repository.
 
 ## Requirements
 
@@ -50,7 +50,8 @@ The client ends up in `build/bin/client`.
 
 ## Running
 
-The client needs the game data (`data/`, the Python scripts in `data/System`, `pack/`...). `just run`
+The client needs the game data (`data/`, the Python scripts in `data/System` and the `data/UI`
+package, `pack/`...). `just run`
 starts it in a bubblewrap sandbox with the game directory mounted as an overlay, so nothing can modify
 it, and `HOME` set to `run/home`. The game directory defaults to an `m2game` checkout next to this
 repository; set `METIN2_CLIENT_DIR` to use another one:

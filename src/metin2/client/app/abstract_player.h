@@ -7,10 +7,10 @@ namespace metin2::inline client::inline characters {
 }
 
 namespace metin2::inline client::inline app {
-
     class abstract_player {
       public:
         abstract_player() = default;
+
         virtual ~abstract_player() = default;
 
         virtual auto main_character_index() -> uint32_t = 0;

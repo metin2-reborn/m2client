@@ -7,10 +7,10 @@ namespace metin2::inline client::inline characters {
 }
 
 namespace metin2::inline client::inline app {
-
     class abstract_character_manager {
       public:
         abstract_character_manager() = default;
+
         virtual ~abstract_character_manager() = default;
 
         virtual void destroy() = 0;

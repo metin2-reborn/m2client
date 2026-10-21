@@ -4,15 +4,15 @@
 #include <metin2/graphics/grp_image_instance.h>
 #include <metin2/graphics/grp_mark_instance.h>
 #include <metin2/graphics/grp_text_instance.h>
-
 #include <metin2/models/thing_instance.h>
+
 #include <stack>
 
 namespace metin2::inline ui {
-
     class python_graphic : public screen {
       public:
         python_graphic();
+
         ~python_graphic() override;
 
         void destroy();

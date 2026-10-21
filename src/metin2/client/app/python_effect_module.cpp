@@ -4,17 +4,16 @@
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline app {
-
     auto effect_register_indexed_fly_data(PyObject *self, PyObject *args) -> PyObject * {
-        int index;
-        if (!py_tuple_get_integer(args, 0, &index))
+        int index, type;
+        if (!py_tuple_get_integer(args, 0, &index) || !py_tuple_get_integer(args, 1, &type)) {
             return py_build_exception();
-        int type;
-        if (!py_tuple_get_integer(args, 1, &type))
-            return py_build_exception();
+        }
+
         char *fly_data_name;
-        if (!py_tuple_get_string(args, 2, &fly_data_name))
+        if (!py_tuple_get_string(args, 2, &fly_data_name)) {
             return py_build_exception();
+        }
 
         get_flying_manager().register_indexed_fly_data(index, type, fly_data_name);
 
@@ -22,15 +21,14 @@ namespace metin2::inline client::inline app {
     }
 
     void initeffect() {
-        static PyMethodDef s_methods[] =
-            {
+        static PyMethodDef methods[] = {
+            {"RegisterIndexedFlyData", effect_register_indexed_fly_data, METH_VARARGS},
 
-                {"RegisterIndexedFlyData", effect_register_indexed_fly_data, METH_VARARGS},
-
-                {nullptr, nullptr, 0, nullptr},
+            {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("effect", s_methods);
+        auto *module_value = Py_InitModule("effect", methods);
+
         PyModule_AddIntConstant(module_value, "INDEX_FLY_TYPE_NORMAL", flying_manager::INDEX_FLY_TYPE_NORMAL);
         PyModule_AddIntConstant(module_value, "INDEX_FLY_TYPE_FIRE_CRACKER", flying_manager::INDEX_FLY_TYPE_FIRE_CRACKER);
         PyModule_AddIntConstant(module_value, "INDEX_FLY_TYPE_AUTO_FIRE", flying_manager::INDEX_FLY_TYPE_AUTO_FIRE);

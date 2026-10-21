@@ -3,12 +3,10 @@
 
 namespace metin2::inline client::inline app {
     void initfly() {
-        static PyMethodDef s_methods[] =
-            {
-
-                {nullptr, nullptr, 0, nullptr},
+        static PyMethodDef methods[] = {
+            {nullptr, nullptr, 0, nullptr},
         };
 
-        Py_InitModule("fly", s_methods);
+        Py_InitModule("fly", methods);
     }
 }

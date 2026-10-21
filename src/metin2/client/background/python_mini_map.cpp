@@ -1,39 +1,39 @@
+#include "python_mini_map.h"
+
+#include <metin2/client/app/abstract_player.h>
+#include <metin2/client/app/locale.h>
+#include <metin2/client/characters/python_character_manager.h>
+#include <metin2/client/guilds/python_guild.h>
 #include <metin2/core/parse.h>
+#include <metin2/core/timer.h>
 #include <metin2/core/utils.h>
 #include <metin2/files/eter_file_manager.h>
+#include <metin2/gpu/types.h>
 #include <metin2/graphics/camera.h>
 #include <metin2/graphics/grp_sub_image.h>
 #include <metin2/graphics/state_manager.h>
 #include <metin2/log/log.h>
-
-#include <metin2/client/characters/python_character_manager.h>
-#include <metin2/client/guilds/python_guild.h>
-#include "python_background.h"
-#include "python_mini_map.h"
-
-#include <metin2/client/app/abstract_player.h>
-
-#include <metin2/client/app/locale.h>
-#include <metin2/core/timer.h>
-#include <metin2/gpu/types.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/ui/python_window_manager.h>
 
-namespace metin2::inline client::inline background {
+#include "python_background.h"
 
+namespace metin2::inline client::inline background {
     void python_mini_map::set_center_position(float center_x, float center_y) {
         center_x_ = center_x;
         center_y_ = center_y;
 
-        map_outdoor &map = get_python_background().map_outdoor_ref();
+        auto &map = get_python_background().map_outdoor_ref();
         for (uint8_t terrain_num = 0; terrain_num < AROUND_AREA_NUM; ++terrain_num) {
             mini_map_texture_[terrain_num] = nullptr;
+
             terrain_area *terrain;
-            if (map.terrain_pointer(terrain_num, &terrain))
+            if (map.terrain_pointer(terrain_num, &terrain)) {
                 mini_map_texture_[terrain_num] = terrain->mini_map_texture();
+            }
         }
 
-        const outdoor_map_coordinate &outdoor_map_coord = map.cur_coordinate();
+        const auto &outdoor_map_coord = map.cur_coordinate();
 
         center_cell_x_ = (center_x_ - (float)(outdoor_map_coord.terrain_coord_x * terrain_impl::TERRAIN_XSIZE)) / (float)(terrain_impl::CELLSCALE);
         center_cell_y_ = (center_y_ - (float)(outdoor_map_coord.terrain_coord_y * terrain_impl::TERRAIN_YSIZE)) / (float)(terrain_impl::CELLSCALE);
@@ -42,12 +42,14 @@ namespace metin2::inline client::inline background {
     }
 
     void python_mini_map::update(float center_x, float center_y) {
-        python_background &bg = get_python_background();
-        if (!bg.is_map_outdoor())
+        auto &bg = get_python_background();
+        if (!bg.is_map_outdoor()) {
             return;
+        }
 
-        if (center_x_ != center_x || center_y_ != center_y)
+        if (center_x_ != center_x || center_y_ != center_y) {
             set_center_position(center_x, center_y);
+        }
 
         other_pc_position_vector_.clear();
         party_pc_position_vector_.clear();
@@ -57,11 +59,12 @@ namespace metin2::inline client::inline background {
 
         float foo_cell_scale = 1.0f / ((float)terrain_impl::CELLSCALE);
 
-        python_character_manager &chr_mgr = get_python_character_manager();
+        auto &chr_mgr = get_python_character_manager();
 
-        instance_base *inst_main = chr_mgr.main_instance_ptr();
-        if (!inst_main)
+        auto *inst_main = chr_mgr.main_instance_ptr();
+        if (!inst_main) {
             return;
+        }
 
         python_character_manager::character_iterator i;
         for (i = chr_mgr.character_instance_begin(); i != chr_mgr.character_instance_end(); ++i) {
@@ -69,28 +72,33 @@ namespace metin2::inline client::inline background {
 
             pixel_position instance_position;
             inst_each->new_get_pixel_position(&instance_position);
+
             float distance_from_center_x = (instance_position.x - center_x_) * foo_cell_scale * scale_;
             float distance_from_center_y = (instance_position.y - center_y_) * foo_cell_scale * scale_;
-            if (fabs(distance_from_center_x) >= mini_map_radius_ || fabs(distance_from_center_y) >= mini_map_radius_)
+            if (fabs(distance_from_center_x) >= mini_map_radius_ || fabs(distance_from_center_y) >= mini_map_radius_) {
                 continue;
+            }
 
             float distance_from_center = sqrtf(distance_from_center_x * distance_from_center_x + distance_from_center_y * distance_from_center_y);
-            if (distance_from_center >= mini_map_radius_)
+            if (distance_from_center >= mini_map_radius_) {
                 continue;
+            }
 
             mark_position mark_position_value;
 
             if (inst_each->is_pc() && !inst_each->is_invisibility()) {
-                if (inst_each == get_python_character_manager().main_instance_ptr())
+                if (inst_each == get_python_character_manager().main_instance_ptr()) {
                     continue;
+                }
 
                 mark_position_value.x = (width_ - (float)white_mark_.width()) / 2.0f + distance_from_center_x + screen_x_;
                 mark_position_value.y = (height_ - (float)white_mark_.height()) / 2.0f + distance_from_center_y + screen_y_;
                 mark_position_value.name_color = inst_each->name_color_index();
-                if (mark_position_value.name_color == instance_base::NAMECOLOR_PARTY)
+                if (mark_position_value.name_color == instance_base::NAMECOLOR_PARTY) {
                     party_pc_position_vector_.push_back(mark_position_value);
-                else
+                } else {
                     other_pc_position_vector_.push_back(mark_position_value);
+                }
             } else if (inst_each->is_npc()) {
                 mark_position_value.x = (width_ - (float)white_mark_.width()) / 2.0f + distance_from_center_x + screen_x_;
                 mark_position_value.y = (height_ - (float)white_mark_.height()) / 2.0f + distance_from_center_y + screen_y_;
@@ -112,13 +120,13 @@ namespace metin2::inline client::inline background {
         {
             auto itor = atlas_way_point_info_vector_.begin();
             for (; itor != atlas_way_point_info_vector_.end(); ++itor) {
-                atlas_mark_info &atlas_mark_info_value = *itor;
-
-                if (TYPE_TARGET != atlas_mark_info_value.type_value)
+                auto &atlas_mark_info_value = *itor;
+                if (TYPE_TARGET != atlas_mark_info_value.type_value) {
                     continue;
+                }
 
-                if (0 != atlas_mark_info_value.chr_vid) {
-                    instance_base *instance = get_python_character_manager().instance_ptr(atlas_mark_info_value.chr_vid);
+                if (atlas_mark_info_value.chr_vid != 0) {
+                    auto *instance = get_python_character_manager().instance_ptr(atlas_mark_info_value.chr_vid);
                     if (instance) {
                         pixel_position pixel_position;
                         instance->new_get_pixel_position(&pixel_position);
@@ -148,15 +156,18 @@ namespace metin2::inline client::inline background {
     }
 
     void python_mini_map::render(float screen_x, float screen_y) {
-        python_background &bg = get_python_background();
-        if (!bg.is_map_outdoor())
+        auto &bg = get_python_background();
+        if (!bg.is_map_outdoor()) {
             return;
+        }
 
-        if (!show_)
+        if (!show_) {
             return;
+        }
 
-        if (!bg.is_map_ready())
+        if (!bg.is_map_ready()) {
             return;
+        }
 
         if (screen_x_ != screen_x || screen_y_ != screen_y) {
             screen_x_ = screen_x;
@@ -201,7 +212,8 @@ namespace metin2::inline client::inline background {
         STATEMANAGER.set_transform(gpu::transform::WORLD, &world_);
 
         for (uint8_t terrain_num = 0; terrain_num < AROUND_AREA_NUM; ++terrain_num) {
-            gpu::texture *mini_map_texture = mini_map_texture_[terrain_num];
+            auto *mini_map_texture = mini_map_texture_[terrain_num];
+
             STATEMANAGER.set_texture(0, mini_map_texture);
             if (mini_map_texture) {
                 state_manager &stt_mgr = get_state_manager();
@@ -251,6 +263,7 @@ namespace metin2::inline client::inline background {
 
         if (scale_ >= 2.0f) {
             STATEMANAGER.set_render_state(gpu::state::TEXTURE_FACTOR, instance_base::indexed_name_color(instance_base::NAMECOLOR_MOB));
+
             iterator = monster_position_vector_.begin();
             while (iterator != monster_position_vector_.end()) {
                 mark_position &position = *iterator;
@@ -270,10 +283,14 @@ namespace metin2::inline client::inline background {
 
             if (!party_pc_position_vector_.empty()) {
                 float v = (1 + sinf(get_timer().current_second() * 6)) / 5 + 0.6;
+
                 math::color c(instance_base::indexed_name_color(instance_base::NAMECOLOR_PARTY));
                 math::color d(v, v, v, 1);
+
                 c = math::color_modulate(c, d);
+
                 STATEMANAGER.set_render_state(gpu::state::TEXTURE_FACTOR, (uint32_t)c);
+
                 iterator = party_pc_position_vector_.begin();
                 while (iterator != party_pc_position_vector_.end()) {
                     mark_position &position = *iterator;
@@ -285,6 +302,7 @@ namespace metin2::inline client::inline background {
         }
 
         STATEMANAGER.set_render_state(gpu::state::TEXTURE_FACTOR, instance_base::indexed_name_color(instance_base::NAMECOLOR_NPC));
+
         iterator = npc_position_vector_.begin();
         while (iterator != npc_position_vector_.end()) {
             mark_position &position = *iterator;
@@ -294,6 +312,7 @@ namespace metin2::inline client::inline background {
         }
 
         STATEMANAGER.set_render_state(gpu::state::TEXTURE_FACTOR, instance_base::indexed_name_color(instance_base::NAMECOLOR_WARP));
+
         iterator = warp_position_vector_.begin();
         while (iterator != warp_position_vector_.end()) {
             mark_position &position = *iterator;
@@ -321,12 +340,14 @@ namespace metin2::inline client::inline background {
         instance_base *inst = get_python_character_manager().main_instance_ptr();
 
         if (inst) {
-            float rotation;
-            rotation = (540.0f - inst->rotation());
-            while (rotation > 360.0f)
+            float rotation = (540.0f - inst->rotation());
+            while (rotation > 360.0f) {
                 rotation -= 360.0f;
-            while (rotation < 0.0f)
+            }
+
+            while (rotation < 0.0f) {
                 rotation += 360.0f;
+            }
 
             player_mark_.set_rotation(rotation);
             player_mark_.render();
@@ -335,34 +356,42 @@ namespace metin2::inline client::inline background {
         {
             auto itor = atlas_way_point_info_vector_.begin();
             for (; itor != atlas_way_point_info_vector_.end(); ++itor) {
-                atlas_mark_info &atlas_mark_info_value = *itor;
+                auto &atlas_mark_info_value = *itor;
+                if (TYPE_TARGET != atlas_mark_info_value.type_value) {
+                    continue;
+                }
 
-                if (TYPE_TARGET != atlas_mark_info_value.type_value)
+                if (atlas_mark_info_value.mini_map_x <= 0.0f) {
                     continue;
-                if (atlas_mark_info_value.mini_map_x <= 0.0f)
+                }
+
+                if (atlas_mark_info_value.mini_map_y <= 0.0f) {
                     continue;
-                if (atlas_mark_info_value.mini_map_y <= 0.0f)
-                    continue;
+                }
 
                 render_target_mark(atlas_mark_info_value.mini_map_x, atlas_mark_info_value.mini_map_y);
             }
         }
 
-        camera *cmr_cur = get_camera_manager().current_camera();
-
-        if (cmr_cur) {
-            mini_map_cameraraphic_image_instance_.set_rotation(cmr_cur->get_roll());
+        auto *camera = get_camera_manager().current_camera();
+        if (camera) {
+            mini_map_cameraraphic_image_instance_.set_rotation(camera->get_roll());
             mini_map_cameraraphic_image_instance_.render();
         }
+
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::MIN_FILTER);
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::MAG_FILTER);
     }
 
     void python_mini_map::set_scale(float scale) {
-        if (scale >= 4.0f)
+        if (scale >= 4.0f) {
             scale = 4.0f;
-        if (scale <= 0.5f)
+        }
+
+        if (scale <= 0.5f) {
             scale = 0.5f;
+        }
+
         scale_ = scale;
 
         set_position_impl();
@@ -371,14 +400,16 @@ namespace metin2::inline client::inline background {
     void python_mini_map::scale_up() {
         scale_ *= 2.0f;
         if (scale_ >= 4.0f)
-            scale_ = 4.0f;
+            {scale_ = 4.0f;}
+
         set_position_impl();
     }
 
     void python_mini_map::scale_down() {
         scale_ *= 0.5f;
         if (scale_ <= 0.5f)
-            scale_ = 0.5f;
+            {scale_ = 0.5f;}
+
         set_position_impl();
     }
 
@@ -424,11 +455,13 @@ namespace metin2::inline client::inline background {
             mini_way_point_graphic_image_instances_[i].set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(buf));
             mini_way_point_graphic_image_instances_[i].set_rendering_mode(graphic_expanded_image_instance::RENDERING_MODE_SCREEN);
         }
+
         for (int j = 0; j < WAYPOINT_IMAGE_COUNT; ++j) {
             snprintf(buf, sizeof(buf), "%sminimap/waypoint%02d.sub", image_root.c_str(), j + 1);
             way_point_graphic_image_instances_[j].set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(buf));
             way_point_graphic_image_instances_[j].set_rendering_mode(graphic_expanded_image_instance::RENDERING_MODE_SCREEN);
         }
+        
         for (int k = 0; k < TARGET_MARK_IMAGE_COUNT; ++k) {
             snprintf(buf, sizeof(buf), "%sminimap/targetmark%02d.sub", image_root.c_str(), k + 1);
             target_mark_graphic_image_instances_[k].set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(buf));

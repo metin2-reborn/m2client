@@ -1,30 +1,28 @@
+#include "python_application.h"
+
+#include <metin2/client/app/python_ime.h>
+#include <metin2/client/app/python_system.h>
+#include <metin2/client/background/python_background.h>
+#include <metin2/client/characters/python_character_manager.h>
 #include <metin2/core/error.h>
 #include <metin2/core/utils.h>
 #include <metin2/dev/automation.h>
+#include <metin2/gpu/types.h>
 #include <metin2/graphics/attribute_instance.h>
 #include <metin2/graphics/camera.h>
 #include <metin2/graphics/font_face.h>
+#include <metin2/graphics/grp_device.h>
 #include <metin2/log/log.h>
 #include <metin2/models/lod_controller.h>
 #include <metin2/models/material.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/world/terrain/area_terrain.h>
 
-#include <metin2/client/characters/python_character_manager.h>
-#include "python_application.h"
-#include "resource_ids.h"
-
-#include <metin2/gpu/types.h>
-#include <metin2/graphics/grp_device.h>
-#include "check_latest_files.h"
-#include "locale.h"
-
 namespace metin2::inline graphics {
-
     extern bool graphics_caps_software_tiling;
 }
-namespace metin2::inline client::inline app {
 
+namespace metin2::inline client::inline app {
     float min_fog_distance = 2400.0f;
     double specular_spd = 0.007f;
 

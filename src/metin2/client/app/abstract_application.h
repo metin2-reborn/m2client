@@ -5,7 +5,6 @@
 #include <metin2/math/math.h>
 
 namespace metin2::inline client::inline app {
-
     class abstract_application {
       public:
         struct camera_pos {
@@ -23,14 +22,16 @@ namespace metin2::inline client::inline app {
             float pitch;
             float zoom;
 
-            camera_setting() : center_position(0.0f, 0.0f, 0.0f),
-                               rotation(0.0f),
-                               pitch(0.0f),
-                               zoom(0.0f) {}
+            camera_setting()
+                : center_position(0.0f, 0.0f, 0.0f),
+                  rotation(0.0f),
+                  pitch(0.0f),
+                  zoom(0.0f) {}
         };
 
       public:
         abstract_application() = default;
+
         virtual ~abstract_application() = default;
 
         virtual auto global_time() -> float = 0;

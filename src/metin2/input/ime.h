@@ -4,17 +4,12 @@
 #include <vector>
 
 namespace metin2::inline input {
-
-    // Receives the edit events of CIME (implemented by CPythonIME).
     class ime_event_sink {
       public:
         virtual auto on_char_event(char32_t codepoint) -> bool = 0;
         virtual void on_update() = 0;
     };
 
-    // Text input buffer of the focused edit line. Characters arrive fully composed as Unicode code
-    // points (there is no composition or candidate state); text goes in and out as
-    // UTF-8.
     class cime {
       public:
         enum {
@@ -23,6 +18,7 @@ namespace metin2::inline input {
 
       public:
         cime();
+
         virtual ~cime();
 
         auto initialize() -> bool;

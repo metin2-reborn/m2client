@@ -1,8 +1,8 @@
-#include <metin2/script/python_utils.h>
 #include "python_system.h"
 
-namespace metin2::inline client::inline app {
+#include <metin2/script/python_utils.h>
 
+namespace metin2::inline client::inline app {
     auto system_get_width(PyObject *self, PyObject *args) -> PyObject * {
         return Py_BuildValue("i", get_python_system().width());
     }
@@ -13,8 +13,9 @@ namespace metin2::inline client::inline app {
 
     auto system_set_interface_handler(PyObject *self, PyObject *args) -> PyObject * {
         PyObject *handler;
-        if (!py_tuple_get_object(args, 0, &handler))
+        if (!py_tuple_get_object(args, 0, &handler)) {
             return py_build_exception();
+        }
 
         get_python_system().set_interface_handler(handler);
         return py_build_none();
@@ -35,8 +36,9 @@ namespace metin2::inline client::inline app {
 
     auto system_set_music_volume(PyObject *self, PyObject *args) -> PyObject * {
         float volume;
-        if (!py_tuple_get_float(args, 0, &volume))
+        if (!py_tuple_get_float(args, 0, &volume)) {
             return py_build_exception();
+        }
 
         get_python_system().set_music_volume(volume);
         return py_build_none();
@@ -44,8 +46,9 @@ namespace metin2::inline client::inline app {
 
     auto system_set_sound_volumef(PyObject *self, PyObject *args) -> PyObject * {
         float volume;
-        if (!py_tuple_get_float(args, 0, &volume))
+        if (!py_tuple_get_float(args, 0, &volume)) {
             return py_build_exception();
+        }
 
         get_python_system().set_sound_volumef(volume);
         return py_build_none();
@@ -57,11 +60,11 @@ namespace metin2::inline client::inline app {
 
     auto system_set_view_chat_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag))
+        if (!py_tuple_get_integer(args, 0, &flag)) {
             return py_build_exception();
+        }
 
         get_python_system().set_view_chat_flag(flag);
-
         return py_build_none();
     }
 
@@ -71,31 +74,31 @@ namespace metin2::inline client::inline app {
 
     auto system_set_always_show_name_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag))
+        if (!py_tuple_get_integer(args, 0, &flag)) {
             return py_build_exception();
+        }
 
         get_python_system().set_always_show_name_flag(flag);
-
         return py_build_none();
     }
 
     auto system_set_show_damage_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag))
+        if (!py_tuple_get_integer(args, 0, &flag)) {
             return py_build_exception();
+        }
 
         get_python_system().set_show_damage_flag(flag);
-
         return py_build_none();
     }
 
     auto system_set_show_sales_text_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag))
+        if (!py_tuple_get_integer(args, 0, &flag)) {
             return py_build_exception();
+        }
 
         get_python_system().set_show_sales_text_flag(flag);
-
         return py_build_none();
     }
 
@@ -118,50 +121,51 @@ namespace metin2::inline client::inline app {
     auto system_set_shadow_level(PyObject *self, PyObject *args) -> PyObject * {
         int level;
 
-        if (!py_tuple_get_integer(args, 0, &level))
+        if (!py_tuple_get_integer(args, 0, &level)) {
             return py_build_exception();
+        }
 
-        if (level > 0)
+        if (level > 0) {
             get_python_system().set_shadow_level(level);
+        }
 
         return py_build_none();
     }
 
     void initsystem() {
-        static PyMethodDef s_methods[] =
-            {
-                {"GetWidth", system_get_width, METH_VARARGS},
-                {"GetHeight", system_get_height, METH_VARARGS},
+        static PyMethodDef methods[] = {
+            {"GetWidth", system_get_width, METH_VARARGS},
+            {"GetHeight", system_get_height, METH_VARARGS},
 
-                {"SetInterfaceHandler", system_set_interface_handler, METH_VARARGS},
-                {"DestroyInterfaceHandler", system_destroy_interface_handler, METH_VARARGS},
+            {"SetInterfaceHandler", system_set_interface_handler, METH_VARARGS},
+            {"DestroyInterfaceHandler", system_destroy_interface_handler, METH_VARARGS},
 
-                {"GetMusicVolume", system_get_music_volume, METH_VARARGS},
-                {"GetSoundVolume", system_get_sound_volume, METH_VARARGS},
+            {"GetMusicVolume", system_get_music_volume, METH_VARARGS},
+            {"GetSoundVolume", system_get_sound_volume, METH_VARARGS},
 
-                {"SetMusicVolume", system_set_music_volume, METH_VARARGS},
-                {"SetSoundVolumef", system_set_sound_volumef, METH_VARARGS},
-                {"IsSoftwareCursor", system_is_software_cursor, METH_VARARGS},
+            {"SetMusicVolume", system_set_music_volume, METH_VARARGS},
+            {"SetSoundVolumef", system_set_sound_volumef, METH_VARARGS},
+            {"IsSoftwareCursor", system_is_software_cursor, METH_VARARGS},
 
-                {"SetViewChatFlag", system_set_view_chat_flag, METH_VARARGS},
-                {"IsViewChat", system_is_view_chat, METH_VARARGS},
+            {"SetViewChatFlag", system_set_view_chat_flag, METH_VARARGS},
+            {"IsViewChat", system_is_view_chat, METH_VARARGS},
 
-                {"SetAlwaysShowNameFlag", system_set_always_show_name_flag, METH_VARARGS},
-                {"IsAlwaysShowName", system_is_always_show_name, METH_VARARGS},
+            {"SetAlwaysShowNameFlag", system_set_always_show_name_flag, METH_VARARGS},
+            {"IsAlwaysShowName", system_is_always_show_name, METH_VARARGS},
 
-                {"SetShowDamageFlag", system_set_show_damage_flag, METH_VARARGS},
-                {"IsShowDamage", system_is_show_damage, METH_VARARGS},
+            {"SetShowDamageFlag", system_set_show_damage_flag, METH_VARARGS},
+            {"IsShowDamage", system_is_show_damage, METH_VARARGS},
 
-                {"SetShowSalesTextFlag", system_set_show_sales_text_flag, METH_VARARGS},
-                {"IsShowSalesText", system_is_show_sales_text, METH_VARARGS},
+            {"SetShowSalesTextFlag", system_set_show_sales_text_flag, METH_VARARGS},
+            {"IsShowSalesText", system_is_show_sales_text, METH_VARARGS},
 
-                {"GetShadowLevel", system_get_shadow_level, METH_VARARGS},
-                {"SetShadowLevel", system_set_shadow_level, METH_VARARGS},
+            {"GetShadowLevel", system_get_shadow_level, METH_VARARGS},
+            {"SetShadowLevel", system_set_shadow_level, METH_VARARGS},
 
-                {nullptr, nullptr, 0, nullptr}
+            {nullptr, nullptr, 0, nullptr}
         };
 
-        PyObject *module_value = Py_InitModule("systemSetting", s_methods);
+        PyObject *module_value = Py_InitModule("systemSetting", methods);
 
         PyModule_AddIntConstant(module_value, "WINDOW_STATUS", python_system::WINDOW_STATUS);
         PyModule_AddIntConstant(module_value, "WINDOW_INVENTORY", python_system::WINDOW_INVENTORY);

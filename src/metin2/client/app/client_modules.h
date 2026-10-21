@@ -58,8 +58,6 @@ namespace metin2::inline client::inline trade {
     void init_trade();
 }
 namespace metin2::inline client::inline app {
-
-    // Registration of the Python modules implemented by the client (called from run_main_script).
     void initapp();
     void initime();
     void initsystem();

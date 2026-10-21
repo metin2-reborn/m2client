@@ -2,10 +2,8 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <cstring>
 
 namespace metin2::inline client::inline app {
-
     namespace {
         const char *service_name_europe = "EUROPE";
 
@@ -42,8 +40,9 @@ namespace metin2::inline client::inline app {
                 16800000UL // 20
         };
 
-        if (level < 0 || level > guild_level_max)
+        if (level < 0 || level > guild_level_max) {
             return 0;
+        }
 
         return international_guildexp_list[level];
     }
@@ -51,8 +50,9 @@ namespace metin2::inline client::inline app {
     auto locale_service_get_skill_power(unsigned level) -> int {
         static const unsigned skill_power_num = 50;
 
-        if (level >= skill_power_num)
+        if (level >= skill_power_num) {
             return 0;
+        }
 
         static unsigned international_skill_powers[skill_power_num] =
             {
@@ -99,6 +99,7 @@ namespace metin2::inline client::inline app {
                 125, // perfect_master
                 125,
         };
+
         return international_skill_powers[level];
     }
 

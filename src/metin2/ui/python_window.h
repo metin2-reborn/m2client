@@ -1,6 +1,5 @@
 #pragma once
 
-#include <list>
 #include <metin2/core/rectangle.h>
 #include <metin2/core/utils.h>
 #include <metin2/graphics/grp_expanded_image_instance.h>
@@ -8,10 +7,11 @@
 #include <metin2/graphics/grp_mark_instance.h>
 #include <metin2/graphics/grp_text_instance.h>
 #include <metin2/script/python_header.h>
+
+#include <list>
 #include <vector>
 
 namespace metin2::inline ui {
-
     namespace widgets {
         class ui_window {
           public:
@@ -49,6 +49,7 @@ namespace metin2::inline ui {
 
           public:
             ui_window(PyObject *ppy_object);
+
             virtual ~ui_window();
 
             void add_child(ui_window *win);
@@ -180,6 +181,7 @@ namespace metin2::inline ui {
         class layer : public ui_window {
           public:
             layer(PyObject *ppy_object) : ui_window(ppy_object) {}
+
             ~layer() override = default;
 
             auto is_window() -> bool override { return false; }
@@ -188,6 +190,7 @@ namespace metin2::inline ui {
         class box : public ui_window {
           public:
             box(PyObject *ppy_object);
+
             ~box() override;
 
             void set_color(uint32_t color) override;
@@ -202,6 +205,7 @@ namespace metin2::inline ui {
         class bar : public ui_window {
           public:
             bar(PyObject *ppy_object);
+
             ~bar() override;
 
             void set_color(uint32_t color) override;
@@ -216,6 +220,7 @@ namespace metin2::inline ui {
         class line : public ui_window {
           public:
             line(PyObject *ppy_object);
+
             ~line() override;
 
             void set_color(uint32_t color) override;
@@ -233,6 +238,7 @@ namespace metin2::inline ui {
 
           public:
             bar3d(PyObject *ppy_object);
+
             ~bar3d() override;
 
             using ui_window::set_color;
@@ -250,6 +256,7 @@ namespace metin2::inline ui {
         class text_line : public ui_window {
           public:
             text_line(PyObject *ppy_object);
+
             ~text_line() override;
 
             void set_max(int max_value);
@@ -287,6 +294,7 @@ namespace metin2::inline ui {
           public:
             number_line(PyObject *ppy_object);
             number_line(ui_window *parent);
+
             ~number_line() override;
 
             void set_path(const char *path);
@@ -310,6 +318,7 @@ namespace metin2::inline ui {
         class image_box : public ui_window {
           public:
             image_box(PyObject *ppy_object);
+
             ~image_box() override;
 
             auto load_image(const char *file_name) -> bool;
@@ -329,9 +338,11 @@ namespace metin2::inline ui {
           protected:
             graphic_image_instance *image_instance_;
         };
+
         class mark_box : public ui_window {
           public:
             mark_box(PyObject *ppy_object);
+
             ~mark_box() override;
 
             void load_image(const char *filename);
@@ -350,12 +361,14 @@ namespace metin2::inline ui {
           protected:
             graphic_mark_instance *mark_instance_;
         };
+
         class expanded_image_box : public image_box {
           public:
             static auto type() -> uint32_t;
 
           public:
             expanded_image_box(PyObject *ppy_object);
+
             ~expanded_image_box() override;
 
             void set_scale(float fx, float fy);
@@ -375,12 +388,14 @@ namespace metin2::inline ui {
 
             auto on_is_type(uint32_t type) -> bool override;
         };
+
         class ani_image_box : public ui_window {
           public:
             static auto type() -> uint32_t;
 
           public:
             ani_image_box(PyObject *ppy_object);
+
             ~ani_image_box() override;
 
             void set_delay(int delay);
@@ -408,6 +423,7 @@ namespace metin2::inline ui {
         class button : public ui_window {
           public:
             button(PyObject *ppy_object);
+
             ~button() override;
 
             auto set_up_visual(const char *file_name) -> bool;
@@ -455,9 +471,11 @@ namespace metin2::inline ui {
             graphic_image_instance down_visual_;
             graphic_image_instance disable_visual_;
         };
+
         class radio_button : public button {
           public:
             radio_button(PyObject *ppy_object);
+
             ~radio_button() override;
 
           protected:
@@ -466,9 +484,11 @@ namespace metin2::inline ui {
             void on_mouse_over_in() override;
             void on_mouse_over_out() override;
         };
+
         class toggle_button : public button {
           public:
             toggle_button(PyObject *ppy_object);
+
             ~toggle_button() override;
 
           protected:
@@ -477,9 +497,11 @@ namespace metin2::inline ui {
             void on_mouse_over_in() override;
             void on_mouse_over_out() override;
         };
+
         class drag_button : public button {
           public:
             drag_button(PyObject *ppy_object);
+
             ~drag_button() override;
 
             void set_restrict_movement_area(int ix, int iy, int iwidth, int iheight);

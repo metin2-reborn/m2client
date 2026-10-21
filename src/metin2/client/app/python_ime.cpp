@@ -3,9 +3,7 @@
 #include "abstract_application.h"
 
 namespace metin2::inline client::inline app {
-
-    python_ime::python_ime()
-        : cime() {
+    python_ime::python_ime() : cime() {
         event = this;
     }
 
@@ -56,7 +54,6 @@ namespace metin2::inline client::inline app {
     void python_ime::on_escape() {
     }
 
-    // Compare the whole code point: U+010D 'č' must not act as Enter.
     auto python_ime::on_char_event(char32_t codepoint) -> bool {
         switch (codepoint) {
         case U'\r':
@@ -64,8 +61,9 @@ namespace metin2::inline client::inline app {
             return true;
 
         case U'\t':
-            if (capture_input == false)
+            if (capture_input == false) {
                 return 0;
+            }
             on_tab();
             return true;
 
@@ -75,6 +73,7 @@ namespace metin2::inline client::inline app {
             on_escape();
             return true;
         }
+
         return false;
     }
 }

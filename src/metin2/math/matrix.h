@@ -6,7 +6,6 @@
 #include <vector>
 
 namespace metin2::math {
-
     // 4x4 matrix for row vectors (v' = v * M): the translation is in the fourth row.
     struct matrix {
         union {
@@ -21,14 +20,20 @@ namespace metin2::math {
 
         // All zero, not identity (see matrix_identity()).
         matrix() { std::memset(m, 0, sizeof(m)); }
+
         explicit matrix(const float *values) { std::memcpy(m, values, sizeof(m)); }
-        matrix(float f11, float f12, float f13, float f14, float f21, float f22, float f23, float f24,
-            float f31, float f32, float f33, float f34, float f41, float f42, float f43, float f44)
+
+        matrix(
+            float f11, float f12, float f13, float f14,
+            float f21, float f22, float f23, float f24,
+            float f31, float f32, float f33, float f34,
+            float f41, float f42, float f43, float f44)
             : _11(f11), _12(f12), _13(f13), _14(f14), _21(f21), _22(f22), _23(f23), _24(f24),
               _31(f31), _32(f32), _33(f33), _34(f34), _41(f41), _42(f42), _43(f43), _44(f44) {}
 
         auto operator()(unsigned row, unsigned column) -> float & { return m[row][column]; }
         auto operator()(unsigned row, unsigned column) const -> float { return m[row][column]; }
+
         operator float *() { return &_11; }
         operator const float *() const { return &_11; }
 
@@ -44,7 +49,9 @@ namespace metin2::math {
         auto operator-(const matrix &other) const -> matrix;
         auto operator*(float f) const -> matrix;
         auto operator/(float f) const -> matrix;
+
         friend auto operator*(float f, const matrix &mat) -> matrix { return mat * f; }
+
         auto operator==(const matrix &other) const -> bool { return std::memcmp(m, other.m, sizeof(m)) == 0; }
     };
 
@@ -65,9 +72,7 @@ namespace metin2::math {
 
     auto transpose(const matrix &mat) -> matrix;
     auto determinant(const matrix &mat) -> float;
-    // False (and the matrix untouched) when the matrix is singular.
     auto inverse(const matrix &mat, matrix &result, float *determinant_value = nullptr) -> bool;
-
     auto transform(const vector3 &v, const matrix &mat) -> vector4; // (x, y, z, 1) * M
     auto transform(const vector4 &v, const matrix &mat) -> vector4;
     auto transform_coord(const vector3 &v, const matrix &mat) -> vector3;  // divided by w
@@ -82,7 +87,6 @@ namespace metin2::math {
         float max_z = 1.0f;
     };
 
-    // World position to screen coordinates; any of the matrices may be null.
     auto project(const vector3 &v, const viewport_rect &viewport, const matrix *projection, const matrix *view, const matrix *world) -> vector3;
 
     // A stack of matrices whose top starts as identity.

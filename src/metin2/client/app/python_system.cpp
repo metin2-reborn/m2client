@@ -1,29 +1,24 @@
 #include "python_system.h"
+
+#include <metin2/config/config_reader.h>
+#include <metin2/config/state_dir.h>
 #include <metin2/core/utf8.h>
 #include <metin2/core/utils.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
-#include "python_application.h"
-
-#define DEFAULT_VALUE_ALWAYS_SHOW_NAME true
-#include <metin2/config/state_dir.h>
-
-#include <metin2/config/config_reader.h>
-
-#include <toml++/toml.hpp>
+#include <metin2/window/main_window.h>
 
 #include <algorithm>
 #include <cstring>
 #include <iterator>
-#include <limits>
-#include <metin2/window/main_window.h>
 #include <set>
 #include <sstream>
 #include <string>
+#include <toml++/toml.hpp>
 #include <type_traits>
+#include "metin2/client/background/python_background.h"
 
 namespace metin2::inline client::inline app {
-
     void python_system::set_interface_handler(PyObject *handler) {
         // The reference count is not changed; the remaining reference keeps Python from deleting it.
         // Instead __del__ calls Destroy, which sets the handler to null.
@@ -37,11 +32,13 @@ namespace metin2::inline client::inline app {
 
     void python_system::display_settings() {
         memset(resolution_list_, 0, sizeof(resolution) * RESOLUTION_MAX_NUM);
+
         resolution_count_ = 0;
 
         for (const metin2::window::display_mode &display_mode : metin2::window::display_modes()) {
-            if (display_mode.width < 800 || display_mode.height < 600)
+            if (display_mode.width < 800 || display_mode.height < 600) {
                 continue;
+            }
 
             const uint32_t bpp = display_mode.bits_per_pixel;
 
@@ -50,8 +47,9 @@ namespace metin2::inline client::inline app {
             for (int i = 0; !check_res && i < resolution_count_; ++i) {
                 if (resolution_list_[i].bpp != bpp ||
                     resolution_list_[i].width != display_mode.width ||
-                    resolution_list_[i].height != display_mode.height)
+                    resolution_list_[i].height != display_mode.height) {
                     continue;
+                }
 
                 int check_fre = false;
 
@@ -63,9 +61,11 @@ namespace metin2::inline client::inline app {
                     }
                 }
 
-                if (!check_fre)
-                    if (resolution_list_[i].frequency_count < FREQUENCY_MAX_NUM)
+                if (!check_fre) {
+                    if (resolution_list_[i].frequency_count < FREQUENCY_MAX_NUM) {
                         resolution_list_[i].frequency[resolution_list_[i].frequency_count++] = display_mode.refresh_rate;
+                    }
+                }
 
                 check_res = true;
             }
@@ -85,21 +85,25 @@ namespace metin2::inline client::inline app {
     }
 
     auto python_system::get_resolution(int index, uint32_t *width_value, uint32_t *height, uint32_t *bpp) -> bool {
-        if (index >= resolution_count_)
+        if (index >= resolution_count_) {
             return false;
+        }
 
         *width_value = resolution_list_[index].width;
         *height = resolution_list_[index].height;
         *bpp = resolution_list_[index].bpp;
+
         return true;
     }
 
     auto python_system::frequency(int index, int freq_index, uint32_t *frequncy) -> bool {
-        if (index >= resolution_count_)
+        if (index >= resolution_count_) {
             return false;
+        }
 
-        if (freq_index >= resolution_list_[index].frequency_count)
+        if (freq_index >= resolution_list_[index].frequency_count) {
             return false;
+        }
 
         *frequncy = resolution_list_[index].frequency[freq_index];
         return true;
@@ -177,7 +181,7 @@ namespace metin2::inline client::inline app {
         config_value_.software_tiling = 0;
         config_value_.shadow_level = 3;
         config_value_.view_chat = true;
-        config_value_.always_show_name = DEFAULT_VALUE_ALWAYS_SHOW_NAME;
+        config_value_.always_show_name = true;
         config_value_.show_damage = true;
         config_value_.show_sales_text = true;
         utf8::copy_truncated(config_value_.renderer, sizeof(config_value_.renderer), "opengl");
@@ -223,24 +227,19 @@ namespace metin2::inline client::inline app {
     }
 
     auto python_system::is_auto_tiling() -> bool {
-        if (config_value_.software_tiling == 0)
-            return true;
-
-        return false;
+        return config_value_.software_tiling == 0;
     }
 
     void python_system::set_software_tiling(bool is_enable) {
-        if (is_enable)
+        if (is_enable) {
             config_value_.software_tiling = 1;
-        else
+        } else {
             config_value_.software_tiling = 2;
+        }
     }
 
     auto python_system::is_software_tiling() -> bool {
-        if (config_value_.software_tiling == 1)
-            return true;
-
-        return false;
+        return config_value_.software_tiling == 1;
     }
 
     auto python_system::is_use_default_ime() -> bool {
@@ -253,12 +252,17 @@ namespace metin2::inline client::inline app {
 
         auto read_file(const std::string &path, std::string &out) -> bool {
             FILE *fp = fopen(path.c_str(), "rb");
-            if (!fp)
+            if (!fp) {
                 return false;
+            }
+
             char buffer_value[4096];
+
             size_t count;
-            while ((count = fread(buffer_value, 1, sizeof(buffer_value), fp)) > 0)
+            while ((count = fread(buffer_value, 1, sizeof(buffer_value), fp)) > 0) {
                 out.append(buffer_value, count);
+            }
+
             fclose(fp);
             return true;
         }
@@ -270,12 +274,14 @@ namespace metin2::inline client::inline app {
                 {"warn",  metin2::log::level::warn },
                 {"error", metin2::log::level::error},
             };
+
             for (const auto &[text, value] : levels) {
                 if (text == name) {
                     out = value;
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -285,8 +291,9 @@ namespace metin2::inline client::inline app {
     auto python_system::load_config() -> bool {
         const std::string path = metin2::state::path(CONFIG_FILE);
         std::string text;
-        if (!read_file(path, text))
+        if (!read_file(path, text)) {
             return false;
+        }
 
         toml::parse_result parsed = toml::parse(std::string_view(text), std::string_view(path));
         if (!parsed) {
@@ -315,11 +322,13 @@ namespace metin2::inline client::inline app {
         std::string renderer = config_value_.renderer;
         reader.read("graphics", "renderer", renderer);
         utf8::copy_truncated(config_value_.renderer, sizeof(config_value_.renderer), renderer);
+
         const auto tiling_it = std::find(std::begin(TILING_NAMES), std::end(TILING_NAMES), tiling);
-        if (tiling_it != std::end(TILING_NAMES))
+        if (tiling_it != std::end(TILING_NAMES)) {
             config_value_.software_tiling = static_cast<uint8_t>(tiling_it - std::begin(TILING_NAMES));
-        else
+        } else {
             metin2::log::error("{}: graphics.tiling must be \"auto\", \"software\" or \"hardware\"; the default is used", path);
+        }
 
         reader.read("sound", "music_volume", config_value_.music_volume);
         reader.read("sound", "voice_volume", config_value_.voice_volume);
@@ -345,10 +354,11 @@ namespace metin2::inline client::inline app {
         std::string log_level = "info";
         reader.read("log", "level", log_level);
         metin2::log::level level;
-        if (parse_log_level(log_level, level))
+        if (parse_log_level(log_level, level)) {
             metin2::log::set_level(level);
-        else
+        } else {
             metin2::log::error("{}: log.level must be \"debug\", \"info\", \"warn\" or \"error\"", path);
+        }
 
         reader.report_unknown_keys();
 
@@ -357,8 +367,10 @@ namespace metin2::inline client::inline app {
             unsigned screen_width = monitor.x;
             unsigned screen_height = monitor.y;
 
-            if (config_value_.width >= screen_width)
+            if (config_value_.width >= screen_width) {
                 config_value_.width = screen_width;
+            }
+
             if (config_value_.height >= screen_height) {
                 int config_height = config_value_.height;
                 int difference = (config_height - screen_height) + 7;
@@ -372,81 +384,94 @@ namespace metin2::inline client::inline app {
 
     auto python_system::save_config() -> bool {
         const toml::table root{
-            {"display",   toml::table{
-                            {"width", static_cast<int64_t>(config_value_.width)},
-                            {"height", static_cast<int64_t>(config_value_.height)},
-                            {"bpp", static_cast<int64_t>(config_value_.bpp)},
-                            {"frequency", static_cast<int64_t>(config_value_.frequency)},
-                            {"windowed", config_value_.windowed},
-                            {"gamma", static_cast<int64_t>(config_value_.gamma)},
-                            {"software_cursor", config_value_.is_software_cursor},
-                            {"vsync", config_value_.vsync},
-                        }    },
-            {"graphics",  toml::table{
-                             {"visibility", static_cast<int64_t>(config_value_.distance)},
-                             {"object_culling", config_value_.is_object_culling},
-                             {"shadow_level", static_cast<int64_t>(config_value_.shadow_level)},
-                             {"tiling", std::string(TILING_NAMES[std::min<uint8_t>(config_value_.software_tiling, 2)])},
-                             {"decompressed_textures", config_value_.decompress_dds},
-                             {"preloading_delay", static_cast<int64_t>(loading_delay_time)},
-                             {"renderer", std::string(config_value_.renderer)},
-                         }  },
-            {"sound",     toml::table{
-                          {"music_volume", static_cast<double>(config_value_.music_volume)},
-                          {"voice_volume", static_cast<int64_t>(config_value_.voice_volume)},
-                          {"no_sound_card", config_value_.no_sound_card},
-                      }        },
-            {"interface", toml::table{
-                              {"view_chat", config_value_.view_chat},
-                              {"always_show_name", config_value_.always_show_name},
-                              {"show_damage", config_value_.show_damage},
-                              {"show_sales_text", config_value_.show_sales_text},
-                              {"use_default_ime", config_value_.use_default_ime},
-                              {"font_antialias", config_value_.font_antialias},
-                              {"font_scale", static_cast<double>(config_value_.font_scale)},
-                          }},
-            {"login",     toml::table{
-                          {"save_id", static_cast<int64_t>(config_value_.is_save_id)},
-                          {"id", std::string(config_value_.save_id, strnlen(config_value_.save_id, sizeof(config_value_.save_id)))},
-                      }        },
-            {"log",       toml::table{
-                        {"level", std::string(metin2::log::enabled(metin2::log::level::debug) ? "debug" : metin2::log::enabled(metin2::log::level::info) ? "info"
-                                                                                                      : metin2::log::enabled(metin2::log::level::warn)   ? "warn"
-                                                                                                                                                         : "error")},
-                    }            },
+            {"display",
+             toml::table{
+                    {"width", static_cast<int64_t>(config_value_.width)},
+                    {"height", static_cast<int64_t>(config_value_.height)},
+                    {"bpp", static_cast<int64_t>(config_value_.bpp)},
+                    {"frequency", static_cast<int64_t>(config_value_.frequency)},
+                    {"windowed", config_value_.windowed},
+                    {"gamma", static_cast<int64_t>(config_value_.gamma)},
+                    {"software_cursor", config_value_.is_software_cursor},
+                    {"vsync", config_value_.vsync},
+                }},
+            {"graphics",
+             toml::table{
+                    {"visibility", static_cast<int64_t>(config_value_.distance)},
+                    {"object_culling", config_value_.is_object_culling},
+                    {"shadow_level", static_cast<int64_t>(config_value_.shadow_level)},
+                    {"tiling", std::string(TILING_NAMES[std::min<uint8_t>(config_value_.software_tiling, 2)])},
+                    {"decompressed_textures", config_value_.decompress_dds},
+                    {"preloading_delay", static_cast<int64_t>(loading_delay_time)},
+                    {"renderer", std::string(config_value_.renderer)},
+                }},
+            {"sound",
+             toml::table{
+                    {"music_volume", static_cast<double>(config_value_.music_volume)},
+                    {"voice_volume", static_cast<int64_t>(config_value_.voice_volume)},
+                    {"no_sound_card", config_value_.no_sound_card},
+                }},
+            {"interface",
+             toml::table{
+                    {"view_chat", config_value_.view_chat},
+                    {"always_show_name", config_value_.always_show_name},
+                    {"show_damage", config_value_.show_damage},
+                    {"show_sales_text", config_value_.show_sales_text},
+                    {"use_default_ime", config_value_.use_default_ime},
+                    {"font_antialias", config_value_.font_antialias},
+                    {"font_scale", static_cast<double>(config_value_.font_scale)},
+                }},
+            {"login",
+             toml::table{
+                    {"save_id", static_cast<int64_t>(config_value_.is_save_id)},
+                    {"id", std::string(config_value_.save_id, strnlen(config_value_.save_id, sizeof(config_value_.save_id)))},
+                }},
+            {"log",
+             toml::table{
+                    {"level", std::string(metin2::log::enabled(metin2::log::level::debug) ? "debug" : metin2::log::enabled(metin2::log::level::info) ? "info"
+                                                                                                  : metin2::log::enabled(metin2::log::level::warn)   ? "warn"
+                                                                                                                                                     : "error")},
+                }},
         };
 
         std::ostringstream text;
         text << root << '\n';
 
         const std::string path = metin2::state::path(CONFIG_FILE);
+
         FILE *fp = fopen(path.c_str(), "w");
         if (!fp) {
             metin2::log::error("Cannot write {}", path);
             return false;
         }
+
         const std::string content = text.str();
+
         fwrite(content.data(), 1, content.size(), fp);
         fclose(fp);
+
         return true;
     }
 
     auto python_system::load_interface_status() -> bool {
         std::string data;
-        if (!read_file(metin2::state::path(INTERFACE_FILE), data))
+        if (!read_file(metin2::state::path(INTERFACE_FILE), data)) {
             return false;
+        }
 
         if (data.size() != sizeof(window_status_value_)) {
             metin2::log::warn("{} has {} bytes instead of {}; the default window layout is used", INTERFACE_FILE, data.size(), sizeof(window_status_value_));
             return false;
         }
+
         memcpy(window_status_value_, data.data(), sizeof(window_status_value_));
         return true;
     }
 
     void python_system::save_interface_status() {
-        if (!interface_handler_)
+        if (!interface_handler_) {
             return;
+        }
 
         py_call_class_member_func(interface_handler_, "OnSaveInterfaceStatus", Py_BuildValue("()"));
 
@@ -464,10 +489,9 @@ namespace metin2::inline client::inline app {
     }
 
     void python_system::change_system() {
-        sound_manager &snd_mgr = get_sound_manager();
-        snd_mgr.set_music_volume(config_value_.music_volume);
-
-        snd_mgr.set_sound_volume_grade(config_value_.voice_volume);
+        auto &sound_manager = get_sound_manager();
+        sound_manager.set_music_volume(config_value_.music_volume);
+        sound_manager.set_sound_volume_grade(config_value_.voice_volume);
     }
 
     void python_system::clear() {
@@ -485,10 +509,11 @@ namespace metin2::inline client::inline app {
 
         change_system();
 
-        if (load_interface_status())
+        if (load_interface_status()) {
             is_interface_config_ = true;
-        else
+        } else {
             is_interface_config_ = false;
+        }
     }
 
     python_system::~python_system() {

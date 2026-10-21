@@ -3,7 +3,6 @@
 #include "vector.h"
 
 namespace metin2::math {
-
     // a * x + b * y + c * z + d = 0
     struct plane {
         float a = 0.0f;
@@ -22,7 +21,6 @@ namespace metin2::math {
         auto operator==(const plane &p) const -> bool = default;
     };
 
-    // Signed distance of the point to a normalized plane.
     auto plane_dot_coord(const plane &p, const vector3 &v) -> float;
     auto plane_normalize(const plane &p) -> plane;
 }

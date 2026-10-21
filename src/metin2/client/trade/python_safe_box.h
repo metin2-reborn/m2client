@@ -1,10 +1,10 @@
 #pragma once
-#include <cstdint>
+
 #include <metin2/client/app/game_type.h>
-#include <string>
+
+#include <cstdint>
 
 namespace metin2::inline client::inline trade {
-
     class python_safe_box {
       public:
         enum {
@@ -12,10 +12,12 @@ namespace metin2::inline client::inline trade {
             SAFEBOX_SLOT_Y_COUNT = 9,
             SAFEBOX_PAGE_SIZE = SAFEBOX_SLOT_X_COUNT * SAFEBOX_SLOT_Y_COUNT,
         };
+
         using item_instance_vector = std::vector<packet_item>;
 
       public:
         python_safe_box();
+
         ~python_safe_box();
 
         void open_safe_box(int size);
@@ -43,6 +45,7 @@ namespace metin2::inline client::inline trade {
 
     inline auto get_python_safe_box() -> python_safe_box & {
         static python_safe_box instance;
+
         return instance;
     }
 }

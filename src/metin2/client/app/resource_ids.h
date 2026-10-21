@@ -4,7 +4,6 @@
 #include <cstdint>
 
 namespace metin2::inline client::inline app {
-
 #define IDS_APP_NAME             1
 #define IDS_POSSESSIVE_MORPHENE  2
 #define IDS_WARN_BAD_DRIVER      3

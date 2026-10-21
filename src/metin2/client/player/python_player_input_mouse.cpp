@@ -1,13 +1,14 @@
-#include <metin2/client/app/python_application.h>
 #include "python_player.h"
 
+#include <metin2/client/app/python_application.h>
+#include <metin2/client/background/python_background.h>
 #include <metin2/graphics/camera.h>
 
 namespace metin2::inline world::inline actors {
     extern auto is_huge_race(unsigned int vnum) -> bool;
 }
-namespace metin2::inline client::inline player {
 
+namespace metin2::inline client::inline player {
     void python_player::new_set_mouse_move_state(int mbs) {
         if (MBS_PRESS == mbs) {
             new_move_to_mouse_screen_direction();

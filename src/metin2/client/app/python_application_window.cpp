@@ -1,17 +1,19 @@
-#include <metin2/graphics/camera.h>
 #include "python_application.h"
+
+#include <metin2/client/app/python_ime.h>
+#include <metin2/graphics/camera.h>
 
 #include <cstdlib>
 
 namespace metin2::inline client::inline app {
-
     void python_application::on_activate(bool active) {
         is_activate_wnd_ = active;
 
-        if (is_activate_wnd_)
+        if (is_activate_wnd_) {
             get_sound_manager().restore_volume();
-        else
+        } else {
             get_sound_manager().save_volume();
+        }
     }
 
     void python_application::on_char(char32_t codepoint) {
@@ -72,6 +74,7 @@ namespace metin2::inline client::inline app {
         is_minimized_wnd_ = minimized;
         if (!minimized) {
             const point client = size();
+
             grp_device_.resize_back_buffer(client.x, client.y);
             widgets::get_window_manager().resize_screen(client.x, client.y);
         }

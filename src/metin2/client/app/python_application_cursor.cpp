@@ -1,9 +1,10 @@
-#include <metin2/script/python_utils.h>
 #include "python_application.h"
+
+#include <metin2/script/python_utils.h>
+
 #include "resource_ids.h"
 
 namespace metin2::inline client::inline app {
-
     auto python_application::create_cursors() -> bool {
         cursor_visible_ = true;
         liar_cursor_on_ = false;
@@ -32,9 +33,10 @@ namespace metin2::inline client::inline app {
         cursors_.clear();
 
         for (int i = 0; i < CURSOR_COUNT; ++i) {
-            std::unique_ptr<window::cursor> cursor = window::cursor::load(resource_id[i]);
-            if (!cursor)
+            auto cursor = window::cursor::load(resource_id[i]);
+            if (!cursor) {
                 return false;
+            }
 
             cursors_.emplace(i, std::move(cursor));
         }
@@ -51,8 +53,9 @@ namespace metin2::inline client::inline app {
         cursor_visible_ = flag;
         liar_cursor_on_ = liar_cursor_on;
 
-        if (CURSOR_MODE_HARDWARE == cursor_mode_value_)
+        if (CURSOR_MODE_HARDWARE == cursor_mode_value_) {
             window::show_cursor(cursor_visible_);
+        }
     }
 
     auto python_application::cursor_visible() -> bool {
@@ -95,8 +98,9 @@ namespace metin2::inline client::inline app {
 
         if (CURSOR_MODE_HARDWARE == cursor_mode_value_) {
             auto itor = cursors_.find(cursor_num);
-            if (cursors_.end() == itor)
+            if (cursors_.end() == itor) {
                 return false;
+            }
 
             window::set_cursor(itor->second.get());
         }

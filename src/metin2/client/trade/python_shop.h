@@ -3,7 +3,6 @@
 #include <metin2/client/protocol/packet.h>
 
 namespace metin2::inline client::inline trade {
-
     enum shop_coin_type {
         SHOP_COIN_TYPE_GOLD, // default
         SHOP_COIN_TYPE_SECONDARY_COIN,
@@ -11,8 +10,9 @@ namespace metin2::inline client::inline trade {
 
     class python_shop {
       public:
-        python_shop(void);
-        ~python_shop(void);
+        python_shop();
+
+        ~python_shop();
 
         void clear();
 
@@ -62,11 +62,13 @@ namespace metin2::inline client::inline trade {
         shop_tab shoptabs_[SHOP_TAB_COUNT_MAX];
 
         using private_shop_item_stock = std::map<item_pos, shop_item_table>;
+
         private_shop_item_stock private_shop_item_stock_value_;
     };
 
     inline auto get_python_shop() -> python_shop & {
         static python_shop instance;
+
         return instance;
     }
 }

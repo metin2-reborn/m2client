@@ -29,8 +29,6 @@
 #include <metin2/client/trade/python_exchange.h>
 #include <metin2/client/trade/python_safe_box.h>
 #include <metin2/client/trade/python_shop.h>
-#include "python_ime.h"
-#include "python_system.h"
 
 #include <metin2/client/guilds/guild_mark_downloader.h>
 #include <metin2/client/guilds/guild_mark_uploader.h>
@@ -44,7 +42,6 @@
 #include "abstract_application.h"
 
 namespace metin2::inline client::inline app {
-
     class python_application : public application, public input_keyboard, public abstract_application {
       public:
         enum device_state {
@@ -118,6 +115,7 @@ namespace metin2::inline client::inline app {
 
       public:
         python_application();
+
         ~python_application() override;
 
       public:
@@ -322,6 +320,7 @@ namespace metin2::inline client::inline app {
 
     inline auto get_python_application() -> python_application & {
         static python_application instance;
+
         return instance;
     }
 }

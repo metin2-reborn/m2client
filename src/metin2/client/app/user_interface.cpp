@@ -11,35 +11,29 @@
 #include <metin2/core/util.h>
 #include <metin2/files/eter_file_manager.h>
 
-#include "check_latest_files.h"
-
 #include <unistd.h>
 
-#include <cstdlib>
-#include <memory>
 #include <metin2/script/python_debug_module.h>
 #include <metin2/script/python_launcher.h>
 #include <metin2/ui/python_modules.h>
 #include "client_modules.h"
-#include "locale.h"
 
 namespace metin2::inline client::inline app {
     bool is_test_server_mode = false;
 
-    static const char *python_library_file_names[] =
-        {
-            "UserDict.pyc",
-            "__future__.pyc",
-            "copy_reg.pyc",
-            "linecache.pyc",
-            "ntpath.pyc",
-            "os.pyc",
-            "site.pyc",
-            "stat.pyc",
-            "string.pyc",
-            "traceback.pyc",
-            "types.pyc",
-            "\n",
+    static const char *python_library_file_names[] = {
+        "UserDict.pyc",
+        "__future__.pyc",
+        "copy_reg.pyc",
+        "linecache.pyc",
+        "ntpath.pyc",
+        "os.pyc",
+        "site.pyc",
+        "stat.pyc",
+        "string.pyc",
+        "traceback.pyc",
+        "types.pyc",
+        "\n",
     };
 
     auto check_python_library_filenames() -> bool {
@@ -47,8 +41,9 @@ namespace metin2::inline client::inline app {
             std::string filename = "lib/";
             filename += python_library_file_names[i];
 
-            if (access(filename.c_str(), F_OK) != 0)
+            if (access(filename.c_str(), F_OK) != 0) {
                 return false;
+            }
         }
 
         return true;
@@ -136,6 +131,7 @@ namespace metin2::inline client::inline app {
             metin2::log::error("Cannot set the Python command line");
             return false;
         }
+
         {
             if (!py_launcher.run_file("system.py")) {
                 metin2::log::error("Cannot run system.py");
@@ -147,8 +143,9 @@ namespace metin2::inline client::inline app {
     }
 
     auto run_client() -> bool {
-        if (!setup())
+        if (!setup()) {
             return false;
+        }
 
         metin2::log::init(metin2::state::path("log"));
 
@@ -162,6 +159,7 @@ namespace metin2::inline client::inline app {
         {
             python_launcher &py_launcher = get_python_launcher();
             python_exception_sender py_exception_sender;
+            
             set_exception_sender(&py_exception_sender);
 
             if (py_launcher.create()) {

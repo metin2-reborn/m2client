@@ -3,11 +3,10 @@
 #include <metin2/input/ime.h>
 
 namespace metin2::inline client::inline app {
-
-    class python_ime : public ime_event_sink,
-                       public cime {
+    class python_ime : public ime_event_sink, public cime {
       public:
         python_ime();
+
         ~python_ime() override;
 
         void move_left();
@@ -30,6 +29,7 @@ namespace metin2::inline client::inline app {
 
     inline auto get_python_ime() -> python_ime & {
         static python_ime instance;
+
         return instance;
     }
 }

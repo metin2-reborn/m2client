@@ -1,12 +1,13 @@
-#include <metin2/client/app/python_application.h>
-#include <metin2/client/inventory/python_item.h>
-#include <metin2/core/timer.h>
-#include <metin2/core/utils.h>
-#include <metin2/log/log.h>
 #include "python_player_event_handler.h"
 
 #include <metin2/client/app/abstract_player.h>
 #include <metin2/client/app/locale.h>
+#include <metin2/client/app/python_application.h>
+#include <metin2/client/background/python_background.h>
+#include <metin2/client/inventory/python_item.h>
+#include <metin2/core/timer.h>
+#include <metin2/core/utils.h>
+#include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/world/actors/game_util.h>
 

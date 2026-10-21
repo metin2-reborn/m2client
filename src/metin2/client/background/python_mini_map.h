@@ -1,11 +1,11 @@
 #pragma once
 
 #include <metin2/graphics/grp_expanded_image_instance.h>
+#include <metin2/graphics/grp_screen.h>
 #include <metin2/script/python_header.h>
-#include "python_background.h"
+#include <metin2/world/terrain/map_outdoor.h>
 
 namespace metin2::inline client::inline background {
-
     class python_mini_map : public screen {
       public:
         enum {
@@ -15,6 +15,7 @@ namespace metin2::inline client::inline background {
             WAYPOINT_IMAGE_COUNT = 15,
             TARGET_MARK_IMAGE_COUNT = 2,
         };
+
         enum {
             TYPE_OPC,
             TYPE_OPCPVP,
@@ -32,6 +33,7 @@ namespace metin2::inline client::inline background {
 
       public:
         python_mini_map();
+
         ~python_mini_map() override;
 
         void destroy();
@@ -197,6 +199,7 @@ namespace metin2::inline client::inline background {
         using atlas_mark_info_vector_iterator = atlas_mark_info_vector::iterator;
         using guild_area_info_vector = std::vector<guild_area_info>;
         using guild_area_info_vector_iterator = guild_area_info_vector::iterator;
+
         atlas_mark_info_vector_iterator atlas_mark_info_vector_iterator_value_;
         atlas_mark_info_vector atlas_npc_info_vector_;
         atlas_mark_info_vector atlas_warp_info_vector_;
@@ -212,6 +215,7 @@ namespace metin2::inline client::inline background {
             math::vector2 pos;
             unsigned int id;
         };
+
         std::vector<signal_point> signal_point_vector_;
 
         PyObject *handler_;
@@ -219,6 +223,7 @@ namespace metin2::inline client::inline background {
 
     inline auto get_python_mini_map() -> python_mini_map & {
         static python_mini_map instance;
+
         return instance;
     }
 }

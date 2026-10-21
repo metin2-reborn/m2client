@@ -2,7 +2,6 @@
 #include <metin2/world/items/item_data.h>
 
 namespace metin2::inline client::inline app {
-
     enum {
         POINT_MAX_NUM = 255,
         CHARACTER_NAME_MAX_LEN = 24,
@@ -18,6 +17,7 @@ namespace metin2::inline client::inline app {
         affects(const uint32_t &affects) {
             set_affects(affects);
         }
+
         auto operator=(const uint32_t &affects_value) -> affects & {
             set_affects(affects_value);
             return *this;
@@ -68,7 +68,6 @@ namespace metin2::inline client::inline app {
     const uint32_t c_Equipment_Ring1 = c_New_Equipment_Start + 0;
     const uint32_t c_Equipment_Ring2 = c_New_Equipment_Start + 1;
     const uint32_t c_Equipment_Belt = c_New_Equipment_Start + 2;
-    ;
 
     enum dragon_soul_deck_type {
         DS_DECK_1,
@@ -83,7 +82,6 @@ namespace metin2::inline client::inline app {
         DRAGON_SOUL_GRADE_ANCIENT,
         DRAGON_SOUL_GRADE_LEGENDARY,
         DRAGON_SOUL_GRADE_MAX,
-
     };
 
     enum dragon_soul_step_types {
@@ -159,15 +157,15 @@ namespace metin2::inline client::inline app {
     };
 
 #pragma pack(push, 1)
-#define WORD_MAX 0xffff
-
     struct item_pos {
         uint8_t window_type;
         uint16_t cell;
+
         item_pos() {
             window_type = INVENTORY;
-            cell = WORD_MAX;
+            cell = 0xffff;
         }
+
         item_pos(uint8_t window_type_value, uint16_t cell_value) {
             window_type = window_type_value;
             cell = cell_value;
@@ -175,17 +173,10 @@ namespace metin2::inline client::inline app {
 
         auto is_valid_cell() -> bool {
             switch (window_type) {
-            case INVENTORY:
-                return cell < c_Inventory_Count;
-                break;
-            case EQUIPMENT:
-                return cell < c_DragonSoul_Equip_End;
-                break;
-            case DRAGON_SOUL_INVENTORY:
-                return cell < (DS_INVENTORY_MAX_NUM);
-                break;
-            default:
-                return false;
+            case INVENTORY:             return cell < c_Inventory_Count;
+            case EQUIPMENT:             return cell < c_DragonSoul_Equip_End;
+            case DRAGON_SOUL_INVENTORY: return cell < (DS_INVENTORY_MAX_NUM);
+            default:                    return false;
             }
         }
         auto is_equip_cell() -> bool {
@@ -193,21 +184,17 @@ namespace metin2::inline client::inline app {
             case INVENTORY:
             case EQUIPMENT:
                 return (c_Equipment_Start + c_Wear_Max > cell) && (c_Equipment_Start <= cell);
-                break;
 
             case BELT_INVENTORY:
             case DRAGON_SOUL_INVENTORY:
                 return false;
-                break;
 
-            default:
-                return false;
+            default: return false;
             }
         }
 
         auto is_belt_inventory_cell() -> bool {
-            bool result = c_Belt_Inventory_Slot_Start <= cell && c_Belt_Inventory_Slot_End > cell;
-            return result;
+            return c_Belt_Inventory_Slot_Start <= cell && c_Belt_Inventory_Slot_End > cell;
         }
 
         auto operator==(const struct item_pos &rhs) const -> bool {
