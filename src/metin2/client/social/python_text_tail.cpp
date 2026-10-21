@@ -1,5 +1,4 @@
 #include "python_text_tail.h"
-#include <metin2/client/app/locale.h>
 #include <metin2/client/app/resource_ids.h>
 #include <metin2/client/characters/instance_base.h>
 #include <metin2/client/characters/python_character_manager.h>

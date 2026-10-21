@@ -192,49 +192,10 @@ namespace metin2::inline client::inline app {
         return py_build_none();
     }
 
-    auto app_force_set_locale(PyObject *self, PyObject *args) -> PyObject * {
-        char *name;
-        if (!py_tuple_get_string(args, 0, &name)) {
-            return py_build_exception();
-        }
-
-        char *locale_path;
-        if (!py_tuple_get_string(args, 1, &locale_path)) {
-            return py_build_exception();
-        }
-
-        locale_service_force_set_locale(name, locale_path);
-
-        return py_build_none();
-    }
-
-    auto app_get_locale_service_name(PyObject *self, PyObject *args) -> PyObject * {
-        return Py_BuildValue("s", locale_service_get_name());
-    }
-
-    auto load_locale_data(const char *locale_path) -> bool;
-
-    auto app_set_cheonma(PyObject *self, PyObject *args) -> PyObject * {
-        int enable;
-        if (!py_tuple_get_integer(args, 0, &enable)) {
-            return py_build_exception();
-        }
-
-        // CHEONMA (a Korean server mode) is not supported; the scripts still call this.
-        return py_build_none();
-    }
+    auto load_locale_data() -> bool;
 
     auto app_load_locale_data(PyObject *self, PyObject *args) -> PyObject * {
-        char *locale_path;
-        if (!py_tuple_get_string(args, 0, &locale_path)) {
-            return py_build_exception();
-        }
-
-        return Py_BuildValue("i", load_locale_data(locale_path));
-    }
-
-    auto app_get_locale_path(PyObject *self, PyObject *args) -> PyObject * {
-        return Py_BuildValue("s", locale_service_get_locale_path());
+        return Py_BuildValue("i", load_locale_data());
     }
 
     auto app_get_state_path(PyObject *self, PyObject *args) -> PyObject * {
@@ -977,13 +938,9 @@ namespace metin2::inline client::inline app {
             {"GetTextFileLineCount", app_get_text_file_line_count, METH_VARARGS},
             {"GetTextFileLine", app_get_text_file_line, METH_VARARGS},
 
-            {"GetLocaleServiceName", app_get_locale_service_name, METH_VARARGS},
-            {"GetLocalePath", app_get_locale_path, METH_VARARGS},
-            {"ForceSetLocale", app_force_set_locale, METH_VARARGS},
             {"GetStatePath", app_get_state_path, METH_VARARGS},
 
-            {"LoadLocaleData", app_load_locale_data, METH_VARARGS},
-            {"SetCHEONMA", app_set_cheonma, METH_VARARGS},
+            {"LoadLocaleData", app_load_locale_data, METH_NOARGS},
 
             {"SetControlFP", app_set_control_fp, METH_VARARGS},
 

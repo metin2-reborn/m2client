@@ -18,6 +18,8 @@
 #include <metin2/script/python_utils.h>
 #include <metin2/world/terrain/area_terrain.h>
 
+#include <format>
+
 namespace metin2::inline graphics {
     extern bool graphics_caps_software_tiling;
 }
@@ -581,60 +583,54 @@ namespace metin2::inline client::inline app {
         return true;
     }
 
-    auto load_locale_data(const char *locale_path) -> bool {
+    auto load_locale_data() -> bool {
         python_non_player &npc_mgr = get_python_non_player();
         item_manager &item_mgr = get_item_manager();
         python_skill &skill_mgr = get_python_skill();
         python_network_stream &net_stream = get_python_network_stream();
 
-        char item_list[256];
-        char item_proto[256];
-        char item_desc[256];
-        char mob_proto[256];
-        char skill_desc_file_name[256];
-        char skill_table_file_name[256];
-        char insult_list[256];
-        snprintf(item_list, sizeof(item_list), "%s/item_list.txt", locale_path);
-        snprintf(item_proto, sizeof(item_proto), "%s/item_proto", locale_path);
-        snprintf(item_desc, sizeof(item_desc), "%s/itemdesc.txt", locale_path);
-        snprintf(mob_proto, sizeof(mob_proto), "%s/mob_proto", locale_path);
-        snprintf(skill_desc_file_name, sizeof(skill_desc_file_name), "%s/SkillDesc.txt", locale_path);
-        snprintf(skill_table_file_name, sizeof(skill_table_file_name), "%s/SkillTable.txt", locale_path);
-        snprintf(insult_list, sizeof(insult_list), "%s/insult.txt", locale_path);
+        const auto locale_file = [](const char *name) { return std::format("{}/{}", LOCALE_DIR, name); };
+        const std::string item_list = locale_file("item_list.txt");
+        const std::string item_proto = locale_file("item_proto");
+        const std::string item_desc = locale_file("itemdesc.txt");
+        const std::string mob_proto = locale_file("mob_proto");
+        const std::string skill_desc_file_name = locale_file("SkillDesc.txt");
+        const std::string skill_table_file_name = locale_file("SkillTable.txt");
+        const std::string insult_list = locale_file("insult.txt");
 
         npc_mgr.destroy();
         item_mgr.destroy();
         skill_mgr.destroy();
 
-        if (!item_mgr.load_item_list(item_list)) {
+        if (!item_mgr.load_item_list(item_list.c_str())) {
             metin2::log::error("Cannot load the item list {}", item_list);
         }
 
-        if (!item_mgr.load_item_table(item_proto)) {
+        if (!item_mgr.load_item_table(item_proto.c_str())) {
             metin2::log::error("Cannot load the item proto {}", item_proto);
             return false;
         }
 
-        if (!item_mgr.load_item_desc(item_desc)) {
+        if (!item_mgr.load_item_desc(item_desc.c_str())) {
             metin2::log::debug("Cannot load the item descriptions {}", item_desc);
         }
 
-        if (!npc_mgr.load_non_player_data(mob_proto)) {
+        if (!npc_mgr.load_non_player_data(mob_proto.c_str())) {
             metin2::log::error("Cannot load the mob proto {}", mob_proto);
             return false;
         }
 
-        if (!skill_mgr.register_skill_desc(skill_desc_file_name)) {
+        if (!skill_mgr.register_skill_desc(skill_desc_file_name.c_str())) {
             metin2::log::error("Cannot load the skill descriptions {}", skill_desc_file_name);
             return false;
         }
 
-        if (!skill_mgr.register_skill_table(skill_table_file_name)) {
+        if (!skill_mgr.register_skill_table(skill_table_file_name.c_str())) {
             metin2::log::error("Cannot load the skill table {}", skill_table_file_name);
             return false;
         }
 
-        if (!net_stream.load_insult_list(insult_list)) {
+        if (!net_stream.load_insult_list(insult_list.c_str())) {
             metin2::log::debug("Cannot load the insult list {}", insult_list);
         }
 

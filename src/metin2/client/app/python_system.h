@@ -1,7 +1,12 @@
 #pragma once
 #include <metin2/script/python_header.h>
 
+#include <string_view>
+
 namespace metin2::inline client::inline app {
+    // English is the only locale shipped; the scripts and the loaders below read everything from here.
+    inline constexpr std::string_view LOCALE_DIR = "locale/en";
+
     class python_system {
       public:
         enum window {

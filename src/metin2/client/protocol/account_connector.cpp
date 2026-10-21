@@ -1,5 +1,4 @@
 #include "account_connector.h"
-#include <metin2/client/app/locale.h>
 #include <metin2/core/random.h>
 #include <metin2/core/tea.h>
 #include <metin2/core/timer.h>

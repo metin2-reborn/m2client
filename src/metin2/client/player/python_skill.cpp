@@ -2,7 +2,6 @@
 #include <metin2/core/parse.h>
 #include <metin2/log/log.h>
 
-#include <metin2/client/app/locale.h>
 #include <metin2/client/characters/instance_base.h>
 #include <metin2/core/utf8.h>
 #include <metin2/files/eter_file_manager.h>

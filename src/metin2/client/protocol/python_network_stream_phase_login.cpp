@@ -1,4 +1,3 @@
-#include <metin2/client/app/locale.h>
 #include <metin2/client/app/test.h>
 #include <metin2/core/timer.h>
 #include <metin2/core/utf8.h>

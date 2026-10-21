@@ -25,7 +25,6 @@
 #include <metin2/client/app/abstract_character_manager.h>
 #include <metin2/client/characters/instance_base.h>
 
-#include <metin2/client/app/locale.h>
 #include <metin2/core/file_name.h>
 #include <metin2/script/python_utils.h>
 

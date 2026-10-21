@@ -1,7 +1,7 @@
 #include "python_mini_map.h"
 
 #include <metin2/client/app/abstract_player.h>
-#include <metin2/client/app/locale.h>
+#include <metin2/client/app/python_system.h>
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/client/guilds/python_guild.h>
 #include <metin2/core/parse.h>
@@ -17,6 +17,8 @@
 #include <metin2/ui/python_window_manager.h>
 
 #include "python_background.h"
+
+#include <format>
 
 namespace metin2::inline client::inline background {
     void python_mini_map::set_center_position(float center_x, float center_y) {
@@ -399,16 +401,18 @@ namespace metin2::inline client::inline background {
 
     void python_mini_map::scale_up() {
         scale_ *= 2.0f;
-        if (scale_ >= 4.0f)
-            {scale_ = 4.0f;}
+        if (scale_ >= 4.0f) {
+            scale_ = 4.0f;
+        }
 
         set_position_impl();
     }
 
     void python_mini_map::scale_down() {
         scale_ *= 0.5f;
-        if (scale_ <= 0.5f)
-            {scale_ = 0.5f;}
+        if (scale_ <= 0.5f) {
+            scale_ = 0.5f;
+        }
 
         set_position_impl();
     }
@@ -461,7 +465,7 @@ namespace metin2::inline client::inline background {
             way_point_graphic_image_instances_[j].set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(buf));
             way_point_graphic_image_instances_[j].set_rendering_mode(graphic_expanded_image_instance::RENDERING_MODE_SCREEN);
         }
-        
+
         for (int k = 0; k < TARGET_MARK_IMAGE_COUNT; ++k) {
             snprintf(buf, sizeof(buf), "%sminimap/targetmark%02d.sub", image_root.c_str(), k + 1);
             target_mark_graphic_image_instances_[k].set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(buf));
@@ -683,12 +687,11 @@ namespace metin2::inline client::inline background {
 
         map_outdoor &map = bg.map_outdoor_ref();
 
-        char atlas_mark_info_file_name[64 + 1];
-        snprintf(atlas_mark_info_file_name, sizeof(atlas_mark_info_file_name), "%s/map/%s_point.txt", locale_service_get_locale_path(), map.get_name().c_str());
+        const std::string atlas_mark_info_file_name = std::format("{}/map/{}_point.txt", LOCALE_DIR, map.get_name());
 
         token_vector_map token_vector_map;
 
-        if (!load_multiple_text_data(atlas_mark_info_file_name, token_vector_map)) {
+        if (!load_multiple_text_data(atlas_mark_info_file_name.c_str(), token_vector_map)) {
             metin2::log::debug("Cannot load the atlas mark info {}", atlas_mark_info_file_name);
             return;
         }

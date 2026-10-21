@@ -1,7 +1,6 @@
 #include "python_player_event_handler.h"
 
 #include <metin2/client/app/abstract_player.h>
-#include <metin2/client/app/locale.h>
 #include <metin2/client/app/python_application.h>
 #include <metin2/client/background/python_background.h>
 #include <metin2/client/inventory/python_item.h>
@@ -10,6 +9,8 @@
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/world/actors/game_util.h>
+
+#include <iterator>
 
 namespace metin2::inline client::inline player {
 
@@ -26,6 +27,61 @@ namespace metin2::inline client::inline player {
     };
 
     const uint32_t POINT_MAGIC_NUMBER = 0xe73ac1da;
+
+    namespace {
+        // Skill efficiency in percent per skill level (0..49).
+        auto skill_power_percent(unsigned level) -> int {
+            static const unsigned power[50] = {
+                0,
+                5,
+                6,
+                8,
+                10,
+                12,
+                14,
+                16,
+                18,
+                20,
+                22,
+                24,
+                26,
+                28,
+                30,
+                32,
+                34,
+                36,
+                38,
+                40,
+                50, // master
+                52,
+                54,
+                56,
+                58,
+                60,
+                63,
+                66,
+                69,
+                72,
+                82, // grand_master
+                85,
+                88,
+                91,
+                94,
+                98,
+                102,
+                106,
+                110,
+                115,
+                125, // perfect_master
+                125,
+            };
+
+            if (level >= std::size(power)) {
+                return 0;
+            }
+            return power[level];
+        }
+    }
 
     void python_player::player_status::set_point(uint32_t e_point, int32_t l_point) {
         point[e_point] = l_point ^ POINT_MAGIC_NUMBER;
@@ -824,8 +880,8 @@ namespace metin2::inline client::inline player {
             return;
         }
 
-        player_status_value_.skill[slot_index].fcur_efficient_percentage = locale_service_get_skill_power(skill_level) / 100.0f;
-        player_status_value_.skill[slot_index].fnext_efficient_percentage = locale_service_get_skill_power(skill_level + 1) / 100.0f;
+        player_status_value_.skill[slot_index].fcur_efficient_percentage = skill_power_percent(skill_level) / 100.0f;
+        player_status_value_.skill[slot_index].fnext_efficient_percentage = skill_power_percent(skill_level + 1) / 100.0f;
     }
 
     void python_player::set_skill_cool_time(uint32_t skill_index) {

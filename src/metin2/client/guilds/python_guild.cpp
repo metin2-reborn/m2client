@@ -1,11 +1,46 @@
 #include "python_guild.h"
 #include <metin2/client/app/abstract_player.h>
-#include <metin2/client/app/locale.h>
 #include <metin2/script/python_header.h>
 #include <metin2/script/python_utils.h>
 #include "mark_manager.h"
 
 namespace metin2::inline client::inline guilds {
+
+    namespace {
+        constexpr int GUILD_LEVEL_MAX = 20;
+
+        // Experience a guild needs to finish each level.
+        auto guild_level_experience(int level) -> unsigned {
+            static const uint32_t experience[GUILD_LEVEL_MAX + 1] = {
+                0,         // 0
+                6000UL,    // 1
+                18000UL,   // 2
+                36000UL,   // 3
+                64000UL,   // 4
+                94000UL,   // 5
+                130000UL,  // 6
+                172000UL,  // 7
+                220000UL,  // 8
+                274000UL,  // 9
+                334000UL,  // 10
+                400000UL,  // 11
+                600000UL,  // 12
+                840000UL,  // 13
+                1120000UL, // 14
+                1440000UL, // 15
+                1800000UL, // 16
+                2600000UL, // 17
+                3200000UL, // 18
+                4000000UL, // 19
+                16800000UL // 20
+            };
+
+            if (level < 0 || level > GUILD_LEVEL_MAX) {
+                return 0;
+            }
+            return experience[level];
+        }
+    }
 
     std::map<uint32_t, uint32_t> guild_skill_slot_to_index_map;
 
@@ -399,11 +434,10 @@ namespace metin2::inline client::inline guilds {
     auto guild_get_guild_experience(PyObject *self, PyObject *args) -> PyObject * {
         python_guild::guild_info &guild_info = get_python_guild().guild_info_ref();
 
-        int gulid_max_level = 20;
-        if (guild_info.guild_level >= uint32_t(gulid_max_level))
+        if (guild_info.guild_level >= uint32_t(GUILD_LEVEL_MAX))
             return Py_BuildValue("ii", 0, 0);
 
-        unsigned last_exp = locale_service_get_last_exp(guild_info.guild_level);
+        unsigned last_exp = guild_level_experience(guild_info.guild_level);
 
         return Py_BuildValue("ii", guild_info.current_experience, last_exp - guild_info.current_experience);
     }

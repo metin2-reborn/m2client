@@ -3,7 +3,6 @@
 #include <metin2/log/log.h>
 #include <metin2/world/terrain/map_outdoor.h>
 
-#include <metin2/client/app/locale.h>
 #include <metin2/client/app/python_system.h>
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/client/protocol/python_network_stream.h>
@@ -12,6 +11,8 @@
 #include <metin2/window/events.h>
 #include "python_background.h"
 #include "python_mini_map.h"
+
+#include <format>
 
 namespace metin2::inline client::inline background {
 
@@ -210,9 +211,7 @@ namespace metin2::inline client::inline background {
     }
 
     void python_background::initialize() {
-        std::string atlas_info_file_name(locale_service_get_locale_path());
-        atlas_info_file_name += "/AtlasInfo.txt";
-        set_atlas_info_file_name(atlas_info_file_name.c_str());
+        set_atlas_info_file_name(std::format("{}/AtlasInfo.txt", LOCALE_DIR).c_str());
         map_manager::initialize();
     }
 
