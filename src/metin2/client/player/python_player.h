@@ -332,9 +332,6 @@ namespace metin2::inline client::inline player {
 
         auto pk_mode() -> uint32_t;
 
-        void set_mobile_flag(bool flag) override;
-        auto has_mobile_phone_number() -> bool;
-
         void set_combo_skill_flag(bool flag) override;
 
         void set_movable_ground_distance(float distance);
@@ -532,8 +529,6 @@ namespace metin2::inline client::inline player {
         float consume_stamina_per_sec_;
 
         uint32_t in_guild_area_id_;
-
-        bool mobile_flag_;
 
         bool sys_is_cool_time_;
         bool sys_is_level_limit_;

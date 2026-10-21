@@ -1470,10 +1470,6 @@ namespace metin2::inline client::inline player {
         return Py_BuildValue("i", get_python_player().pk_mode());
     }
 
-    auto player_has_mobile_phone_number(PyObject *self, PyObject *args) -> PyObject * {
-        return Py_BuildValue("i", get_python_player().has_mobile_phone_number());
-    }
-
     auto player_set_weapon_attack_bonus_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
         if (!py_tuple_get_integer(args, 0, &flag))
@@ -1753,8 +1749,6 @@ namespace metin2::inline client::inline player {
                 {"ExitParty", player_exit_party, METH_VARARGS},
 
                 {"GetPKMode", player_get_pk_mode, METH_VARARGS},
-
-                {"HasMobilePhoneNumber", player_has_mobile_phone_number, METH_VARARGS},
 
                 {"RegisterEmotionIcon", player_register_emotion_icon, METH_VARARGS},
                 {"GetEmotionIconImage", player_get_emotion_icon_image, METH_VARARGS},

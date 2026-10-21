@@ -1312,14 +1312,6 @@ namespace metin2::inline client::inline player {
         return instance->pk_mode();
     }
 
-    void python_player::set_mobile_flag(bool flag) {
-        mobile_flag_ = flag;
-    }
-
-    auto python_player::has_mobile_phone_number() -> bool {
-        return mobile_flag_;
-    }
-
     void python_player::set_game_window(PyObject *ppy_object) {
         ppy_game_window_ = ppy_object;
     }
@@ -1358,8 +1350,6 @@ namespace metin2::inline client::inline player {
         is_consuming_stamina_ = false;
         consume_stamina_per_sec_ = 0.0f;
         current_stamina_ = 0.0f;
-
-        mobile_flag_ = false;
 
         clear_auto_attack_target_actor_id();
     }
@@ -1428,8 +1418,6 @@ namespace metin2::inline client::inline player {
         current_stamina_ = 0.0f;
 
         in_guild_area_id_ = 0xffffffff;
-
-        mobile_flag_ = false;
 
         clear_auto_attack_target_actor_id();
     }

@@ -54,7 +54,6 @@ namespace metin2::inline client::inline app {
         virtual void notify_change_pk_mode() = 0;
 
         virtual void set_observer_mode(bool is_enable) = 0;
-        virtual void set_mobile_flag(bool flag) = 0;
         virtual void set_combo_skill_flag(bool flag) = 0;
 
         virtual void start_emotion_process() = 0;
