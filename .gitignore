@@ -1,0 +1,17 @@
+# CLangd cache
+/.cache/
+
+# Claude Code: only the project skills are shared
+/.claude/*
+!/.claude/skills/
+
+# Linux port build outputs and runtime state
+/build/
+/build-*/
+/run/*
+!/run/.keep
+!/run/gamedir.sha256
+
+# Visual Studio local state
+*.user
+*.suo

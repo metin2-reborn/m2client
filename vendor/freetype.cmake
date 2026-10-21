@@ -1,0 +1,13 @@
+set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_BROTLI ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_BZIP2 ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_PNG ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_ZLIB OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(freetype
+    GIT_REPOSITORY https://github.com/freetype/freetype.git
+    GIT_TAG c740f0fda4274d6ffd2e5b64a25b06ef69803a07 # tag VER-2-14-3
+    GIT_SHALLOW FALSE
+)
+
+FetchContent_MakeAvailable(freetype)

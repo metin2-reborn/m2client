@@ -1,0 +1,15 @@
+# 3D test without a server: switch to the character-creation phase, which loads the intro
+# map and eight animated Granny characters client-side.
+waitframes 5
+wait 2000
+pyexec "import sys\nf=sys._getframe()\nms=None\nwhile f:\n  ms = f.f_locals.get('mainStream', ms)\n  f=f.f_back\nimport __main__\n__main__.ms=ms\nms.SetCreateCharacterPhase()"
+wait 4000
+screenshot world_00.png
+audio
+wait 2000
+screenshot world_01.png
+# rotate the shown character with the on-screen arrows is UI; instead select another slot
+pyexec "import __main__\nw=__main__.ms.curPhaseWindow\nw.SelectSlot(1) if hasattr(w,'SelectSlot') else None"
+wait 1500
+screenshot world_02.png
+quit

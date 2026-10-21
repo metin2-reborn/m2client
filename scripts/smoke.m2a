@@ -1,0 +1,13 @@
+# Phase 3 smoke test: the window comes up, a few frames render, a screenshot is taken.
+ping
+waitframes 5
+log "window is presenting frames"
+wait 2000
+screenshot smoke.png
+mousemove 300 200
+click left
+wait 300
+key DIK_ESCAPE
+wait 300
+frame
+quit

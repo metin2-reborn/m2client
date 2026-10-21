@@ -1,0 +1,29 @@
+# Login screen walkthrough: server board -> login board -> typed ID/password -> login attempt.
+# Click targets are kept off the exact centre of buttons: the centre pixel belongs to the
+# zero-size text child window (same as on Windows).
+waitframes 5
+wait 2500
+screenshot login_00.png
+audio
+# pick channel 1, then "OK" on the server board
+click left 600 346
+wait 300
+click left 626 653
+wait 1000
+screenshot login_01.png
+# ID field, then password field (LoginBoard at (408,358), edit lines at (77,16)/(77,43), 120x18)
+click left 500 380
+wait 200
+text "testuser"
+wait 300
+click left 500 407
+wait 200
+text "secret"
+wait 500
+screenshot login_02.png
+# Enter in the password field triggers the login button (the connect attempt fails without a server)
+key DIK_RETURN
+wait 2500
+screenshot login_03.png
+audio
+quit

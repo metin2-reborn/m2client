@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.compiler }})
+    runs-on: ubuntu-latest
+    container: docker.io/library/debian:13-slim
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: clang
+            cc: clang-22
+            cxx: clang++-22
+          - compiler: gcc
+            cc: gcc
+            cxx: g++
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - name: Install packages
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends build-essential clang-22 clang-format cmake ninja-build git ca-certificates \
+            pkgconf zlib1g-dev liblzo2-dev libexpat1-dev libfontconfig-dev libgl-dev \
+            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+            libwayland-dev wayland-protocols libxkbcommon-dev \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev
+
+      - uses: actions/checkout@v4
+
+      - name: Cache third-party downloads
+        uses: actions/cache@v4
+        with:
+          path: .deps
+          key: deps-${{ matrix.compiler }}-${{ hashFiles('vendor/*.cmake') }}
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DFETCHCONTENT_BASE_DIR="$PWD/.deps"
+
+      - name: Build
+        run: cmake --build build --parallel "$(nproc)"
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
