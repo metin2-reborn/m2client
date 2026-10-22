@@ -1,6 +1,7 @@
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/effects/effect_manager.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline app {
@@ -20,14 +21,14 @@ namespace metin2::inline client::inline app {
         return py_build_none();
     }
 
-    void initeffect() {
+    void init_effects_module() {
         static PyMethodDef methods[] = {
             {"RegisterIndexedFlyData", effect_register_indexed_fly_data, METH_VARARGS},
 
             {nullptr, nullptr, 0, nullptr},
         };
 
-        auto *module_value = Py_InitModule("effect", methods);
+        auto *module_value = init_python_module("metin2.effects", methods);
 
         PyModule_AddIntConstant(module_value, "INDEX_FLY_TYPE_NORMAL", flying_manager::INDEX_FLY_TYPE_NORMAL);
         PyModule_AddIntConstant(module_value, "INDEX_FLY_TYPE_FIRE_CRACKER", flying_manager::INDEX_FLY_TYPE_FIRE_CRACKER);

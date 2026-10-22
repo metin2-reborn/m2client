@@ -1,6 +1,7 @@
 #include <metin2/client/inventory/python_item.h>
 #include <metin2/core/parse.h>
 #include <metin2/core/utils.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/world/items/item_manager.h>
 #include "python_chat.h"
@@ -391,7 +392,7 @@ namespace metin2::inline client::inline social {
         return Py_BuildValue("s", "");
     }
 
-    void init_chat() {
+    void init_social_chat_module() {
         static PyMethodDef s_methods[] =
             {
                 {"SetChatColor", chat_set_chat_color, METH_VARARGS},
@@ -431,7 +432,7 @@ namespace metin2::inline client::inline social {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("chat", s_methods);
+        PyObject *module_value = init_python_module("metin2.social.chat", s_methods);
 
         PyModule_AddIntConstant(module_value, "CHAT_TYPE_TALKING", CHAT_TYPE_TALKING);
         PyModule_AddIntConstant(module_value, "CHAT_TYPE_INFO", CHAT_TYPE_INFO);

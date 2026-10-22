@@ -1,5 +1,6 @@
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/ui/python_graphic.h>
 #include "python_text_tail.h"
@@ -132,7 +133,7 @@ namespace metin2::inline client::inline social {
         return py_build_none();
     }
 
-    void init_text_tail() {
+    void init_social_text_tail_module() {
         static PyMethodDef s_methods[] =
             {
                 {"Clear", text_tail_clear, METH_VARARGS},
@@ -161,6 +162,6 @@ namespace metin2::inline client::inline social {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        Py_InitModule("textTail", s_methods);
+        init_python_module("metin2.social.text_tail", s_methods);
     }
 }

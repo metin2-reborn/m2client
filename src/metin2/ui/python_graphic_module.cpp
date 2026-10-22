@@ -5,6 +5,7 @@
 #include <metin2/graphics/text_bar.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 #include <cstdlib>
@@ -430,7 +431,7 @@ namespace metin2::inline ui {
         return py_build_none();
     }
 
-    void initgrp() {
+    void init_graphics_module() {
         static PyMethodDef methods[] = {
             {"InitScreenEffect", grp_init_screen_effect, METH_VARARGS},
             {"ClearDepthBuffer", grp_clear_depth_buffer, METH_VARARGS},
@@ -466,6 +467,6 @@ namespace metin2::inline ui {
             {nullptr, nullptr, 0, nullptr},
         };
 
-        Py_InitModule("grp", methods);
+        init_python_module("metin2.graphics", methods);
     }
 }

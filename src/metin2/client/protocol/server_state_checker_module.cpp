@@ -1,3 +1,4 @@
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "server_state_checker.h"
 
@@ -44,7 +45,7 @@ namespace metin2::inline client::inline protocol {
         return py_build_none();
     }
 
-    void init_server_state_checker() {
+    void init_net_server_state_module() {
         static PyMethodDef s_methods[] =
             {
                 {"Create", server_state_checker_create, METH_VARARGS},
@@ -55,6 +56,6 @@ namespace metin2::inline client::inline protocol {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        Py_InitModule("ServerStateChecker", s_methods);
+        init_python_module("metin2.net.server_state", s_methods);
     }
 }

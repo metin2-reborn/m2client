@@ -1,6 +1,7 @@
 #include "python_guild.h"
 #include <metin2/client/app/abstract_player.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "mark_manager.h"
 
@@ -624,7 +625,7 @@ namespace metin2::inline client::inline guilds {
         return Py_BuildValue("i", mark_id % guild_mark_image::MARK_TOTAL_COUNT);
     }
 
-    void initguild() {
+    void init_guild_module() {
         static PyMethodDef s_methods[] =
             {
                 {"IsGuildEnable", guild_is_guild_enable, METH_VARARGS},
@@ -669,7 +670,7 @@ namespace metin2::inline client::inline guilds {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("guild", s_methods);
+        PyObject *module_value = init_python_module("metin2.guild", s_methods);
         PyModule_AddIntConstant(module_value, "AUTH_ADD_MEMBER", GUILD_AUTH_ADD_MEMBER);
         PyModule_AddIntConstant(module_value, "AUTH_REMOVE_MEMBER", GUILD_AUTH_REMOVE_MEMBER);
         PyModule_AddIntConstant(module_value, "AUTH_NOTICE", GUILD_AUTH_NOTICE);

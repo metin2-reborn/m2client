@@ -6,6 +6,7 @@
 #include <metin2/graphics/resource.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include <string>
 #include <string_view>
@@ -197,7 +198,7 @@ namespace metin2::inline ui {
         return Py_BuildValue("s", line);
     }
 
-    void initgrp_text() {
+    void init_graphics_text_module() {
         static PyMethodDef s_methods[] =
             {
                 {"Generate", grp_text_generate, METH_VARARGS},
@@ -212,6 +213,6 @@ namespace metin2::inline ui {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        Py_InitModule("grpText", s_methods);
+        init_python_module("metin2.graphics.text", s_methods);
     }
 }

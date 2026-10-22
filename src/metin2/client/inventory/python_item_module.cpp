@@ -5,6 +5,7 @@
 #include <metin2/client/app/game_type.h>
 #include <metin2/client/characters/instance_base.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/world/items/item_manager.h>
 
@@ -375,7 +376,7 @@ namespace metin2::inline client::inline inventory {
             return Py_BuildValue("i", -1);
     }
 
-    void init_item() {
+    void init_items_module() {
         static PyMethodDef s_methods[] =
             {
                 {"SetUseSoundFileName", item_set_use_sound_file_name, METH_VARARGS},
@@ -413,7 +414,7 @@ namespace metin2::inline client::inline inventory {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("item", s_methods);
+        PyObject *module_value = init_python_module("metin2.items", s_methods);
 
         PyModule_AddIntConstant(module_value, "USESOUND_ACCESSORY", python_item::USESOUND_ACCESSORY);
         PyModule_AddIntConstant(module_value, "USESOUND_ARMOR", python_item::USESOUND_ARMOR);

@@ -6,6 +6,7 @@
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/graphics/camera.h>
 #include <metin2/graphics/image_file.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/world/actors/game_util.h>
 
@@ -240,7 +241,7 @@ namespace metin2::inline client::inline app {
         // Asset folders (BGM/*.mp3) are listed through the file manager. upload/ holds the player's
         // own guild mark images, which the mark uploader reads from disk, so it is listed there.
         std::string st_filter(sz_filter);
-        std::replace(st_filter.begin(), st_filter.end(), '\\', '/');
+        std::ranges::replace(st_filter, '\\', '/');
         if (strncasecmp(st_filter.c_str(), "upload/", 7) != 0) {
             auto asset_path = eter_file_manager::parse_path(st_filter);
             std::string::size_type slash = asset_path.path.rfind('/');
@@ -255,7 +256,7 @@ namespace metin2::inline client::inline app {
                 }
             });
 
-            std::sort(names_value.begin(), names_value.end());
+            std::ranges::sort(names_value);
 
             for (const std::string &name : names_value) {
                 PyObject *file_name = PyString_FromString(name.c_str());
@@ -851,7 +852,7 @@ namespace metin2::inline client::inline app {
         return py_build_none();
     }
 
-    void initapp() {
+    void init_app_module() {
         static PyMethodDef methods[] = {
             {"IsDevStage", app_is_dev_stage, METH_VARARGS},
 
@@ -959,7 +960,7 @@ namespace metin2::inline client::inline app {
             {nullptr, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("app", methods);
+        PyObject *module_value = init_python_module("metin2.app", methods);
 
         PyModule_AddIntConstant(module_value, "INFO_ITEM", python_application::INFO_ITEM);
         PyModule_AddIntConstant(module_value, "INFO_ACTOR", python_application::INFO_ACTOR);

@@ -2,6 +2,7 @@
 #include <metin2/log/log.h>
 
 #include <metin2/client/protocol/python_network_stream.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline trade {
@@ -334,7 +335,7 @@ namespace metin2::inline client::inline trade {
         return Py_BuildValue("i", get_python_shop().tab_coin_type(tab_idx));
     }
 
-    void initshop() {
+    void init_trade_shop_module() {
         static PyMethodDef s_methods[] =
             {
                 {"Open", shop_open, METH_VARARGS},
@@ -358,7 +359,7 @@ namespace metin2::inline client::inline trade {
                 {"BuildPrivateShop", shop_build_private_shop, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
-        PyObject *module_value = Py_InitModule("shop", s_methods);
+        PyObject *module_value = init_python_module("metin2.trade.shop", s_methods);
 
         PyModule_AddIntConstant(module_value, "SHOP_SLOT_COUNT", SHOP_HOST_ITEM_MAX_NUM);
         PyModule_AddIntConstant(module_value, "SHOP_COIN_TYPE_GOLD", SHOP_COIN_TYPE_GOLD);

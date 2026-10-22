@@ -1,4 +1,5 @@
 #include <metin2/client/app/python_application.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "python_player.h"
 
@@ -1636,7 +1637,7 @@ namespace metin2::inline client::inline player {
 
         return py_build_none();
     }
-    void init_player() {
+    void init_player_module() {
         static PyMethodDef s_methods[] =
             {
                 {"GetAutoPotionInfo", player_get_auto_potion_info, METH_VARARGS},
@@ -1768,7 +1769,7 @@ namespace metin2::inline client::inline player {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("player", s_methods);
+        PyObject *module_value = init_python_module("metin2.player", s_methods);
         PyModule_AddIntConstant(module_value, "LEVEL", POINT_LEVEL);
         PyModule_AddIntConstant(module_value, "VOICE", POINT_VOICE);
         PyModule_AddIntConstant(module_value, "EXP", POINT_EXP);

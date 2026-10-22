@@ -6,6 +6,7 @@
 #include <metin2/client/guilds/guild_mark_uploader.h>
 #include <metin2/client/guilds/python_guild.h>
 #include <metin2/log/log.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "account_connector.h"
 #include "python_network_stream.h"
@@ -1329,7 +1330,7 @@ namespace metin2::inline client::inline protocol {
         return py_build_none();
     }
 
-    void initnet() {
+    void init_net_module() {
         static PyMethodDef s_methods[] =
             {
                 {"EnableChatInsultFilter", net_enable_chat_insult_filter, METH_VARARGS},
@@ -1462,7 +1463,7 @@ namespace metin2::inline client::inline protocol {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("net", s_methods);
+        PyObject *module_value = init_python_module("metin2.net", s_methods);
 
         PyModule_AddIntConstant(module_value, "ERROR_NONE", python_network_stream::ERROR_NONE);
         PyModule_AddIntConstant(module_value, "ERROR_CONNECT_MARK_SERVER", python_network_stream::ERROR_CONNECT_MARK_SERVER);

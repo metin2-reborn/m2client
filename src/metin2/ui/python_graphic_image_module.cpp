@@ -5,6 +5,7 @@
 #include <metin2/graphics/resource.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "python_modules.h"
 
@@ -160,7 +161,7 @@ namespace metin2::inline ui {
         return Py_BuildValue("i", image_instance->height());
     }
 
-    void initgrp_image() {
+    void init_graphics_image_module() {
         static PyMethodDef s_methods[] =
             {
                 {"Render", grp_image_render, METH_VARARGS},
@@ -174,6 +175,6 @@ namespace metin2::inline ui {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        Py_InitModule("grpImage", s_methods);
+        init_python_module("metin2.graphics.image", s_methods);
     }
 }

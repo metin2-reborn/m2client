@@ -1,3 +1,4 @@
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/sound/sound_manager.h>
 
@@ -124,7 +125,7 @@ namespace metin2::inline client::inline app {
         return py_build_none();
     }
 
-    void initsnd() {
+    void init_sound_module() {
         static PyMethodDef methods[] = {
             {"PlaySound", snd_play_sound, METH_VARARGS},
             {"PlaySound3D", snd_play_sound3d, METH_VARARGS},
@@ -142,6 +143,6 @@ namespace metin2::inline client::inline app {
             {nullptr, nullptr, 0, nullptr},
         };
 
-        Py_InitModule("snd", methods);
+        init_python_module("metin2.sound", methods);
     }
 }

@@ -1,4 +1,5 @@
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "python_exchange.h"
 
@@ -115,7 +116,7 @@ namespace metin2::inline client::inline trade {
         return Py_BuildValue("ii", type, value);
     }
 
-    void init_trade() {
+    void init_trade_exchange_module() {
         static PyMethodDef s_methods[] =
             {
                 {"InitTrading", exchange_init_trading, METH_VARARGS},
@@ -143,7 +144,7 @@ namespace metin2::inline client::inline trade {
                 {nullptr, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("exchange", s_methods);
+        PyObject *module_value = init_python_module("metin2.trade.exchange", s_methods);
         PyModule_AddIntConstant(module_value, "EXCHANGE_ITEM_MAX_NUM", python_exchange::EXCHANGE_ITEM_MAX_NUM);
     }
 }

@@ -1,4 +1,5 @@
 #include <metin2/client/protocol/python_network_stream.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "python_event_manager.h"
 
@@ -227,7 +228,7 @@ namespace metin2::inline client::inline quest {
         return py_build_none();
     }
 
-    void init_event() {
+    void init_quest_events_module() {
         static PyMethodDef s_methods[] =
             {
                 {"RegisterEventSet", event_register_event_set, METH_VARARGS},
@@ -261,7 +262,7 @@ namespace metin2::inline client::inline quest {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("event", s_methods);
+        PyObject *module_value = init_python_module("metin2.quest.events", s_methods);
 
         PyModule_AddIntConstant(module_value, "BOX_VISIBLE_LINE_COUNT", python_event_manager::BOX_VISIBLE_LINE_COUNT);
         PyModule_AddIntConstant(module_value, "BUTTON_TYPE_NEXT", python_event_manager::BUTTON_TYPE_NEXT);

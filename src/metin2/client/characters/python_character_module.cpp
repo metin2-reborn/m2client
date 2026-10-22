@@ -1,4 +1,5 @@
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/ui/python_graphic.h>
 #include "python_character_manager.h"
@@ -693,7 +694,7 @@ namespace metin2::inline client::inline characters {
         return py_build_none();
     }
 
-    void initchr() {
+    void init_characters_module() {
         static PyMethodDef s_methods[] =
             {
 
@@ -763,7 +764,7 @@ namespace metin2::inline client::inline characters {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("chr", s_methods);
+        PyObject *module_value = init_python_module("metin2.characters", s_methods);
 
         PyModule_AddIntConstant(module_value, "PLAYER_NAME_MAX_LEN", PLAYER_NAME_MAX_LEN);
 

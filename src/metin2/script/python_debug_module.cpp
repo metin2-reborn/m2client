@@ -1,6 +1,7 @@
 #include "python_debug_module.h"
 
 #include <metin2/log/log.h>
+#include "python_module.h"
 #include "python_utils.h"
 
 namespace metin2::inline script {
@@ -55,7 +56,7 @@ namespace metin2::inline script {
         return py_build_none();
     }
 
-    void initdbg() {
+    void init_log_module() {
         static PyMethodDef s_methods[] = {
             {"LogBox", dbg_log_box, METH_VARARGS},
             {"Trace", dbg_trace, METH_VARARGS},
@@ -65,6 +66,6 @@ namespace metin2::inline script {
             {nullptr, nullptr},
         };
 
-        Py_InitModule("dbg", s_methods);
+        init_python_module("metin2.log", s_methods);
     }
 }

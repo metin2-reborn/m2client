@@ -2,6 +2,7 @@
 #include <metin2/client/app/python_system.h>
 #include <metin2/graphics/state_manager.h>
 #include <metin2/log/log.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/world/terrain/map_outdoor.h>
 #include <string>
@@ -333,7 +334,7 @@ namespace metin2::inline client::inline background {
         return py_build_none();
     }
 
-    void init_background() {
+    void init_world_module() {
         static PyMethodDef s_methods[] =
             {
                 {"IsSoftwareTiling", background_is_software_tiling, METH_VARARGS},
@@ -375,7 +376,7 @@ namespace metin2::inline client::inline background {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("background", s_methods);
+        PyObject *module_value = init_python_module("metin2.world", s_methods);
 
         PyModule_AddIntConstant(module_value, "PART_SKY", map_outdoor::PART_SKY);
         PyModule_AddIntConstant(module_value, "PART_TREE", map_outdoor::PART_TREE);

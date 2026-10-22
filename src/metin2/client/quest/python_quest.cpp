@@ -3,6 +3,7 @@
 #include <metin2/graphics/grp_image.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline quest {
@@ -199,7 +200,7 @@ namespace metin2::inline client::inline quest {
         return py_build_none();
     }
 
-    void initquest() {
+    void init_quest_module() {
         static PyMethodDef s_methods[] =
             {
                 {"GetQuestCount", quest_get_quest_count, METH_VARARGS},
@@ -210,7 +211,7 @@ namespace metin2::inline client::inline quest {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("quest", s_methods);
+        PyObject *module_value = init_python_module("metin2.quest", s_methods);
         PyModule_AddIntConstant(module_value, "QUEST_MAX_NUM", 5);
     }
 }

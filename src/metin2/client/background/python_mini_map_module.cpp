@@ -1,5 +1,6 @@
 #include "python_mini_map.h"
 
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline background {
@@ -187,7 +188,7 @@ namespace metin2::inline client::inline background {
         return Py_BuildValue("i", guild_id);
     }
 
-    void init_mini_map() {
+    void init_world_minimap_module() {
         static PyMethodDef methods[] = {
             {"SetScale", mini_map_set_scale, METH_VARARGS},
             {"ScaleUp", mini_map_scale_up, METH_VARARGS},
@@ -221,7 +222,7 @@ namespace metin2::inline client::inline background {
             {nullptr, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("miniMap", methods);
+        PyObject *module_value = init_python_module("metin2.world.minimap", methods);
 
         PyModule_AddIntConstant(module_value, "TYPE_OPC", python_mini_map::TYPE_OPC);
         PyModule_AddIntConstant(module_value, "TYPE_OPCPVP", python_mini_map::TYPE_OPCPVP);

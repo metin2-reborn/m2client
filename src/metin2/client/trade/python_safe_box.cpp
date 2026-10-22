@@ -1,6 +1,7 @@
 #include "python_safe_box.h"
 #include <metin2/log/log.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline trade {
@@ -260,7 +261,7 @@ namespace metin2::inline client::inline trade {
         return Py_BuildValue("i", get_python_safe_box().mall_size());
     }
 
-    void initsafebox() {
+    void init_trade_safebox_module() {
         static PyMethodDef s_methods[] =
             {
                 {"GetItemID", safebox_get_item_id, METH_VARARGS},
@@ -278,7 +279,7 @@ namespace metin2::inline client::inline trade {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("safebox", s_methods);
+        PyObject *module_value = init_python_module("metin2.trade.safebox", s_methods);
         PyModule_AddIntConstant(module_value, "SAFEBOX_SLOT_X_COUNT", python_safe_box::SAFEBOX_SLOT_X_COUNT);
         PyModule_AddIntConstant(module_value, "SAFEBOX_SLOT_Y_COUNT", python_safe_box::SAFEBOX_SLOT_Y_COUNT);
         PyModule_AddIntConstant(module_value, "SAFEBOX_PAGE_SIZE", python_safe_box::SAFEBOX_PAGE_SIZE);

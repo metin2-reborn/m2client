@@ -73,37 +73,38 @@ namespace metin2::inline client::inline app {
     }
 
     auto run_main_script(python_launcher &py_launcher) -> bool {
-        initpack();
-        initdbg();
-        initime();
-        initgrp();
-        initgrp_image();
-        initgrp_text();
-        initwnd_mgr();
-        initapp();
-        initsystem();
-        initchr();
-        initchrmgr();
-        init_player();
-        init_item();
-        init_non_player();
-        init_trade();
-        init_chat();
-        init_text_tail();
-        initnet();
-        init_mini_map();
-        init_event();
-        initeffect();
-        initfly();
-        initsnd();
-        initshop();
-        initskill();
-        initquest();
-        init_background();
-        init_messenger();
-        initsafebox();
-        initguild();
-        init_server_state_checker();
+        // Every module registers under the `metin2` package; the containers are created on demand,
+        // so the order below only groups them for reading.
+        init_files_module();
+        init_log_module();
+        init_app_module();
+        init_settings_module();
+        init_ime_module();
+        init_sound_module();
+        init_effects_module();
+        init_graphics_module();
+        init_graphics_image_module();
+        init_graphics_text_module();
+        init_widgets_module();
+        init_net_module();
+        init_net_server_state_module();
+        init_world_module();
+        init_world_minimap_module();
+        init_characters_module();
+        init_characters_manager_module();
+        init_characters_nonplayer_module();
+        init_player_module();
+        init_player_skills_module();
+        init_items_module();
+        init_guild_module();
+        init_quest_module();
+        init_quest_events_module();
+        init_social_chat_module();
+        init_social_messenger_module();
+        init_social_text_tail_module();
+        init_trade_exchange_module();
+        init_trade_shop_module();
+        init_trade_safebox_module();
 
 #if M2_DEV_TOOLS
         // Lets the automation harness run Python inside the client (pyexec command).
@@ -159,7 +160,7 @@ namespace metin2::inline client::inline app {
         {
             python_launcher &py_launcher = get_python_launcher();
             python_exception_sender py_exception_sender;
-            
+
             set_exception_sender(&py_exception_sender);
 
             if (py_launcher.create()) {

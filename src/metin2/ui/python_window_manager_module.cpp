@@ -1,4 +1,5 @@
 #include <metin2/log/log.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "python_grid_slot_window.h"
 #include "python_modules.h"
@@ -1747,7 +1748,7 @@ namespace metin2::inline ui {
         return py_build_none();
     }
 
-    void initwnd_mgr() {
+    void init_widgets_module() {
         static PyMethodDef s_methods[] =
             {
                 // WindowManager
@@ -1928,7 +1929,7 @@ namespace metin2::inline ui {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("wndMgr", s_methods);
+        PyObject *module_value = init_python_module("metin2.widgets", s_methods);
 
         PyModule_AddIntConstant(module_value, "SLOT_STYLE_NONE", widgets::SLOT_STYLE_NONE);
         PyModule_AddIntConstant(module_value, "SLOT_STYLE_PICK_UP", widgets::SLOT_STYLE_PICK_UP);

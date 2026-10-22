@@ -3,6 +3,7 @@
 #include <metin2/core/utils.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/world/actors/race_manager.h>
 #include "instance_base.h"
@@ -521,7 +522,7 @@ namespace metin2::inline client::inline characters {
         return Py_BuildValue("i", result);
     }
 
-    void initchrmgr() {
+    void init_characters_manager_module() {
         static PyMethodDef s_methods[] =
             {
                 {"SetEmpireNameMode", chrmgr_set_empire_name_mode, METH_VARARGS},
@@ -560,7 +561,7 @@ namespace metin2::inline client::inline characters {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("chrmgr", s_methods);
+        PyObject *module_value = init_python_module("metin2.characters.manager", s_methods);
 
         PyModule_AddIntConstant(module_value, "NAMECOLOR_MOB", instance_base::NAMECOLOR_NORMAL_MOB);
         PyModule_AddIntConstant(module_value, "NAMECOLOR_NPC", instance_base::NAMECOLOR_NORMAL_NPC);

@@ -1,4 +1,5 @@
 #include "python_messenger.h"
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline social {
@@ -129,7 +130,7 @@ namespace metin2::inline client::inline social {
         return py_build_none();
     }
 
-    void init_messenger() {
+    void init_social_messenger_module() {
         static PyMethodDef s_methods[] =
             {
                 {"RemoveFriend", messenger_remove_friend, METH_VARARGS},
@@ -140,6 +141,6 @@ namespace metin2::inline client::inline social {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        Py_InitModule("messenger", s_methods);
+        init_python_module("metin2.social.messenger", s_methods);
     }
 }

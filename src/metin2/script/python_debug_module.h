@@ -2,6 +2,6 @@
 
 namespace metin2::inline script {
 
-    // The "dbg" Python module: LogBox, Trace, Tracen, TraceError, RegisterExceptionString.
-    void initdbg();
+    // The "metin2.log" Python module: LogBox, Trace, Tracen, TraceError, RegisterExceptionString.
+    void init_log_module();
 }

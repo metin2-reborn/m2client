@@ -144,7 +144,10 @@ and protected data members, `UPPER_CASE` for constants and enumerators. `clang-t
 - Keep headers self-contained, with `#pragma once`, and include what you use.
 - Read game assets through `get_file_manager()` (`files/eter_file_manager.h`), never by path: asset
   names are case-insensitive and may live in the zip or the loose-file folder.
-- Python export names (the strings in the module tables) must not change: the game scripts call them.
+- The Python modules live under the root package `metin2` (`metin2.app`, `metin2.graphics.text`,
+  `metin2.trade.shop`, ...); register a new one with `init_python_module` (`script/python_module.h`),
+  which creates the parent packages. Python export names (the strings in the module tables) must not
+  change: the game scripts call them.
 - Wire structures in `client/protocol/packet.h` are packed and checked with `static_assert`; their
   sizes must match the server's.
 - Comments explain what the code cannot: pitfalls, ordering, lifetimes, protocol facts.

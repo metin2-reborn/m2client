@@ -1,6 +1,7 @@
 #include "python_non_player.h"
 
 #include <metin2/script/python_header.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "instance_base.h"
 #include "python_character_manager.h"
@@ -54,7 +55,7 @@ namespace metin2::inline client::inline characters {
         return Py_BuildValue("s", non_player.monster_name(v_num));
     }
 
-    void init_non_player() {
+    void init_characters_nonplayer_module() {
         static PyMethodDef s_methods[] =
             {
                 {"GetLevelByVID", nonplayer_get_level_by_vid, METH_VARARGS},
@@ -64,7 +65,7 @@ namespace metin2::inline client::inline characters {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("nonplayer", s_methods);
+        PyObject *module_value = init_python_module("metin2.characters.nonplayer", s_methods);
 
         PyModule_AddIntConstant(module_value, "ON_CLICK_EVENT_NONE", python_non_player::ON_CLICK_EVENT_NONE);
         PyModule_AddIntConstant(module_value, "ON_CLICK_EVENT_BATTLE", python_non_player::ON_CLICK_EVENT_BATTLE);

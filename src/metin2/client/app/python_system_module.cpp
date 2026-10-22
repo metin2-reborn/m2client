@@ -1,5 +1,6 @@
 #include "python_system.h"
 
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline app {
@@ -132,7 +133,7 @@ namespace metin2::inline client::inline app {
         return py_build_none();
     }
 
-    void initsystem() {
+    void init_settings_module() {
         static PyMethodDef methods[] = {
             {"GetWidth", system_get_width, METH_VARARGS},
             {"GetHeight", system_get_height, METH_VARARGS},
@@ -165,7 +166,7 @@ namespace metin2::inline client::inline app {
             {nullptr, nullptr, 0, nullptr}
         };
 
-        PyObject *module_value = Py_InitModule("systemSetting", methods);
+        PyObject *module_value = init_python_module("metin2.settings", methods);
 
         PyModule_AddIntConstant(module_value, "WINDOW_STATUS", python_system::WINDOW_STATUS);
         PyModule_AddIntConstant(module_value, "WINDOW_INVENTORY", python_system::WINDOW_INVENTORY);

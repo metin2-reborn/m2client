@@ -1,4 +1,5 @@
 #include <metin2/files/eter_file_manager.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline app {
@@ -35,13 +36,13 @@ namespace metin2::inline client::inline app {
         return py_build_exception();
     }
 
-    void initpack() {
+    void init_files_module() {
         static PyMethodDef methods[] = {
             {"Exist", pack_exist, METH_VARARGS},
             {"Get", pack_get, METH_VARARGS},
             {nullptr, nullptr},
         };
 
-        Py_InitModule("pack", methods);
+        init_python_module("metin2.files", methods);
     }
 }

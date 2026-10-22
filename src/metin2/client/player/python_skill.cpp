@@ -7,6 +7,7 @@
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/poly/poly.h>
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "python_player.h"
 
@@ -1616,7 +1617,7 @@ namespace metin2::inline client::inline player {
         return Py_BuildValue("i", skill_data->get_duration(skill_level));
     }
 
-    void initskill() {
+    void init_player_skills_module() {
         static PyMethodDef s_methods[] =
             {
                 {"LoadSkillData", skill_load_skill_data, METH_VARARGS},
@@ -1657,7 +1658,7 @@ namespace metin2::inline client::inline player {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = Py_InitModule("skill", s_methods);
+        PyObject *module_value = init_python_module("metin2.player.skills", s_methods);
         PyModule_AddIntConstant(module_value, "SKILL_TYPE_NONE", python_skill::SKILL_TYPE_NONE);
         PyModule_AddIntConstant(module_value, "SKILL_TYPE_ACTIVE", python_skill::SKILL_TYPE_ACTIVE);
         PyModule_AddIntConstant(module_value, "SKILL_TYPE_SUPPORT", python_skill::SKILL_TYPE_SUPPORT);

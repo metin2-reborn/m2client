@@ -1,5 +1,6 @@
 #include "python_ime.h"
 
+#include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline app {
@@ -154,7 +155,7 @@ namespace metin2::inline client::inline app {
         return py_build_none();
     }
 
-    void initime() {
+    void init_ime_module() {
         static PyMethodDef methods[] = {
             {"EnableCaptureInput", ime_enable_capture_input, METH_VARARGS},
             {"DisableCaptureInput", ime_disable_capture_input, METH_VARARGS},
@@ -185,6 +186,6 @@ namespace metin2::inline client::inline app {
             {nullptr, nullptr, 0, nullptr},
         };
 
-        Py_InitModule("ime", methods);
+        init_python_module("metin2.ime", methods);
     }
 }
