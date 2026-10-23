@@ -1,16 +1,14 @@
 #include "python_character_manager.h"
+
 #include <metin2/client/app/abstract_player.h>
 #include <metin2/client/background/python_background.h>
 #include <metin2/client/protocol/packet.h>
-#include <metin2/log/log.h>
-#include "python_non_player.h"
-
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/camera.h>
+#include <metin2/log/log.h>
 #include <metin2/ui/python_graphic.h>
 
 namespace metin2::inline client::inline characters {
-
     int char_stage_view_bound = 200 * 100;
 
     struct character_manager_character_instance_update_fn {
@@ -26,20 +24,24 @@ namespace metin2::inline client::inline characters {
         python_character_manager &chr_mgr = get_python_character_manager();
         for (python_character_manager::character_iterator i = chr_mgr.character_instance_begin(); i != chr_mgr.character_instance_end(); ++i) {
             instance_base *inst_each = *i;
-            actor_instance *actor_each = inst_each->graphic_thing_instance_ptr();
 
-            if (actor_each == inst)
+            actor_instance *actor = inst_each->graphic_thing_instance_ptr();
+            if (actor == inst) {
                 continue;
+            }
 
-            if (actor_each->is_pc() || actor_each->is_npc() || actor_each->is_enemy())
+            if (actor->is_pc() || actor->is_npc() || actor->is_enemy()) {
                 continue;
+            }
 
-            if (inst->test_physics_blending_collision(*actor_each)) {
+            if (inst->test_physics_blending_collision(*actor)) {
                 // For now, snap back to the previous position.
                 // TODO: step the physics movement in smaller increments instead.
                 pixel_position cur_pos;
+
                 inst->get_pixel_position(&cur_pos);
                 inst->set_blending_position(cur_pos);
+
                 break;
             }
         }
@@ -48,13 +50,15 @@ namespace metin2::inline client::inline characters {
     void python_character_manager::insert_pvp_key(uint32_t vid_src, uint32_t vid_dst) {
         instance_base::insert_pvp_key(vid_src, vid_dst);
 
-        instance_base *inst_src = instance_ptr(vid_src);
-        if (inst_src)
+        auto *inst_src = instance_ptr(vid_src);
+        if (inst_src) {
             inst_src->refresh_text_tail();
+        }
 
-        instance_base *inst_dst = instance_ptr(vid_dst);
-        if (inst_dst)
+        auto *inst_dst = instance_ptr(vid_dst);
+        if (inst_dst) {
             inst_dst->refresh_text_tail();
+        }
     }
 
     void python_character_manager::remove_pvp_key(uint32_t vid_src, uint32_t vid_dst) {

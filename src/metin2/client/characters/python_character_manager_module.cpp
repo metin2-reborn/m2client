@@ -10,7 +10,6 @@
 #include "python_character_manager.h"
 
 namespace metin2::inline client::inline characters {
-
     auto chrmgr_set_empire_name_mode(PyObject *self, PyObject *args) -> PyObject * {
         int enable;
         if (!PyArg_ParseTuple(args, "i", &enable)) {

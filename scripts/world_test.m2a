@@ -2,14 +2,14 @@
 # map and eight animated Granny characters client-side.
 waitframes 5
 wait 2000
-pyexec "import sys\nf=sys._getframe()\nms=None\nwhile f:\n  ms = f.f_locals.get('mainStream', ms)\n  f=f.f_back\nimport __main__\n__main__.ms=ms\nms.SetCreateCharacterPhase()"
+pyexec "import sys\nf=sys._getframe()\nms=None\nwhile f:\n  ms = f.f_locals.get('main_stream', ms)\n  f=f.f_back\nimport __main__\n__main__.ms=ms\nms.set_create_character_phase()"
 wait 4000
 screenshot world_00.png
 audio
 wait 2000
 screenshot world_01.png
 # rotate the shown character with the on-screen arrows is UI; instead select another slot
-pyexec "import __main__\nw=__main__.ms.curPhaseWindow\nw.SelectSlot(1) if hasattr(w,'SelectSlot') else None"
+pyexec "import __main__\nw=__main__.ms.cur_phase_window\nw.select_slot(1) if hasattr(w,'select_slot') else None"
 wait 1500
 screenshot world_02.png
 quit

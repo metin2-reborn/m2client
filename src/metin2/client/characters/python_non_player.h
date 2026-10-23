@@ -1,12 +1,12 @@
 #pragma once
-#include <cstdint>
-#include <list>
+
 #include <metin2/client/app/game_type.h>
 #include <metin2/world/items/item_data.h>
-#include <string>
+
+#include <cstdint>
+#include <list>
 
 namespace metin2::inline client::inline characters {
-
     // Holds the NPC and monster prototypes loaded from mob_proto.
     class python_non_player {
       public:
@@ -139,6 +139,7 @@ namespace metin2::inline client::inline characters {
 
     inline auto get_python_non_player() -> python_non_player & {
         static python_non_player instance;
+
         return instance;
     }
 }

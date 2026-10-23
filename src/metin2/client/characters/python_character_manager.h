@@ -1,12 +1,12 @@
 #pragma once
 
+#include "instance_base.h"
+
 #include <metin2/client/app/abstract_character_manager.h>
 #include <metin2/client/app/game_type.h>
 #include <metin2/world/actors/physics_object.h>
-#include "instance_base.h"
 
 namespace metin2::inline client::inline characters {
-
     class python_character_manager : public abstract_character_manager, public object_manager {
       public:
         using character_instance_list = std::list<instance_base *>;
@@ -141,6 +141,7 @@ namespace metin2::inline client::inline characters {
 
     inline auto get_python_character_manager() -> python_character_manager & {
         static python_character_manager instance;
+
         return instance;
     }
 }
