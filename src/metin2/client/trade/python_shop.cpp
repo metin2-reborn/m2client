@@ -185,7 +185,7 @@ namespace metin2::inline client::inline trade {
         return Py_BuildValue("i", shop.is_open());
     }
 
-    auto shop_is_prviate_shop(PyObject *self, PyObject *args) -> PyObject * {
+    auto shop_is_private_shop(PyObject *self, PyObject *args) -> PyObject * {
         python_shop &shop = get_python_shop();
         return Py_BuildValue("i", shop.is_private_shop());
     }
@@ -335,25 +335,25 @@ namespace metin2::inline client::inline trade {
     void init_trade_shop_module() {
         static PyMethodDef s_methods[] =
             {
-                {"Open", shop_open, METH_VARARGS},
-                {"Close", shop_close, METH_VARARGS},
-                {"IsOpen", shop_is_open, METH_VARARGS},
-                {"IsPrivateShop", shop_is_prviate_shop, METH_VARARGS},
-                {"IsMainPlayerPrivateShop", shop_is_main_player_private_shop, METH_VARARGS},
-                {"GetItemID", shop_get_item_id, METH_VARARGS},
-                {"GetItemCount", shop_get_item_count, METH_VARARGS},
-                {"GetItemPrice", shop_get_item_price, METH_VARARGS},
-                {"GetItemMetinSocket", shop_get_item_metin_socket, METH_VARARGS},
-                {"GetItemAttribute", shop_get_item_attribute, METH_VARARGS},
-                {"GetTabCount", shop_get_tab_count, METH_VARARGS},
-                {"GetTabName", shop_get_tab_name, METH_VARARGS},
-                {"GetTabCoinType", shop_get_tab_coin_type, METH_VARARGS},
+                {"open", shop_open, METH_VARARGS},
+                {"close", shop_close, METH_VARARGS},
+                {"is_open", shop_is_open, METH_VARARGS},
+                {"is_private_shop", shop_is_private_shop, METH_VARARGS},
+                {"is_main_player_private_shop", shop_is_main_player_private_shop, METH_VARARGS},
+                {"get_item_id", shop_get_item_id, METH_VARARGS},
+                {"get_item_count", shop_get_item_count, METH_VARARGS},
+                {"get_item_price", shop_get_item_price, METH_VARARGS},
+                {"get_item_metin_socket", shop_get_item_metin_socket, METH_VARARGS},
+                {"get_item_attribute", shop_get_item_attribute, METH_VARARGS},
+                {"get_tab_count", shop_get_tab_count, METH_VARARGS},
+                {"get_tab_name", shop_get_tab_name, METH_VARARGS},
+                {"get_tab_coin_type", shop_get_tab_coin_type, METH_VARARGS},
 
-                {"ClearPrivateShopStock", shop_clear_private_shop_stock, METH_VARARGS},
-                {"AddPrivateShopItemStock", shop_add_private_shop_item_stock, METH_VARARGS},
-                {"DelPrivateShopItemStock", shop_del_private_shop_item_stock, METH_VARARGS},
-                {"GetPrivateShopItemPrice", shop_get_private_shop_item_price, METH_VARARGS},
-                {"BuildPrivateShop", shop_build_private_shop, METH_VARARGS},
+                {"clear_private_shop_stock", shop_clear_private_shop_stock, METH_VARARGS},
+                {"add_private_shop_item_stock", shop_add_private_shop_item_stock, METH_VARARGS},
+                {"del_private_shop_item_stock", shop_del_private_shop_item_stock, METH_VARARGS},
+                {"get_private_shop_item_price", shop_get_private_shop_item_price, METH_VARARGS},
+                {"build_private_shop", shop_build_private_shop, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
         PyObject *module = init_python_module("metin2.trade.shop", s_methods);

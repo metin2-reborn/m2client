@@ -146,8 +146,9 @@ and protected data members, `UPPER_CASE` for constants and enumerators. `clang-t
   names are case-insensitive and may live in the zip or the loose-file folder.
 - The Python modules live under the root package `metin2` (`metin2.app`, `metin2.graphics.text`,
   `metin2.trade.shop`, ...); register a new one with `init_python_module` (`script/python_module.h`),
-  which creates the parent packages. Python export names (the strings in the module tables) must not
-  change: the game scripts call them.
+  which creates the parent packages. Export names (the strings in the module tables) are
+  `snake_case`; the game scripts call them, so an export and its call sites in `m2game/data` change
+  together.
 - Wire structures in `client/protocol/packet.h` are packed and checked with `static_assert`; their
   sizes must match the server's.
 - Comments explain what the code cannot: pitfalls, ordering, lifetimes, protocol facts.

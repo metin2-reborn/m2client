@@ -119,19 +119,19 @@ namespace metin2::inline client::inline app {
 
     void init_sound_module() {
         static PyMethodDef methods[] = {
-            {"PlaySound", snd_play_sound, METH_VARARGS},
-            {"PlaySound3D", snd_play_sound3d, METH_VARARGS},
-            {"FadeInMusic", snd_fade_in_music, METH_VARARGS},
-            {"FadeOutMusic", snd_fade_out_music, METH_VARARGS},
-            {"FadeOutAllMusic", snd_fade_out_all_music, METH_VARARGS},
-            {"FadeLimitOutMusic", snd_fade_limit_out_music, METH_VARARGS},
-            {"StopAllSound", snd_stop_all_sound, METH_VARARGS},
+            {"play_sound", snd_play_sound, METH_VARARGS},
+            {"play_sound_3d", snd_play_sound3d, METH_VARARGS},
+            {"fade_in_music", snd_fade_in_music, METH_VARARGS},
+            {"fade_out_music", snd_fade_out_music, METH_VARARGS},
+            {"fade_out_all_music", snd_fade_out_all_music, METH_VARARGS},
+            {"fade_limit_out_music", snd_fade_limit_out_music, METH_VARARGS},
+            {"stop_all_sound", snd_stop_all_sound, METH_VARARGS},
 
-            {"SetMusicVolume", snd_set_music_volume, METH_VARARGS},
-            {"SetSoundVolumef", snd_set_sound_volumef, METH_VARARGS},
-            {"SetSoundVolume", snd_set_sound_volume, METH_VARARGS},
-            {"SetSoundScale", snd_set_sound_scale, METH_VARARGS},
-            {"SetAmbienceSoundScale", snd_set_ambience_sound_scale, METH_VARARGS},
+            {"set_music_volume", snd_set_music_volume, METH_VARARGS},
+            {"set_sound_volumef", snd_set_sound_volumef, METH_VARARGS},
+            {"set_sound_volume", snd_set_sound_volume, METH_VARARGS},
+            {"set_sound_scale", snd_set_sound_scale, METH_VARARGS},
+            {"set_ambience_sound_scale", snd_set_ambience_sound_scale, METH_VARARGS},
             {nullptr, nullptr, 0, nullptr},
         };
 

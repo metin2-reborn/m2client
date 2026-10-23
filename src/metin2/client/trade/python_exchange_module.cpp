@@ -111,27 +111,27 @@ namespace metin2::inline client::inline trade {
     void init_trade_exchange_module() {
         static PyMethodDef s_methods[] =
             {
-                {"InitTrading", exchange_init_trading, METH_VARARGS},
+                {"init_trading", exchange_init_trading, METH_VARARGS},
 
-                {"GetElkFromSelf", exchange_get_elk_from_self, METH_VARARGS},
-                {"GetElkFromTarget", exchange_get_elk_from_target, METH_VARARGS},
+                {"get_elk_from_self", exchange_get_elk_from_self, METH_VARARGS},
+                {"get_elk_from_target", exchange_get_elk_from_target, METH_VARARGS},
 
-                {"GetItemVnumFromSelf", exchange_get_item_vnum_from_self, METH_VARARGS},
-                {"GetItemVnumFromTarget", exchange_get_item_vnum_from_target, METH_VARARGS},
+                {"get_item_vnum_from_self", exchange_get_item_vnum_from_self, METH_VARARGS},
+                {"get_item_vnum_from_target", exchange_get_item_vnum_from_target, METH_VARARGS},
 
-                {"GetItemCountFromSelf", exchange_get_item_count_from_self, METH_VARARGS},
-                {"GetItemCountFromTarget", exchange_get_item_count_from_target, METH_VARARGS},
+                {"get_item_count_from_self", exchange_get_item_count_from_self, METH_VARARGS},
+                {"get_item_count_from_target", exchange_get_item_count_from_target, METH_VARARGS},
 
-                {"GetAcceptFromSelf", exchange_get_accept_from_self, METH_VARARGS},
-                {"GetAcceptFromTarget", exchange_get_accept_from_target, METH_VARARGS},
+                {"get_accept_from_self", exchange_get_accept_from_self, METH_VARARGS},
+                {"get_accept_from_target", exchange_get_accept_from_target, METH_VARARGS},
 
-                {"GetNameFromTarget", exchange_get_name_from_target, METH_VARARGS},
+                {"get_name_from_target", exchange_get_name_from_target, METH_VARARGS},
 
-                {"GetItemMetinSocketFromTarget", exchange_get_item_metin_socket_from_target, METH_VARARGS},
-                {"GetItemMetinSocketFromSelf", exchange_get_item_metin_socket_from_self, METH_VARARGS},
+                {"get_item_metin_socket_from_target", exchange_get_item_metin_socket_from_target, METH_VARARGS},
+                {"get_item_metin_socket_from_self", exchange_get_item_metin_socket_from_self, METH_VARARGS},
 
-                {"GetItemAttributeFromTarget", exchange_get_item_attribute_from_target, METH_VARARGS},
-                {"GetItemAttributeFromSelf", exchange_get_item_attribute_from_self, METH_VARARGS},
+                {"get_item_attribute_from_target", exchange_get_item_attribute_from_target, METH_VARARGS},
+                {"get_item_attribute_from_self", exchange_get_item_attribute_from_self, METH_VARARGS},
 
                 {nullptr, nullptr},
         };

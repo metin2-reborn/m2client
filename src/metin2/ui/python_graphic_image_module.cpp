@@ -146,14 +146,14 @@ namespace metin2::inline ui {
     void init_graphics_image_module() {
         static PyMethodDef s_methods[] =
             {
-                {"Render", grp_image_render, METH_VARARGS},
-                {"SetPosition", grp_set_image_position, METH_VARARGS},
-                {"Generate", grp_image_generate, METH_VARARGS},
-                {"GenerateFromHandle", grp_image_generate_from_handle, METH_VARARGS},
-                {"Delete", grp_image_delete, METH_VARARGS},
-                {"SetDiffuseColor", grp_set_image_diffuse_color, METH_VARARGS},
-                {"GetWidth", grp_get_width, METH_VARARGS},
-                {"GetHeight", grp_get_height, METH_VARARGS},
+                {"render", grp_image_render, METH_VARARGS},
+                {"set_position", grp_set_image_position, METH_VARARGS},
+                {"generate", grp_image_generate, METH_VARARGS},
+                {"generate_from_handle", grp_image_generate_from_handle, METH_VARARGS},
+                {"delete", grp_image_delete, METH_VARARGS},
+                {"set_diffuse_color", grp_set_image_diffuse_color, METH_VARARGS},
+                {"get_width", grp_get_width, METH_VARARGS},
+                {"get_height", grp_get_height, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
 

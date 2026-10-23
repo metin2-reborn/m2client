@@ -18,7 +18,7 @@ namespace metin2::inline client::inline app {
 
     void init_effects_module() {
         static PyMethodDef methods[] = {
-            {"RegisterIndexedFlyData", effect_register_indexed_fly_data, METH_VARARGS},
+            {"register_indexed_fly_data", effect_register_indexed_fly_data, METH_VARARGS},
 
             {nullptr, nullptr, 0, nullptr},
         };

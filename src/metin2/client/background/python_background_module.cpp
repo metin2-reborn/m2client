@@ -186,7 +186,7 @@ namespace metin2::inline client::inline background {
         }
 
         if (splat_limit < 0) {
-            PyErr_Format(PyExc_ValueError, "background.SetSplatLimit(iSplatNum(%d) >= 0)", splat_limit);
+            PyErr_Format(PyExc_ValueError, "world.set_splat_limit(%d): the limit must not be negative", splat_limit);
             return nullptr;
         }
 
@@ -309,41 +309,41 @@ namespace metin2::inline client::inline background {
 
     void init_world_module() {
         static PyMethodDef methods[] = {
-            {"IsSoftwareTiling", background_is_software_tiling, METH_VARARGS},
-            {"EnableSoftwareTiling", background_enable_software_tiling, METH_VARARGS},
-            {"EnableSnow", background_enable_snow, METH_VARARGS},
-            {"GlobalPositionToMapInfo", background_global_position_to_map_info, METH_VARARGS},
-            {"GetRenderShadowTime", background_get_render_shadow_time, METH_VARARGS},
-            {"LoadMap", background_load_map, METH_VARARGS},
-            {"Destroy", background_destroy, METH_VARARGS},
-            {"RegisterEnvironmentData", background_register_environment_data, METH_VARARGS},
-            {"SetEnvironmentData", background_set_environment_data, METH_VARARGS},
-            {"GetCurrentMapName", background_get_current_map_name, METH_VARARGS},
-            {"GetPickingPoint", background_get_picking_point, METH_VARARGS},
+            {"is_software_tiling", background_is_software_tiling, METH_VARARGS},
+            {"enable_software_tiling", background_enable_software_tiling, METH_VARARGS},
+            {"enable_snow", background_enable_snow, METH_VARARGS},
+            {"global_position_to_map_info", background_global_position_to_map_info, METH_VARARGS},
+            {"get_render_shadow_time", background_get_render_shadow_time, METH_VARARGS},
+            {"load_map", background_load_map, METH_VARARGS},
+            {"destroy", background_destroy, METH_VARARGS},
+            {"register_environment_data", background_register_environment_data, METH_VARARGS},
+            {"set_environment_data", background_set_environment_data, METH_VARARGS},
+            {"get_current_map_name", background_get_current_map_name, METH_VARARGS},
+            {"get_picking_point", background_get_picking_point, METH_VARARGS},
 
-            {"Initialize", background_initialize, METH_VARARGS},
-            {"RenderCollision", background_render_collision, METH_VARARGS},
-            {"GetHeight", background_get_height, METH_VARARGS},
+            {"initialize", background_initialize, METH_VARARGS},
+            {"render_collision", background_render_collision, METH_VARARGS},
+            {"get_height", background_get_height, METH_VARARGS},
 
-            {"SetShadowLevel", background_set_shadow_level, METH_VARARGS},
+            {"set_shadow_level", background_set_shadow_level, METH_VARARGS},
 
-            {"SetVisiblePart", background_set_visible_part, METH_VARARGS},
-            {"SetSplatLimit", background_set_splat_limit, METH_VARARGS},
-            {"GetRenderedSplatNum", background_get_rendered_splat_num, METH_VARARGS},
-            {"GetRenderedGraphicThingInstanceNum", background_get_rendered_gti_num, METH_VARARGS},
-            {"SelectViewDistanceNum", background_select_view_distance_num, METH_VARARGS},
-            {"SetViewDistanceSet", background_set_view_distance_set, METH_VARARGS},
-            {"GetDistanceSetInfo", background_get_distance_set_info, METH_VARARGS},
-            {"SetBGLoading", background_set_bg_loading, METH_VARARGS},
-            {"SetRenderSort", background_set_render_sort, METH_VARARGS},
-            {"SetTransparentTree", background_set_transparent_tree, METH_VARARGS},
-            {"SetXMasTree", background_set_x_mas_tree, METH_VARARGS},
-            {"RegisterDungeonMapName", background_register_dungeon_map_name, METH_VARARGS},
+            {"set_visible_part", background_set_visible_part, METH_VARARGS},
+            {"set_splat_limit", background_set_splat_limit, METH_VARARGS},
+            {"get_rendered_splat_num", background_get_rendered_splat_num, METH_VARARGS},
+            {"get_rendered_graphic_thing_instance_num", background_get_rendered_gti_num, METH_VARARGS},
+            {"select_view_distance_num", background_select_view_distance_num, METH_VARARGS},
+            {"set_view_distance_set", background_set_view_distance_set, METH_VARARGS},
+            {"get_distance_set_info", background_get_distance_set_info, METH_VARARGS},
+            {"set_bg_loading", background_set_bg_loading, METH_VARARGS},
+            {"set_render_sort", background_set_render_sort, METH_VARARGS},
+            {"set_transparent_tree", background_set_transparent_tree, METH_VARARGS},
+            {"set_xmas_tree", background_set_x_mas_tree, METH_VARARGS},
+            {"register_dungeon_map_name", background_register_dungeon_map_name, METH_VARARGS},
 
-            {"VisibleGuildArea", background_visible_guild_area, METH_VARARGS},
-            {"DisableGuildArea", background_disable_guild_area, METH_VARARGS},
+            {"visible_guild_area", background_visible_guild_area, METH_VARARGS},
+            {"disable_guild_area", background_disable_guild_area, METH_VARARGS},
 
-            {"WarpTest", background_warp_test, METH_VARARGS},
+            {"warp_test", background_warp_test, METH_VARARGS},
 
             {nullptr, nullptr, 0, nullptr},
         };

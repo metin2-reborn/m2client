@@ -33,8 +33,8 @@ before the work is committed.
    first ~20 lines of `run/walk_test.m2a`.
 2. Script commands (PORTING.md, section 12): `wait`, `waitframes`, `click`, `key`, `keydown`,
    `keyup`, `text`, `wheel`, `resize <w> <h>` / `resize max`, `screenshot <file>`, `quit`, and
-   `pyexec "<python>"`. Inside `pyexec`, `from metin2 import log` and `log.TraceError('...')`
-   write to syserr.log, so Python state (`player.GetMainCharacterPosition()`, `app.GetCamera()`,
+   `pyexec "<python>"`. Inside `pyexec`, `from metin2 import log` and `log.trace_error('...')`
+   write to syserr.log, so Python state (`player.get_main_character_position()`, `app.get_camera()`,
    ... after `from metin2 import player, app`) can be traced without touching C++.
 3. Run with `just run-auto run/<name>.m2a` (add `SANITIZE=1` for ASan/UBSan). Read
    `run/home/.metin2/log/syserr.log`, `run/automation.log` and the screenshots in `run/`.

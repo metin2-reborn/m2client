@@ -41,8 +41,8 @@ namespace metin2::inline client::inline app {
 
     void init_files_module() {
         static PyMethodDef methods[] = {
-            {"Exist", pack_exist, METH_VARARGS},
-            {"Get", pack_get, METH_VARARGS},
+            {"exist", pack_exist, METH_VARARGS},
+            {"get", pack_get, METH_VARARGS},
             {nullptr, nullptr},
         };
 

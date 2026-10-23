@@ -56,7 +56,7 @@ namespace metin2::inline client::inline background {
         Py_RETURN_NONE;
     }
 
-    auto mini_mapis_show(PyObject *self, PyObject *args) -> PyObject * {
+    auto mini_map_is_show(PyObject *self, PyObject *args) -> PyObject * {
         return Py_BuildValue("b", get_python_mini_map().can_show());
     }
 
@@ -177,34 +177,34 @@ namespace metin2::inline client::inline background {
 
     void init_world_minimap_module() {
         static PyMethodDef methods[] = {
-            {"SetScale", mini_map_set_scale, METH_VARARGS},
-            {"ScaleUp", mini_map_scale_up, METH_VARARGS},
-            {"ScaleDown", mini_map_scale_down, METH_VARARGS},
+            {"set_scale", mini_map_set_scale, METH_VARARGS},
+            {"scale_up", mini_map_scale_up, METH_VARARGS},
+            {"scale_down", mini_map_scale_down, METH_VARARGS},
 
-            {"Destroy", mini_map_destroy, METH_VARARGS},
-            {"Create", mini_map_create, METH_VARARGS},
-            {"Update", mini_map_update, METH_VARARGS},
-            {"Render", mini_map_render, METH_VARARGS},
+            {"destroy", mini_map_destroy, METH_VARARGS},
+            {"create", mini_map_create, METH_VARARGS},
+            {"update", mini_map_update, METH_VARARGS},
+            {"render", mini_map_render, METH_VARARGS},
 
-            {"Show", mini_map_show, METH_VARARGS},
-            {"Hide", mini_map_hide, METH_VARARGS},
+            {"show", mini_map_show, METH_VARARGS},
+            {"hide", mini_map_hide, METH_VARARGS},
 
-            {"isShow", mini_mapis_show, METH_VARARGS},
+            {"is_show", mini_map_is_show, METH_VARARGS},
 
-            {"GetInfo", mini_map_get_info, METH_VARARGS},
+            {"get_info", mini_map_get_info, METH_VARARGS},
 
-            {"UpdateAtlas", mini_map_update_atlas, METH_VARARGS},
-            {"RenderAtlas", mini_map_render_atlas, METH_VARARGS},
-            {"ShowAtlas", mini_map_show_atlas, METH_VARARGS},
-            {"HideAtlas", mini_map_hide_atlas, METH_VARARGS},
-            {"IsAtlas", mini_map_is_atlas, METH_VARARGS},
-            {"GetAtlasInfo", mini_map_get_atlas_info, METH_VARARGS},
-            {"GetAtlasSize", mini_map_get_atlas_size, METH_VARARGS},
+            {"update_atlas", mini_map_update_atlas, METH_VARARGS},
+            {"render_atlas", mini_map_render_atlas, METH_VARARGS},
+            {"show_atlas", mini_map_show_atlas, METH_VARARGS},
+            {"hide_atlas", mini_map_hide_atlas, METH_VARARGS},
+            {"is_atlas", mini_map_is_atlas, METH_VARARGS},
+            {"get_atlas_info", mini_map_get_atlas_info, METH_VARARGS},
+            {"get_atlas_size", mini_map_get_atlas_size, METH_VARARGS},
 
-            {"RegisterAtlasWindow", mini_map_register_atlas_window, METH_VARARGS},
-            {"UnregisterAtlasWindow", mini_map_unregister_atlas_window, METH_VARARGS},
+            {"register_atlas_window", mini_map_register_atlas_window, METH_VARARGS},
+            {"unregister_atlas_window", mini_map_unregister_atlas_window, METH_VARARGS},
 
-            {"GetGuildAreaID", mini_map_get_guild_area_id, METH_VARARGS},
+            {"get_guild_area_id", mini_map_get_guild_area_id, METH_VARARGS},
 
             {nullptr, nullptr},
         };

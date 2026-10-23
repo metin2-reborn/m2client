@@ -51,11 +51,11 @@ namespace metin2::inline client::inline protocol {
     void init_net_server_state_module() {
         static PyMethodDef s_methods[] =
             {
-                {"Create", server_state_checker_create, METH_VARARGS},
-                {"Update", server_state_checker_update, METH_VARARGS},
-                {"Request", server_state_checker_request, METH_VARARGS},
-                {"AddChannel", server_state_checker_add_channel, METH_VARARGS},
-                {"Initialize", server_state_checker_initialize, METH_VARARGS},
+                {"create", server_state_checker_create, METH_VARARGS},
+                {"update", server_state_checker_update, METH_VARARGS},
+                {"request", server_state_checker_request, METH_VARARGS},
+                {"add_channel", server_state_checker_add_channel, METH_VARARGS},
+                {"initialize", server_state_checker_initialize, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
 

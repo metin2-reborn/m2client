@@ -220,34 +220,34 @@ namespace metin2::inline client::inline quest {
     void init_quest_events_module() {
         static PyMethodDef s_methods[] =
             {
-                {"RegisterEventSet", event_register_event_set, METH_VARARGS},
-                {"ClearEventSet", event_clear_event_set, METH_VARARGS},
+                {"register_event_set", event_register_event_set, METH_VARARGS},
+                {"clear_event_set", event_clear_event_set, METH_VARARGS},
 
-                {"SetRestrictedCount", event_set_restricted_count, METH_VARARGS},
+                {"set_restricted_count", event_set_restricted_count, METH_VARARGS},
 
-                {"GetEventSetLocalYPosition", event_get_event_set_local_y_position, METH_VARARGS},
-                {"AddEventSetLocalYPosition", event_add_event_set_local_y_position, METH_VARARGS},
-                {"InsertTextInline", event_insert_text_inline, METH_VARARGS},
+                {"get_event_set_local_y_position", event_get_event_set_local_y_position, METH_VARARGS},
+                {"add_event_set_local_y_position", event_add_event_set_local_y_position, METH_VARARGS},
+                {"insert_text_inline", event_insert_text_inline, METH_VARARGS},
 
-                {"UpdateEventSet", event_update_event_set, METH_VARARGS},
-                {"RenderEventSet", event_render_event_set, METH_VARARGS},
-                {"SetEventSetWidth", event_set_event_set_width, METH_VARARGS},
+                {"update_event_set", event_update_event_set, METH_VARARGS},
+                {"render_event_set", event_render_event_set, METH_VARARGS},
+                {"set_event_set_width", event_set_event_set_width, METH_VARARGS},
 
-                {"Skip", event_skip, METH_VARARGS},
-                {"IsWait", event_is_wait, METH_VARARGS},
-                {"EndEventProcess", event_end_event_process, METH_VARARGS},
+                {"skip", event_skip, METH_VARARGS},
+                {"is_wait", event_is_wait, METH_VARARGS},
+                {"end_event_process", event_end_event_process, METH_VARARGS},
 
-                {"SelectAnswer", event_select_answer, METH_VARARGS},
-                {"GetLineCount", event_get_line_count, METH_VARARGS},
-                {"SetVisibleStartLine", event_set_visible_start_line, METH_VARARGS},
-                {"GetVisibleStartLine", event_get_visible_start_line, METH_VARARGS},
+                {"select_answer", event_select_answer, METH_VARARGS},
+                {"get_line_count", event_get_line_count, METH_VARARGS},
+                {"set_visible_start_line", event_set_visible_start_line, METH_VARARGS},
+                {"get_visible_start_line", event_get_visible_start_line, METH_VARARGS},
 
-                {"SetEventHandler", event_set_event_handler, METH_VARARGS},
-                {"SetInterfaceWindow", event_set_interface_window, METH_VARARGS},
-                {"SetLeftTimeString", event_set_left_time_string, METH_VARARGS},
+                {"set_event_handler", event_set_event_handler, METH_VARARGS},
+                {"set_interface_window", event_set_interface_window, METH_VARARGS},
+                {"set_left_time_string", event_set_left_time_string, METH_VARARGS},
 
-                {"QuestButtonClick", event_quest_button_click, METH_VARARGS},
-                {"Destroy", event_destroy, METH_VARARGS},
+                {"quest_button_click", event_quest_button_click, METH_VARARGS},
+                {"destroy", event_destroy, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
 

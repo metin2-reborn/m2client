@@ -134,33 +134,33 @@ namespace metin2::inline client::inline app {
 
     void init_settings_module() {
         static PyMethodDef methods[] = {
-            {"GetWidth", system_get_width, METH_VARARGS},
-            {"GetHeight", system_get_height, METH_VARARGS},
+            {"get_width", system_get_width, METH_VARARGS},
+            {"get_height", system_get_height, METH_VARARGS},
 
-            {"SetInterfaceHandler", system_set_interface_handler, METH_VARARGS},
-            {"DestroyInterfaceHandler", system_destroy_interface_handler, METH_VARARGS},
+            {"set_interface_handler", system_set_interface_handler, METH_VARARGS},
+            {"destroy_interface_handler", system_destroy_interface_handler, METH_VARARGS},
 
-            {"GetMusicVolume", system_get_music_volume, METH_VARARGS},
-            {"GetSoundVolume", system_get_sound_volume, METH_VARARGS},
+            {"get_music_volume", system_get_music_volume, METH_VARARGS},
+            {"get_sound_volume", system_get_sound_volume, METH_VARARGS},
 
-            {"SetMusicVolume", system_set_music_volume, METH_VARARGS},
-            {"SetSoundVolumef", system_set_sound_volumef, METH_VARARGS},
-            {"IsSoftwareCursor", system_is_software_cursor, METH_VARARGS},
+            {"set_music_volume", system_set_music_volume, METH_VARARGS},
+            {"set_sound_volumef", system_set_sound_volumef, METH_VARARGS},
+            {"is_software_cursor", system_is_software_cursor, METH_VARARGS},
 
-            {"SetViewChatFlag", system_set_view_chat_flag, METH_VARARGS},
-            {"IsViewChat", system_is_view_chat, METH_VARARGS},
+            {"set_view_chat_flag", system_set_view_chat_flag, METH_VARARGS},
+            {"is_view_chat", system_is_view_chat, METH_VARARGS},
 
-            {"SetAlwaysShowNameFlag", system_set_always_show_name_flag, METH_VARARGS},
-            {"IsAlwaysShowName", system_is_always_show_name, METH_VARARGS},
+            {"set_always_show_name_flag", system_set_always_show_name_flag, METH_VARARGS},
+            {"is_always_show_name", system_is_always_show_name, METH_VARARGS},
 
-            {"SetShowDamageFlag", system_set_show_damage_flag, METH_VARARGS},
-            {"IsShowDamage", system_is_show_damage, METH_VARARGS},
+            {"set_show_damage_flag", system_set_show_damage_flag, METH_VARARGS},
+            {"is_show_damage", system_is_show_damage, METH_VARARGS},
 
-            {"SetShowSalesTextFlag", system_set_show_sales_text_flag, METH_VARARGS},
-            {"IsShowSalesText", system_is_show_sales_text, METH_VARARGS},
+            {"set_show_sales_text_flag", system_set_show_sales_text_flag, METH_VARARGS},
+            {"is_show_sales_text", system_is_show_sales_text, METH_VARARGS},
 
-            {"GetShadowLevel", system_get_shadow_level, METH_VARARGS},
-            {"SetShadowLevel", system_set_shadow_level, METH_VARARGS},
+            {"get_shadow_level", system_get_shadow_level, METH_VARARGS},
+            {"set_shadow_level", system_set_shadow_level, METH_VARARGS},
 
             {nullptr, nullptr, 0, nullptr}
         };

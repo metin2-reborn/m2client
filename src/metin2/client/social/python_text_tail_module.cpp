@@ -139,28 +139,28 @@ namespace metin2::inline client::inline social {
     void init_social_text_tail_module() {
         static PyMethodDef s_methods[] =
             {
-                {"Clear", text_tail_clear, METH_VARARGS},
+                {"clear", text_tail_clear, METH_VARARGS},
 
-                {"UpdateAllTextTail", text_tail_update_all_text_tail, METH_VARARGS},
-                {"UpdateShowingTextTail", text_tail_update_showing_text_tail, METH_VARARGS},
-                {"Render", text_tail_render, METH_VARARGS},
+                {"update_all_text_tail", text_tail_update_all_text_tail, METH_VARARGS},
+                {"update_showing_text_tail", text_tail_update_showing_text_tail, METH_VARARGS},
+                {"render", text_tail_render, METH_VARARGS},
 
-                {"ShowCharacterTextTail", text_tail_show_character_text_tail, METH_VARARGS},
-                {"ShowItemTextTail", text_tail_show_item_text_tail, METH_VARARGS},
+                {"show_character_text_tail", text_tail_show_character_text_tail, METH_VARARGS},
+                {"show_item_text_tail", text_tail_show_item_text_tail, METH_VARARGS},
 
-                {"GetPosition", text_tail_get_position, METH_VARARGS},
-                {"IsChat", text_tail_is_chat, METH_VARARGS},
+                {"get_position", text_tail_get_position, METH_VARARGS},
+                {"is_chat", text_tail_is_chat, METH_VARARGS},
 
-                {"ArrangeTextTail", text_tail_arrange_text_tail, METH_VARARGS},
-                {"HideAllTextTail", text_tail_hide_all_text_tail, METH_VARARGS},
-                {"ShowAllTextTail", text_tail_show_all_text_tail, METH_VARARGS},
+                {"arrange_text_tail", text_tail_arrange_text_tail, METH_VARARGS},
+                {"hide_all_text_tail", text_tail_hide_all_text_tail, METH_VARARGS},
+                {"show_all_text_tail", text_tail_show_all_text_tail, METH_VARARGS},
 
-                {"Pick", text_tail_pick, METH_VARARGS},
-                {"SelectItemName", text_tail_select_item_name, METH_VARARGS},
+                {"pick", text_tail_pick, METH_VARARGS},
+                {"select_item_name", text_tail_select_item_name, METH_VARARGS},
 
-                {"EnablePKTitle", text_tail_enable_pk_title, METH_VARARGS},
+                {"enable_pk_title", text_tail_enable_pk_title, METH_VARARGS},
 
-                {"RegisterInfoTail", text_tail_register_info_tail, METH_VARARGS},
+                {"register_info_tail", text_tail_register_info_tail, METH_VARARGS},
 
                 {nullptr, nullptr, 0, nullptr},
         };

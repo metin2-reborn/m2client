@@ -60,11 +60,11 @@ namespace metin2::inline script {
 
     void init_log_module() {
         static PyMethodDef s_methods[] = {
-            {"LogBox", dbg_log_box, METH_VARARGS},
-            {"Trace", dbg_trace, METH_VARARGS},
-            {"Tracen", dbg_tracen, METH_VARARGS},
-            {"TraceError", dbg_trace_error, METH_VARARGS},
-            {"RegisterExceptionString", dbg_register_exception_string, METH_VARARGS},
+            {"log_box", dbg_log_box, METH_VARARGS},
+            {"trace", dbg_trace, METH_VARARGS},
+            {"tracen", dbg_tracen, METH_VARARGS},
+            {"trace_error", dbg_trace_error, METH_VARARGS},
+            {"register_exception_string", dbg_register_exception_string, METH_VARARGS},
             {nullptr, nullptr},
         };
 

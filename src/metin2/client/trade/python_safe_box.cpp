@@ -279,18 +279,18 @@ namespace metin2::inline client::inline trade {
     void init_trade_safebox_module() {
         static PyMethodDef s_methods[] =
             {
-                {"GetItemID", safebox_get_item_id, METH_VARARGS},
-                {"GetItemCount", safebox_get_item_count, METH_VARARGS},
-                {"GetItemFlags", safebox_get_item_flags, METH_VARARGS},
-                {"GetItemMetinSocket", safebox_get_item_metin_socket, METH_VARARGS},
-                {"GetItemAttribute", safebox_get_item_attribute, METH_VARARGS},
-                {"GetMoney", safebox_get_money, METH_VARARGS},
+                {"get_item_id", safebox_get_item_id, METH_VARARGS},
+                {"get_item_count", safebox_get_item_count, METH_VARARGS},
+                {"get_item_flags", safebox_get_item_flags, METH_VARARGS},
+                {"get_item_metin_socket", safebox_get_item_metin_socket, METH_VARARGS},
+                {"get_item_attribute", safebox_get_item_attribute, METH_VARARGS},
+                {"get_money", safebox_get_money, METH_VARARGS},
 
-                {"GetMallItemID", safebox_get_mall_item_id, METH_VARARGS},
-                {"GetMallItemCount", safebox_get_mall_item_count, METH_VARARGS},
-                {"GetMallItemMetinSocket", safebox_get_mall_item_metin_socket, METH_VARARGS},
-                {"GetMallItemAttribute", safebox_get_mall_item_attribute, METH_VARARGS},
-                {"GetMallSize", safebox_get_mall_size, METH_VARARGS},
+                {"get_mall_item_id", safebox_get_mall_item_id, METH_VARARGS},
+                {"get_mall_item_count", safebox_get_mall_item_count, METH_VARARGS},
+                {"get_mall_item_metin_socket", safebox_get_mall_item_metin_socket, METH_VARARGS},
+                {"get_mall_item_attribute", safebox_get_mall_item_attribute, METH_VARARGS},
+                {"get_mall_size", safebox_get_mall_size, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
 

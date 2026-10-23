@@ -212,11 +212,11 @@ namespace metin2::inline client::inline quest {
     void init_quest_module() {
         static PyMethodDef s_methods[] =
             {
-                {"GetQuestCount", quest_get_quest_count, METH_VARARGS},
-                {"GetQuestData", quest_get_quest_data, METH_VARARGS},
-                {"GetQuestIndex", quest_get_quest_index, METH_VARARGS},
-                {"GetQuestLastTime", quest_get_quest_last_time, METH_VARARGS},
-                {"Clear", quest_clear, METH_VARARGS},
+                {"get_quest_count", quest_get_quest_count, METH_VARARGS},
+                {"get_quest_data", quest_get_quest_data, METH_VARARGS},
+                {"get_quest_index", quest_get_quest_index, METH_VARARGS},
+                {"get_quest_last_time", quest_get_quest_last_time, METH_VARARGS},
+                {"clear", quest_clear, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
 

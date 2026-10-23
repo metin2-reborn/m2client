@@ -61,9 +61,9 @@ namespace metin2::inline client::inline characters {
     void init_characters_nonplayer_module() {
         static PyMethodDef s_methods[] =
             {
-                {"GetLevelByVID", nonplayer_get_level_by_vid, METH_VARARGS},
-                {"GetGradeByVID", nonplayer_get_grade_by_vid, METH_VARARGS},
-                {"GetMonsterName", nonplayer_get_monster_name, METH_VARARGS},
+                {"get_level_by_vid", nonplayer_get_level_by_vid, METH_VARARGS},
+                {"get_grade_by_vid", nonplayer_get_grade_by_vid, METH_VARARGS},
+                {"get_monster_name", nonplayer_get_monster_name, METH_VARARGS},
 
                 {nullptr, nullptr, 0, nullptr},
         };

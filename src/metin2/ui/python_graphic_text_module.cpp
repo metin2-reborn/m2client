@@ -173,15 +173,15 @@ namespace metin2::inline ui {
     void init_graphics_text_module() {
         static PyMethodDef s_methods[] =
             {
-                {"Generate", grp_text_generate, METH_VARARGS},
-                {"SetFontName", grp_text_set_font_name, METH_VARARGS},
-                {"SetFontColor", grp_text_set_font_color, METH_VARARGS},
-                {"SetOutline", grp_text_outline, METH_VARARGS},
-                {"SetText", grp_text_set_text, METH_VARARGS},
-                {"SetPosition", grp_text_set_position, METH_VARARGS},
-                {"SetHorizontalAlign", grp_set_horizontal_align, METH_VARARGS},
-                {"GetSplitingTextLineCount", grp_get_spliting_text_line_count, METH_VARARGS},
-                {"GetSplitingTextLine", grp_get_spliting_text_line, METH_VARARGS},
+                {"generate", grp_text_generate, METH_VARARGS},
+                {"set_font_name", grp_text_set_font_name, METH_VARARGS},
+                {"set_font_color", grp_text_set_font_color, METH_VARARGS},
+                {"set_outline", grp_text_outline, METH_VARARGS},
+                {"set_text", grp_text_set_text, METH_VARARGS},
+                {"set_position", grp_text_set_position, METH_VARARGS},
+                {"set_horizontal_align", grp_set_horizontal_align, METH_VARARGS},
+                {"get_spliting_text_line_count", grp_get_spliting_text_line_count, METH_VARARGS},
+                {"get_spliting_text_line", grp_get_spliting_text_line, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
 

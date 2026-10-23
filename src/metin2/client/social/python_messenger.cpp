@@ -136,11 +136,11 @@ namespace metin2::inline client::inline social {
     void init_social_messenger_module() {
         static PyMethodDef s_methods[] =
             {
-                {"RemoveFriend", messenger_remove_friend, METH_VARARGS},
-                {"IsFriendByName", messenger_is_friend_by_name, METH_VARARGS},
-                {"Destroy", messenger_destroy, METH_VARARGS},
-                {"RefreshGuildMember", messenger_refresh_guild_member, METH_VARARGS},
-                {"SetMessengerHandler", messenger_set_messenger_handler, METH_VARARGS},
+                {"remove_friend", messenger_remove_friend, METH_VARARGS},
+                {"is_friend_by_name", messenger_is_friend_by_name, METH_VARARGS},
+                {"destroy", messenger_destroy, METH_VARARGS},
+                {"refresh_guild_member", messenger_refresh_guild_member, METH_VARARGS},
+                {"set_messenger_handler", messenger_set_messenger_handler, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
 
