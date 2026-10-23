@@ -1100,12 +1100,5 @@ namespace metin2::inline client::inline app {
         PyModule_AddIntConstant(module, "CAMERA_TO_NEGATIVE", python_application::CAMERA_TO_NEGITIVE);
         PyModule_AddIntConstant(module, "CAMERA_STOP", python_application::CAMERA_STOP);
 
-        PyModule_AddIntConstant(module, "ENABLE_COSTUME_SYSTEM", 1);
-        PyModule_AddIntConstant(module, "ENABLE_ENERGY_SYSTEM", 1);
-        PyModule_AddIntConstant(module, "ENABLE_DRAGON_SOUL_SYSTEM", 1);
-        PyModule_AddIntConstant(module, "ENABLE_NEW_EQUIPMENT_SYSTEM", 1);
-
-        PyModule_AddIntConstant(module, "USE_OPENID", 0);
-        PyModule_AddIntConstant(module, "OPENID_TEST", 0);
     }
 }
