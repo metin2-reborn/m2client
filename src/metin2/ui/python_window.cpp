@@ -132,7 +132,7 @@ namespace metin2::inline ui {
             if (!is_show())
                 return;
 
-            static PyObject *func_name_on_update = PyString_InternFromString("OnUpdate");
+            static PyObject *func_name_on_update = PyString_InternFromString("on_update");
 
             py_call_class_member_func_by_py_string(handler_, func_name_on_update, build_empty_tuple());
         }
@@ -144,7 +144,7 @@ namespace metin2::inline ui {
             if (!is_show())
                 return;
 
-            py_call_class_member_func(handler_, "OnRender", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_render", build_empty_tuple());
         }
 
         void ui_window::set_name(const char *name) {
@@ -237,7 +237,7 @@ namespace metin2::inline ui {
             const int32_t dx = width_ - old_width;
             const int32_t dy = height_ - old_height;
             for (ui_window *child : child_list_) {
-                if (child->handler_ && PyObject_HasAttrString(child->handler_, "OnScreenResize")) {
+                if (child->handler_ && PyObject_HasAttrString(child->handler_, "on_screen_resize")) {
                     Py_INCREF(child->handler_);
                     scripted.push_back(child->handler_);
                     continue;
@@ -303,42 +303,42 @@ namespace metin2::inline ui {
         }
 
         void ui_window::on_mouse_drag(int32_t lx, int32_t ly) {
-            py_call_class_member_func(handler_, "OnMouseDrag", Py_BuildValue("(ii)", lx, ly));
+            py_call_class_member_func(handler_, "on_mouse_drag", Py_BuildValue("(ii)", lx, ly));
         }
 
         void ui_window::on_move_window(int32_t lx, int32_t ly) {
-            py_call_class_member_func(handler_, "OnMoveWindow", Py_BuildValue("(ii)", lx, ly));
+            py_call_class_member_func(handler_, "on_move_window", Py_BuildValue("(ii)", lx, ly));
         }
 
         void ui_window::on_set_focus() {
-            py_call_class_member_func(handler_, "OnSetFocus", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_set_focus", build_empty_tuple());
         }
 
         void ui_window::on_kill_focus() {
-            py_call_class_member_func(handler_, "OnKillFocus", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_kill_focus", build_empty_tuple());
         }
 
         void ui_window::on_mouse_over_in() {
-            py_call_class_member_func(handler_, "OnMouseOverIn", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_mouse_over_in", build_empty_tuple());
         }
 
         void ui_window::on_mouse_over_out() {
-            py_call_class_member_func(handler_, "OnMouseOverOut", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_mouse_over_out", build_empty_tuple());
         }
 
         void ui_window::on_mouse_over() {
         }
 
         void ui_window::on_drop() {
-            py_call_class_member_func(handler_, "OnDrop", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_drop", build_empty_tuple());
         }
 
         void ui_window::on_top() {
-            py_call_class_member_func(handler_, "OnTop", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_top", build_empty_tuple());
         }
 
         void ui_window::on_ime_update() {
-            py_call_class_member_func(handler_, "OnIMEUpdate", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_ime_update", build_empty_tuple());
         }
 
         auto ui_window::run_ime_tab_event() -> bool {
@@ -464,7 +464,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_mouse_left_button_down() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnMouseLeftButtonDown", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_mouse_left_button_down", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -472,13 +472,13 @@ namespace metin2::inline ui {
         }
 
         auto ui_window::on_mouse_left_button_up() -> bool {
-            py_call_class_member_func(handler_, "OnMouseLeftButtonUp", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_mouse_left_button_up", build_empty_tuple());
             return true; // Button up is the exception and always returns true.
         }
 
         auto ui_window::on_mouse_left_button_double_click() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnMouseLeftButtonDoubleClick", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_mouse_left_button_double_click", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -487,7 +487,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_mouse_right_button_down() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnMouseRightButtonDown", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_mouse_right_button_down", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -496,7 +496,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_mouse_right_button_up() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnMouseRightButtonUp", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_mouse_right_button_up", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -505,7 +505,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_mouse_right_button_double_click() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnMouseRightButtonDoubleClick", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_mouse_right_button_double_click", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -514,7 +514,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_mouse_middle_button_down() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnMouseMiddleButtonDown", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_mouse_middle_button_down", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -523,7 +523,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_mouse_middle_button_up() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnMouseMiddleButtonUp", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_mouse_middle_button_up", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -532,7 +532,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_ime_tab_event() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnIMETab", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_ime_tab", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -541,7 +541,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_ime_return_event() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnIMEReturn", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_ime_return", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -550,7 +550,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_ime_key_down_event(int ikey) -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnIMEKeyDown", Py_BuildValue("(i)", ikey), &value))
+            if (py_call_class_member_func(handler_, "on_ime_key_down", Py_BuildValue("(i)", ikey), &value))
                 if (0 != value)
                     return true;
 
@@ -559,7 +559,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_key_down(int ikey) -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnKeyDown", Py_BuildValue("(i)", ikey), &value))
+            if (py_call_class_member_func(handler_, "on_key_down", Py_BuildValue("(i)", ikey), &value))
                 if (0 != value)
                     return true;
 
@@ -568,7 +568,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_key_up(int ikey) -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnKeyUp", Py_BuildValue("(i)", ikey), &value))
+            if (py_call_class_member_func(handler_, "on_key_up", Py_BuildValue("(i)", ikey), &value))
                 if (0 != value)
                     return true;
 
@@ -577,7 +577,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_press_escape_key() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnPressEscapeKey", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_press_escape_key", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -586,7 +586,7 @@ namespace metin2::inline ui {
 
         auto ui_window::on_press_exit_key() -> bool {
             long value;
-            if (py_call_class_member_func(handler_, "OnPressExitKey", build_empty_tuple(), &value))
+            if (py_call_class_member_func(handler_, "on_press_exit_key", build_empty_tuple(), &value))
                 if (0 != value)
                     return true;
 
@@ -1248,7 +1248,7 @@ namespace metin2::inline ui {
         }
 
         void ani_image_box::on_end_frame() {
-            py_call_class_member_func(handler_, "OnEndFrame", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_end_frame", build_empty_tuple());
         }
 
         button::button(PyObject *ppy_object)
@@ -1346,7 +1346,7 @@ namespace metin2::inline ui {
             else
                 set_current_visual(&up_visual_);
 
-            py_call_class_member_func(handler_, "CallEvent", build_empty_tuple());
+            py_call_class_member_func(handler_, "call_event", build_empty_tuple());
         }
         void button::over() {
             set_current_visual(&over_visual_);
@@ -1354,7 +1354,7 @@ namespace metin2::inline ui {
         void button::down() {
             is_pressed_ = true;
             set_current_visual(&down_visual_);
-            py_call_class_member_func(handler_, "DownEvent", build_empty_tuple());
+            py_call_class_member_func(handler_, "down_event", build_empty_tuple());
         }
 
         void button::on_update() {
@@ -1373,7 +1373,7 @@ namespace metin2::inline ui {
                 pcur_visual_->render();
             }
 
-            py_call_class_member_func(handler_, "OnRender", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_render", build_empty_tuple());
         }
         void button::on_change_position() {
             if (pcur_visual_)
@@ -1413,14 +1413,14 @@ namespace metin2::inline ui {
                 return;
 
             over();
-            py_call_class_member_func(handler_, "ShowToolTip", build_empty_tuple());
+            py_call_class_member_func(handler_, "show_tool_tip", build_empty_tuple());
         }
         void button::on_mouse_over_out() {
             if (!is_enable())
                 return;
 
             set_up();
-            py_call_class_member_func(handler_, "HideToolTip", build_empty_tuple());
+            py_call_class_member_func(handler_, "hide_tool_tip", build_empty_tuple());
         }
 
         void button::set_current_visual(graphic_image_instance *visual) {
@@ -1446,7 +1446,7 @@ namespace metin2::inline ui {
 
             if (!is_pressed_) {
                 down();
-                py_call_class_member_func(handler_, "CallEvent", build_empty_tuple());
+                py_call_class_member_func(handler_, "call_event", build_empty_tuple());
             }
 
             return true;
@@ -1462,7 +1462,7 @@ namespace metin2::inline ui {
                 set_current_visual(&over_visual_);
             }
 
-            py_call_class_member_func(handler_, "ShowToolTip", build_empty_tuple());
+            py_call_class_member_func(handler_, "show_tool_tip", build_empty_tuple());
         }
         void radio_button::on_mouse_over_out() {
             if (!is_enable())
@@ -1472,7 +1472,7 @@ namespace metin2::inline ui {
                 set_current_visual(&up_visual_);
             }
 
-            py_call_class_member_func(handler_, "HideToolTip", build_empty_tuple());
+            py_call_class_member_func(handler_, "hide_tool_tip", build_empty_tuple());
         }
 
         toggle_button::toggle_button(PyObject *ppy_object) : button(ppy_object) {
@@ -1489,10 +1489,10 @@ namespace metin2::inline ui {
                     set_current_visual(&over_visual_);
                 else
                     set_current_visual(&up_visual_);
-                py_call_class_member_func(handler_, "OnToggleUp", build_empty_tuple());
+                py_call_class_member_func(handler_, "on_toggle_up", build_empty_tuple());
             } else {
                 down();
-                py_call_class_member_func(handler_, "OnToggleDown", build_empty_tuple());
+                py_call_class_member_func(handler_, "on_toggle_down", build_empty_tuple());
             }
 
             return true;
@@ -1509,7 +1509,7 @@ namespace metin2::inline ui {
                 set_current_visual(&over_visual_);
             }
 
-            py_call_class_member_func(handler_, "ShowToolTip", build_empty_tuple());
+            py_call_class_member_func(handler_, "show_tool_tip", build_empty_tuple());
         }
         void toggle_button::on_mouse_over_out() {
             if (!is_enable())
@@ -1519,7 +1519,7 @@ namespace metin2::inline ui {
                 set_current_visual(&up_visual_);
             }
 
-            py_call_class_member_func(handler_, "HideToolTip", build_empty_tuple());
+            py_call_class_member_func(handler_, "hide_tool_tip", build_empty_tuple());
         }
 
         drag_button::drag_button(PyObject *ppy_object) : button(ppy_object) {
@@ -1562,7 +1562,7 @@ namespace metin2::inline ui {
                 pcur_visual_->set_position(rect_.left, rect_.top);
 
             if (is_pressed())
-                py_call_class_member_func(handler_, "OnMove", build_empty_tuple());
+                py_call_class_member_func(handler_, "on_move", build_empty_tuple());
         }
 
         void drag_button::on_mouse_over_in() {
@@ -1571,7 +1571,7 @@ namespace metin2::inline ui {
                 return;
 
             button::on_mouse_over_in();
-            py_call_class_member_func(handler_, "OnMouseOverIn", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_mouse_over_in", build_empty_tuple());
         }
 
         void drag_button::on_mouse_over_out() {
@@ -1579,7 +1579,7 @@ namespace metin2::inline ui {
                 return;
 
             button::on_mouse_over_in();
-            py_call_class_member_func(handler_, "OnMouseOverOut", build_empty_tuple());
+            py_call_class_member_func(handler_, "on_mouse_over_out", build_empty_tuple());
         }
     };
 }

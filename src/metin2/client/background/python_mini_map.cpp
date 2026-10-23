@@ -1217,13 +1217,13 @@ namespace metin2::inline client::inline background {
 
     void python_mini_map::open_atlas_window() {
         if (handler_) {
-            py_call_class_member_func(handler_, "Show", Py_BuildValue("()"));
+            py_call_class_member_func(handler_, "show", Py_BuildValue("()"));
         }
     }
 
     void python_mini_map::set_atlas_center_position(int x, int y) {
         if (handler_) {
-            py_call_class_member_func(handler_, "SetCenterPositionAdjust", Py_BuildValue("(ii)", x, y));
+            py_call_class_member_func(handler_, "set_center_position_adjust", Py_BuildValue("(ii)", x, y));
         }
     }
 

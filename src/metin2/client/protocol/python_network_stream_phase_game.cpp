@@ -31,19 +31,19 @@
 namespace metin2::inline client::inline protocol {
 
     void python_network_stream::refresh_alignment_window() {
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshAlignment", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_alignment", Py_BuildValue("()"));
     }
 
     void python_network_stream::refresh_target_board_by_vid(uint32_t vid) {
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshTargetBoardByVID", Py_BuildValue("(i)", vid));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_target_board_by_vid", Py_BuildValue("(i)", vid));
     }
 
     void python_network_stream::refresh_target_board_by_name(const char *name) {
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshTargetBoardByName", Py_BuildValue("(s)", name));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_target_board_by_name", Py_BuildValue("(s)", name));
     }
 
     void python_network_stream::refresh_target_board() {
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshTargetBoard", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_target_board", Py_BuildValue("()"));
     }
 
     void python_network_stream::refresh_guild_window_grade_page() {
@@ -506,91 +506,91 @@ namespace metin2::inline client::inline protocol {
 
         if (is_refresh_character_wnd_) {
             is_refresh_character_wnd_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshCharacter", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_character", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_equipment_wnd_) {
             is_refresh_equipment_wnd_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshEquipment", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_equipment", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_inventory_wnd_) {
             is_refresh_inventory_wnd_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshInventory", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_inventory", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_exchange_wnd_) {
             is_refresh_exchange_wnd_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshExchange", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_exchange", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_skill_wnd_) {
             is_refresh_skill_wnd_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshSkill", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_skill", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_safebox_wnd_) {
             is_refresh_safebox_wnd_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshSafebox", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_safebox", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_mall_wnd_) {
             is_refresh_mall_wnd_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshMall", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_mall", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_status_) {
             is_refresh_status_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshStatus", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_status", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_messenger_wnd_) {
             is_refresh_messenger_wnd_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshMessenger", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_messenger", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_guild_wnd_info_page_) {
             is_refresh_guild_wnd_info_page_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshGuildInfoPage", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_guild_info_page", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_guild_wnd_board_page_) {
             is_refresh_guild_wnd_board_page_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshGuildBoardPage", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_guild_board_page", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_guild_wnd_member_page_) {
             is_refresh_guild_wnd_member_page_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshGuildMemberPage", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_guild_member_page", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_guild_wnd_member_page_grade_combo_box_) {
             is_refresh_guild_wnd_member_page_grade_combo_box_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshGuildMemberPageGradeComboBox", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_guild_member_page_grade_combo_box", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_guild_wnd_skill_page_) {
             is_refresh_guild_wnd_skill_page_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshGuildSkillPage", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_guild_skill_page", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
 
         if (is_refresh_guild_wnd_grade_page_) {
             is_refresh_guild_wnd_grade_page_ = false;
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshGuildGradePage", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_guild_grade_page", Py_BuildValue("()"));
             next_refresh_time = cur_time + 300;
         }
     }
@@ -642,7 +642,7 @@ namespace metin2::inline client::inline protocol {
 
     void python_network_stream::show_map_name(int32_t local_x, int32_t local_y) {
         const std::string &map_file_name = get_python_background().warp_map_name();
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "ShowMapName", Py_BuildValue("(sii)", map_file_name.c_str(), local_x, local_y));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "show_map_name", Py_BuildValue("(sii)", map_file_name.c_str(), local_x, local_y));
     }
 
     void python_network_stream::leave_game_phase() {
@@ -717,7 +717,7 @@ namespace metin2::inline client::inline protocol {
         else
             inst_main->set_duel_mode(instance_base::DUEL_START);
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "CloseTargetBoard", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "close_target_board", Py_BuildValue("()"));
 
         chr_mgr.refresh_all_pc_text_tail();
 
@@ -1015,9 +1015,9 @@ namespace metin2::inline client::inline protocol {
                 get_python_chat().append_chat(chat.type_value, buf);
         } else {
             if (CHAT_TYPE_NOTICE == chat.type_value) {
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_SetTipMessage", Py_BuildValue("(s)", buf));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "set_tip_message", Py_BuildValue("(s)", buf));
             } else if (CHAT_TYPE_BIG_NOTICE == chat.type_value) {
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_SetBigMessage", Py_BuildValue("(s)", buf));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "set_big_message", Py_BuildValue("(s)", buf));
             } else if (CHAT_TYPE_SHOUT == chat.type_value) {
                 char *p = strchr(buf, ':');
 
@@ -1047,11 +1047,11 @@ namespace metin2::inline client::inline protocol {
         static char line[CHARACTER_NAME_MAX_LEN + 3 + sizeof(buf)]; // "name : text", never cut
         if (python_chat::WHISPER_TYPE_CHAT == whisper_packet.type_value || python_chat::WHISPER_TYPE_GM == whisper_packet.type_value) {
             snprintf(line, sizeof(line), "%s : %s", name_from.c_str(), buf);
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnRecvWhisper", Py_BuildValue("(iss)", (int)whisper_packet.type_value, name_from.c_str(), line));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_recv_whisper", Py_BuildValue("(iss)", (int)whisper_packet.type_value, name_from.c_str(), line));
         } else if (python_chat::WHISPER_TYPE_SYSTEM == whisper_packet.type_value || python_chat::WHISPER_TYPE_ERROR == whisper_packet.type_value) {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnRecvWhisperSystemMessage", Py_BuildValue("(iss)", (int)whisper_packet.type_value, name_from.c_str(), buf));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_recv_whisper_system_message", Py_BuildValue("(iss)", (int)whisper_packet.type_value, name_from.c_str(), buf));
         } else {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnRecvWhisperError", Py_BuildValue("(iss)", (int)whisper_packet.type_value, name_from.c_str(), buf));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_recv_whisper_error", Py_BuildValue("(iss)", (int)whisper_packet.type_value, name_from.c_str(), buf));
         }
 
         return true;
@@ -1125,7 +1125,7 @@ namespace metin2::inline client::inline protocol {
 
                 if (POINT_GOLD == point_change.type_value) {
                     if (point_change.amount > 0) {
-                        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnPickMoney", Py_BuildValue("(i)", point_change.amount));
+                        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_pick_money", Py_BuildValue("(i)", point_change.amount));
                     }
                 }
             } else {
@@ -1176,7 +1176,7 @@ namespace metin2::inline client::inline protocol {
             if (inst_main == chr_inst_sel) {
                 metin2::log::debug("Main character died");
                 if (false == inst_main->duel_mode()) {
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnGameOver", Py_BuildValue("()"));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_game_over", Py_BuildValue("()"));
                 }
                 get_python_player().notify_dead_main_character();
             }
@@ -1231,7 +1231,7 @@ namespace metin2::inline client::inline protocol {
                 for (uint8_t item_index = 0; item_index < SHOP_HOST_ITEM_MAX_NUM; ++item_index)
                     get_python_shop().set_item_data(item_index, start.items[item_index]);
 
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "StartShop", Py_BuildValue("(i)", start.owner_vid));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "start_shop", Py_BuildValue("(i)", start.owner_vid));
             }
             break;
 
@@ -1256,12 +1256,12 @@ namespace metin2::inline client::inline protocol {
                         get_python_shop().set_item_data(i, j, tab.items[j]);
                 }
 
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "StartShop", Py_BuildValue("(i)", start.owner_vid));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "start_shop", Py_BuildValue("(i)", start.owner_vid));
             }
             break;
 
         case SHOP_SUBHEADER_GC_END:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "EndShop", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "end_shop", Py_BuildValue("()"));
             break;
 
         case SHOP_SUBHEADER_GC_UPDATE_ITEM:
@@ -1270,7 +1270,7 @@ namespace metin2::inline client::inline protocol {
                 if (!recv(sizeof(update), &update))
                     return false;
                 get_python_shop().set_item_data(update.pos, update.item_value);
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshShop", Py_BuildValue("()"));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_shop", Py_BuildValue("()"));
             }
             break;
 
@@ -1279,28 +1279,28 @@ namespace metin2::inline client::inline protocol {
                 int32_t price;
                 if (!recv(sizeof(price), &price))
                     return false;
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "SetShopSellingPrice", Py_BuildValue("(i)", price));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "set_shop_selling_price", Py_BuildValue("(i)", price));
             }
             break;
 
         case SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnShopError", Py_BuildValue("(s)", "NOT_ENOUGH_MONEY"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_shop_error", Py_BuildValue("(s)", "NOT_ENOUGH_MONEY"));
             break;
 
         case SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY_EX:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnShopError", Py_BuildValue("(s)", "NOT_ENOUGH_MONEY_EX"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_shop_error", Py_BuildValue("(s)", "NOT_ENOUGH_MONEY_EX"));
             break;
 
         case SHOP_SUBHEADER_GC_SOLDOUT:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnShopError", Py_BuildValue("(s)", "SOLDOUT"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_shop_error", Py_BuildValue("(s)", "SOLDOUT"));
             break;
 
         case SHOP_SUBHEADER_GC_INVENTORY_FULL:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnShopError", Py_BuildValue("(s)", "INVENTORY_FULL"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_shop_error", Py_BuildValue("(s)", "INVENTORY_FULL"));
             break;
 
         case SHOP_SUBHEADER_GC_INVALID_POS:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnShopError", Py_BuildValue("(s)", "INVALID_POS"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_shop_error", Py_BuildValue("(s)", "INVALID_POS"));
             break;
 
         default:
@@ -1330,7 +1330,7 @@ namespace metin2::inline client::inline protocol {
                     get_python_exchange().set_target_name(character_instance->name_string());
             }
 
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "StartExchange", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "start_exchange", Py_BuildValue("()"));
             break;
 
         case EXCHANGE_SUBHEADER_GC_ITEM_ADD:
@@ -1383,7 +1383,7 @@ namespace metin2::inline client::inline protocol {
             break;
 
         case EXCHANGE_SUBHEADER_GC_END:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "EndExchange", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "end_exchange", Py_BuildValue("()"));
             refresh_inventory_window();
             get_python_exchange().end();
             break;
@@ -1513,7 +1513,7 @@ namespace metin2::inline client::inline protocol {
             get_python_quest().register_quest_instance(quest_instance);
         }
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshQuest", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_quest", Py_BuildValue("()"));
         return true;
     }
 
@@ -1525,7 +1525,7 @@ namespace metin2::inline client::inline protocol {
         }
 
         PyObject *arg = Py_BuildValue("(sii)", packet_string(quest_confirm_packet.msg).c_str(), quest_confirm_packet.timeout, quest_confirm_packet.request_pid);
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_OnQuestConfirm", arg);
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_quest_confirm", arg);
         return true;
     }
 
@@ -1538,13 +1538,13 @@ namespace metin2::inline client::inline protocol {
 
         guild_creation_key_ = packet.key;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "AskGuildName", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "ask_guild_name", Py_BuildValue("()"));
 
         return true;
     }
 
     void python_network_stream::toggle_game_debug_info() {
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "ToggleDebugInfo", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "toggle_debug_info", Py_BuildValue("()"));
     }
 
     auto python_network_stream::send_exchange_start_packet(uint32_t vid) -> bool {
@@ -1837,16 +1837,16 @@ namespace metin2::inline client::inline protocol {
         if (inst_player && inst_target) {
             if (!inst_target->is_dead()) {
                 if (inst_target->is_pc() || inst_target->is_building())
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "CloseTargetBoardIfDifferent", Py_BuildValue("(i)", target_packet.vid));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "close_target_board_if_different", Py_BuildValue("(i)", target_packet.vid));
                 else if (inst_player->can_view_target_hp(*inst_target))
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "SetHPTargetBoard", Py_BuildValue("(ii)", target_packet.vid, target_packet.hp_percent));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "set_hp_target_board", Py_BuildValue("(ii)", target_packet.vid, target_packet.hp_percent));
                 else
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "CloseTargetBoard", Py_BuildValue("()"));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "close_target_board", Py_BuildValue("()"));
 
                 inst_target_ = inst_target;
             }
         } else {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "CloseTargetBoard", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "close_target_board", Py_BuildValue("()"));
         }
 
         return true;
@@ -2179,7 +2179,7 @@ namespace metin2::inline client::inline protocol {
             return true;
         }
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RecvPartyInviteQuestion", Py_BuildValue("(is)", party_invite_packet.leader_pid, instance->name_string()));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "recv_party_invite_question", Py_BuildValue("(is)", party_invite_packet.leader_pid, instance->name_string()));
         metin2::log::debug("Received party invite from leader {} ({})", party_invite_packet.leader_pid, instance->name_string());
 
         return true;
@@ -2191,7 +2191,7 @@ namespace metin2::inline client::inline protocol {
             return false;
 
         get_python_player().append_party_member(party_add_packet.pid, packet_string(party_add_packet.name_value).c_str());
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "AddPartyMember", Py_BuildValue("(is)", party_add_packet.pid, packet_string(party_add_packet.name_value).c_str()));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "add_party_member", Py_BuildValue("(is)", party_add_packet.pid, packet_string(party_add_packet.name_value).c_str()));
         metin2::log::debug("Party member {} added ({})", party_add_packet.pid, packet_string(party_add_packet.name_value).c_str());
 
         return true;
@@ -2213,7 +2213,7 @@ namespace metin2::inline client::inline protocol {
             get_python_player().update_party_member_affect(party_update_packet.pid, i, party_update_packet.affects_value[i]);
         }
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "UpdatePartyMemberInfo", Py_BuildValue("(i)", party_update_packet.pid));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "update_party_member_info", Py_BuildValue("(i)", party_update_packet.pid));
 
         // If the leader changed, update the target board buttons.
         uint32_t vid;
@@ -2230,7 +2230,7 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(party_remove_packet), &party_remove_packet))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RemovePartyMember", Py_BuildValue("(i)", party_remove_packet.pid));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "remove_party_member", Py_BuildValue("(i)", party_remove_packet.pid));
         metin2::log::debug("Party member {} removed", party_remove_packet.pid);
 
         return true;
@@ -2242,7 +2242,7 @@ namespace metin2::inline client::inline protocol {
             return false;
 
         get_python_player().link_party_member(party_link_packet.pid, party_link_packet.vid);
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "LinkPartyMember", Py_BuildValue("(ii)", party_link_packet.pid, party_link_packet.vid));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "link_party_member", Py_BuildValue("(ii)", party_link_packet.pid, party_link_packet.vid));
         metin2::log::debug("Party member {} linked to vid {}", party_link_packet.pid, party_link_packet.vid);
 
         return true;
@@ -2256,9 +2256,9 @@ namespace metin2::inline client::inline protocol {
         get_python_player().unlink_party_member(party_unlink_packet.pid);
 
         if (get_python_player().is_main_character_index(party_unlink_packet.vid)) {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "UnlinkAllPartyMember", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "unlink_all_party_member", Py_BuildValue("()"));
         } else {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "UnlinkPartyMember", Py_BuildValue("(i)", party_unlink_packet.pid));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "unlink_party_member", Py_BuildValue("(i)", party_unlink_packet.pid));
         }
 
         metin2::log::debug("Party member {} unlinked from vid {}", party_unlink_packet.pid, party_unlink_packet.vid);
@@ -2271,7 +2271,7 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(party_parameter_packet), &party_parameter_packet))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "ChangePartyParameter", Py_BuildValue("(i)", party_parameter_packet.distribute_mode));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "change_party_parameter", Py_BuildValue("(i)", party_parameter_packet.distribute_mode));
         metin2::log::debug("Party distribute mode changed to {}", party_parameter_packet.distribute_mode);
 
         return true;
@@ -2542,7 +2542,7 @@ namespace metin2::inline client::inline protocol {
 
                 if (get_python_guild().is_main_player(pid)) {
                     get_python_guild().destroy();
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "DeleteGuild", Py_BuildValue("()"));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "delete_guild", Py_BuildValue("()"));
                     get_python_messenger().remove_all_guild_member();
                     set_guild_id(0);
                     refresh_messenger_window();
@@ -2639,7 +2639,7 @@ namespace metin2::inline client::inline protocol {
                 grade_name[GUILD_GRADE_NAME_MAX_LEN] = '\0';
 
                 get_python_guild().set_grade_name(grade_number, grade_name);
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshGuildGrade", Py_BuildValue("()"));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_guild_grade", Py_BuildValue("()"));
 
                 metin2::log::debug("Guild grade {} renamed to {}", grade_number, grade_name);
                 refresh_guild_window_grade_page();
@@ -2656,7 +2656,7 @@ namespace metin2::inline client::inline protocol {
                     return false;
 
                 get_python_guild().set_grade_authority(grade_number, authority_flag);
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshGuildGrade", Py_BuildValue("()"));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_guild_grade", Py_BuildValue("()"));
 
                 metin2::log::debug("Guild grade {} authority changed to {}", grade_number, authority_flag);
                 refresh_guild_window_grade_page();
@@ -2780,7 +2780,7 @@ namespace metin2::inline client::inline protocol {
 
                 guild_name[GUILD_NAME_MAX_LEN] = 0;
 
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RecvGuildInviteQuestion", Py_BuildValue("(is)", guild_id, guild_name));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "recv_guild_invite_question", Py_BuildValue("(is)", guild_id, guild_name));
                 metin2::log::debug("Guild {} ({}) sent an invite", guild_id, guild_name);
                 break;
             }
@@ -2794,26 +2794,26 @@ namespace metin2::inline client::inline protocol {
                 case GUILD_WAR_SEND_DECLARE:
                     metin2::log::debug("Guild war: declaration sent");
                     py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                        "BINARY_GuildWar_OnSendDeclare",
+                        "guild_war_on_send_declare",
                         Py_BuildValue("(i)", guild_war.guild_opp));
                     break;
                 case GUILD_WAR_RECV_DECLARE:
                     metin2::log::debug("Guild war: declaration received");
                     py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                        "BINARY_GuildWar_OnRecvDeclare",
+                        "guild_war_on_recv_declare",
                         Py_BuildValue("(ii)", guild_war.guild_opp, guild_war.type_value));
                     break;
                 case GUILD_WAR_ON_WAR:
                     metin2::log::debug("Guild war: guild {} is at war with guild {}", guild_war.guild_self, guild_war.guild_opp);
                     py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                        "BINARY_GuildWar_OnStart",
+                        "guild_war_on_start",
                         Py_BuildValue("(ii)", guild_war.guild_self, guild_war.guild_opp));
                     get_python_guild().start_guild_war(guild_war.guild_opp);
                     break;
                 case GUILD_WAR_END:
                     metin2::log::debug("Guild war: ended");
                     py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                        "BINARY_GuildWar_OnEnd",
+                        "guild_war_on_end",
                         Py_BuildValue("(ii)", guild_war.guild_self, guild_war.guild_opp));
                     get_python_guild().end_guild_war(guild_war.guild_opp);
                     break;
@@ -2881,7 +2881,7 @@ namespace metin2::inline client::inline protocol {
                     return false;
 
                 py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                    "BINARY_GuildWar_OnRecvPoint",
+                    "guild_war_on_recv_point",
                     Py_BuildValue("(iii)", guild_war_point.gain_guild_id, guild_war_point.opponent_guild_id, guild_war_point.point));
                 break;
             }
@@ -2958,7 +2958,7 @@ namespace metin2::inline client::inline protocol {
         case FISHING_SUBHEADER_GC_FAIL:
             fishing_instance->catch_fail();
             if (fishing_instance == get_python_character_manager().main_instance_ptr()) {
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnFishingFailure", Py_BuildValue("()"));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_fishing_failure", Py_BuildValue("()"));
             }
             break;
         case FISHING_SUBHEADER_GC_FISH:
@@ -2966,7 +2966,7 @@ namespace metin2::inline client::inline protocol {
                 uint32_t fish_id = fishing_packet.info_value;
 
                 if (0 == fishing_packet.info_value) {
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnFishingNotifyUnknown", Py_BuildValue("()"));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_fishing_notify_unknown", Py_BuildValue("()"));
                     return true;
                 }
 
@@ -2979,9 +2979,9 @@ namespace metin2::inline client::inline protocol {
                     return true;
 
                 if (main_instance->is_fishing()) {
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnFishingNotify", Py_BuildValue("(is)", item_data::ITEM_TYPE_FISH == item_data->get_type(), item_data->get_name()));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_fishing_notify", Py_BuildValue("(is)", item_data::ITEM_TYPE_FISH == item_data->get_type(), item_data->get_name()));
                 } else {
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnFishingSuccess", Py_BuildValue("(is)", item_data::ITEM_TYPE_FISH == item_data->get_type(), item_data->get_name()));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_fishing_success", Py_BuildValue("(is)", item_data::ITEM_TYPE_FISH == item_data->get_type(), item_data->get_name()));
                 }
                 break;
             }
@@ -3042,14 +3042,14 @@ namespace metin2::inline client::inline protocol {
 
         if (0 == strlen(p.sign)) {
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                "BINARY_PrivateShop_Disappear",
+                "private_shop_disappear",
                 Py_BuildValue("(i)", p.vid));
 
             if (player.is_main_character_index(p.vid))
                 player.close_private_shop();
         } else {
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                "BINARY_PrivateShop_Appear",
+                "private_shop_appear",
                 Py_BuildValue("(is)", p.vid, packet_string(p.sign).c_str()));
 
             if (player.is_main_character_index(p.vid))
@@ -3103,7 +3103,7 @@ namespace metin2::inline client::inline protocol {
         main_actor_skill_group_ = uint32_t(index);
 
         get_python_player().new_clear_skill_data();
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshCharacter", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_character", Py_BuildValue("()"));
     }
 
     auto python_network_stream::send_refine_packet(uint8_t pos, uint8_t type) -> bool {
@@ -3136,7 +3136,7 @@ namespace metin2::inline client::inline protocol {
 
         refine_table &refine_table = refine_info_packet.refine_table_value;
         py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-            "OpenRefineDialog",
+            "open_refine_dialog",
             Py_BuildValue("(iiiii)",
                 refine_info_packet.pos,
                 refine_info_packet.refine_table_value.result_vnum,
@@ -3145,7 +3145,7 @@ namespace metin2::inline client::inline protocol {
                 refine_info_packet.type_value));
 
         for (int i = 0; i < refine_table.material_count; ++i) {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "AppendMaterialToRefineDialog", Py_BuildValue("(ii)", refine_table.materials[i].vnum, refine_table.materials[i].count));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "append_material_to_refine_dialog", Py_BuildValue("(ii)", refine_table.materials[i].vnum, refine_table.materials[i].count));
         }
 
         return true;
@@ -3200,7 +3200,7 @@ namespace metin2::inline client::inline protocol {
             get_python_player().set_status(POINT_ENERGY_END_TIME, get_python_application().server_time_stamp() + element.duration);
             refresh_status();
         }
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_NEW_AddAffect", Py_BuildValue("(iiii)", element.type_value, element.point_idx_apply_on, element.apply_value, element.duration));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "add_affect", Py_BuildValue("(iiii)", element.type_value, element.point_idx_apply_on, element.apply_value, element.duration));
 
         return true;
     }
@@ -3210,7 +3210,7 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(affect_remove), &affect_remove))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_NEW_RemoveAffect", Py_BuildValue("(ii)", affect_remove.type_value, affect_remove.apply_on));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "remove_affect", Py_BuildValue("(ii)", affect_remove.type_value, affect_remove.apply_on));
 
         return true;
     }
@@ -3228,17 +3228,17 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(view_equip_packet), &view_equip_packet))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OpenEquipmentDialog", Py_BuildValue("(i)", view_equip_packet.vid));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "open_equipment_dialog", Py_BuildValue("(i)", view_equip_packet.vid));
 
         for (int i = 0; i < WEAR_MAX_NUM; ++i) {
             equipment_item_set &item_set = view_equip_packet.equips[i];
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "SetEquipmentDialogItem", Py_BuildValue("(iiii)", view_equip_packet.vid, i, item_set.vnum, item_set.count));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "set_equipment_dialog_item", Py_BuildValue("(iiii)", view_equip_packet.vid, i, item_set.vnum, item_set.count));
 
             for (int j = 0; j < ITEM_SOCKET_SLOT_MAX_NUM; ++j)
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "SetEquipmentDialogSocket", Py_BuildValue("(iiii)", view_equip_packet.vid, i, j, item_set.sockets[j]));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "set_equipment_dialog_socket", Py_BuildValue("(iiii)", view_equip_packet.vid, i, j, item_set.sockets[j]));
 
             for (int k = 0; k < ITEM_ATTRIBUTE_SLOT_MAX_NUM; ++k)
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "SetEquipmentDialogAttr", Py_BuildValue("(iiiii)", view_equip_packet.vid, i, k, item_set.attr[k].type_value, item_set.attr[k].value));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "set_equipment_dialog_attr", Py_BuildValue("(iiiii)", view_equip_packet.vid, i, k, item_set.attr[k].type_value, item_set.attr[k].value));
         }
 
         return true;
@@ -3302,7 +3302,7 @@ namespace metin2::inline client::inline protocol {
             rkpy_bg.create_target_effect(target_create.id, target_create.vid);
         }
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_OpenAtlasWindow", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "open_atlas_window", Py_BuildValue("()"));
         return true;
     }
 
@@ -3339,7 +3339,7 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(lover_info), &lover_info))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_LoverInfo", Py_BuildValue("(si)", packet_string(lover_info.name_value).c_str(), lover_info.love_point));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "lover_info", Py_BuildValue("(si)", packet_string(lover_info.name_value).c_str(), lover_info.love_point));
         return true;
     }
 
@@ -3348,7 +3348,7 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(love_point_update), &love_point_update))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_UpdateLovePoint", Py_BuildValue("(i)", love_point_update.love_point));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "update_love_point", Py_BuildValue("(i)", love_point_update.love_point));
         return true;
     }
 

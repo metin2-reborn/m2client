@@ -246,7 +246,7 @@ namespace metin2::inline client::inline protocol {
         // Remove the private shop when the character disappears. Not strictly needed, since the
         // shop key is checked.
         py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-            "BINARY_PrivateShop_Disappear",
+            "private_shop_disappear",
             Py_BuildValue("(i)", chr_del_packet.vid));
 
         return true;

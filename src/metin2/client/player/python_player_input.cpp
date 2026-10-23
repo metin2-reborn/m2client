@@ -178,7 +178,7 @@ namespace metin2::inline client::inline player {
         if (!inst_target->is_pc() && !inst_target->is_building())
             return;
 
-        py_call_class_member_func(ppy_game_window_, "SetPCTargetBoard", Py_BuildValue("(is)", inst_target->virtual_id(), inst_target->name_string()));
+        py_call_class_member_func(ppy_game_window_, "set_pc_target_board", Py_BuildValue("(is)", inst_target->virtual_id(), inst_target->name_string()));
     }
 
     void python_player::on_click_item(instance_base &inst_main, uint32_t item_id) {
@@ -424,7 +424,7 @@ namespace metin2::inline client::inline player {
                 if (inst_main->fishing_rot(&irot))
                     get_python_network_stream().send_fishing_packet(irot);
                 else {
-                    py_call_class_member_func(ppy_game_window_, "OnFishingWrongPlace", Py_BuildValue("()"));
+                    py_call_class_member_func(ppy_game_window_, "on_fishing_wrong_place", Py_BuildValue("()"));
                 }
             }
         }
@@ -463,7 +463,7 @@ namespace metin2::inline client::inline player {
                     inst_main->new_attack_to_dest_instance_direction(*inst_target);
                 }
             } else {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
                 return;
             }
         } else if (is_dir_key_) {
@@ -517,17 +517,17 @@ namespace metin2::inline client::inline player {
 
     auto python_player::can_shot(instance_base &inst_main, instance_base &inst_target) -> bool {
         if (!has_enough_arrow()) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotShot", Py_BuildValue("(is)", main_character_index(), "EMPTY_ARROW"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_shot", Py_BuildValue("(is)", main_character_index(), "EMPTY_ARROW"));
             return false;
         }
 
         if (inst_main.is_in_safe()) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotShot", Py_BuildValue("(is)", main_character_index(), "IN_SAFE"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_shot", Py_BuildValue("(is)", main_character_index(), "IN_SAFE"));
             return false;
         }
 
         if (inst_target.is_in_safe()) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotShot", Py_BuildValue("(is)", main_character_index(), "DEST_IN_SAFE"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_shot", Py_BuildValue("(is)", main_character_index(), "DEST_IN_SAFE"));
             return false;
         }
 
@@ -698,14 +698,14 @@ namespace metin2::inline client::inline player {
         }
 
         if (inst_main->is_in_safe()) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotAttack", Py_BuildValue("(is)", main_character_index(), "IN_SAFE"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_attack", Py_BuildValue("(is)", main_character_index(), "IN_SAFE"));
             inst_main->new_stop();
             clear_reserved_action();
             return;
         }
 
         if (inst_reserved->is_in_safe()) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotAttack", Py_BuildValue("(is)", main_character_index(), "DEST_IN_SAFE"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_attack", Py_BuildValue("(is)", main_character_index(), "DEST_IN_SAFE"));
             inst_main->new_stop();
             clear_reserved_action();
             return;
@@ -718,7 +718,7 @@ namespace metin2::inline client::inline player {
 
         if (inst_main->is_bow_mode()) {
             if (!has_enough_arrow()) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotShot", Py_BuildValue("(is)", main_character_index(), "EMPTY_ARROW"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_shot", Py_BuildValue("(is)", main_character_index(), "EMPTY_ARROW"));
                 inst_main->new_stop();
                 clear_reserved_action();
                 return;

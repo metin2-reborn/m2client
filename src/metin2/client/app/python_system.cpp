@@ -473,7 +473,7 @@ namespace metin2::inline client::inline app {
             return;
         }
 
-        py_call_class_member_func(interface_handler_, "OnSaveInterfaceStatus", Py_BuildValue("()"));
+        py_call_class_member_func(interface_handler_, "on_save_interface_status", Py_BuildValue("()"));
 
         FILE *file;
 

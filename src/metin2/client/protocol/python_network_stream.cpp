@@ -625,7 +625,7 @@ namespace metin2::inline client::inline protocol {
         if (is_start_game_) {
             is_start_game_ = false;
 
-            py_call_class_member_func(handler_, "SetGamePhase", Py_BuildValue("()"));
+            py_call_class_member_func(handler_, "set_game_phase", Py_BuildValue("()"));
         }
 
         rok_net_actor_mgr_->update();
@@ -664,7 +664,7 @@ namespace metin2::inline client::inline protocol {
     }
 
     void python_network_stream::close_phase() {
-        py_call_class_member_func(handler_, "SetLoginPhase", Py_BuildValue("()"));
+        py_call_class_member_func(handler_, "set_login_phase", Py_BuildValue("()"));
     }
 
     void python_network_stream::set_game_online() {

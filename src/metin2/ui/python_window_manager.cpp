@@ -162,7 +162,7 @@ namespace metin2::inline ui {
         void window_manager::deattach_icon() {
             set_attaching_flag(false);
             if (mouse_handler_)
-                py_call_class_member_func(mouse_handler_, "DeattachObject", build_empty_tuple());
+                py_call_class_member_func(mouse_handler_, "deattach_object", build_empty_tuple());
         }
 
         void window_manager::set_parent(ui_window *window, ui_window *parent_window) {
@@ -330,7 +330,7 @@ namespace metin2::inline ui {
 
             // Called after the walk: a script may create or destroy windows.
             for (PyObject *handler : scripted) {
-                py_call_class_member_func(handler, "OnScreenResize", Py_BuildValue("(ii)", width_value, height));
+                py_call_class_member_func(handler, "on_screen_resize", Py_BuildValue("(ii)", width_value, height));
                 Py_DECREF(handler);
             }
         }

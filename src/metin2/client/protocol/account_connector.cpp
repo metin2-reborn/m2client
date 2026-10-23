@@ -218,7 +218,7 @@ namespace metin2::inline client::inline protocol {
 
         if (!auth_success_packet.result) {
             if (handler_)
-                py_call_class_member_func(handler_, "OnLoginFailure", Py_BuildValue("(s)", "BESAMEKEY"));
+                py_call_class_member_func(handler_, "on_login_failure", Py_BuildValue("(s)", "BESAMEKEY"));
         } else {
             python_network_stream &net = get_python_network_stream();
             net.set_login_key(auth_success_packet.login_key);
@@ -237,7 +237,7 @@ namespace metin2::inline client::inline protocol {
             return false;
 
         if (handler_)
-            py_call_class_member_func(handler_, "OnLoginFailure", Py_BuildValue("(s)", packet_failure.status));
+            py_call_class_member_func(handler_, "on_login_failure", Py_BuildValue("(s)", packet_failure.status));
 
         return true;
     }
@@ -339,7 +339,7 @@ namespace metin2::inline client::inline protocol {
 
     void account_connector::on_connect_failure() {
         if (handler_)
-            py_call_class_member_func(handler_, "OnConnectFailure", Py_BuildValue("()"));
+            py_call_class_member_func(handler_, "on_connect_failure", Py_BuildValue("()"));
 
         offline_state_set();
     }

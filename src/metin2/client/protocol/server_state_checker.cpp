@@ -45,7 +45,7 @@ namespace metin2::inline client::inline protocol {
 
         if (!stream_value_.connect(channel_value_.begin()->addr.c_str(), channel_value_.begin()->port)) {
             for (auto it = channel_value_.begin(); it != channel_value_.end(); ++it) {
-                py_call_class_member_func(wnd_, "NotifyChannelState", Py_BuildValue("(ii)", it->server_index, 0));
+                py_call_class_member_func(wnd_, "notify_channel_state", Py_BuildValue("(ii)", it->server_index, 0));
             }
             return;
         }
@@ -56,7 +56,7 @@ namespace metin2::inline client::inline protocol {
         uint8_t header = HEADER_CG_STATE_CHECKER;
         if (!stream_value_.send(sizeof(header), &header)) {
             for (auto it = channel_value_.begin(); it != channel_value_.end(); ++it) {
-                py_call_class_member_func(wnd_, "NotifyChannelState", Py_BuildValue("(ii)", it->server_index, 0));
+                py_call_class_member_func(wnd_, "notify_channel_state", Py_BuildValue("(ii)", it->server_index, 0));
             }
             initialize();
             return;
@@ -84,7 +84,7 @@ namespace metin2::inline client::inline protocol {
             }
             for (auto it = channel_value_.begin(); it != channel_value_.end(); ++it) {
                 if (uint16_t(channel_status.port) == it->port) {
-                    py_call_class_member_func(wnd_, "NotifyChannelState", Py_BuildValue("(ii)", it->server_index, channel_status.status));
+                    py_call_class_member_func(wnd_, "notify_channel_state", Py_BuildValue("(ii)", it->server_index, channel_status.status));
                     break;
                 }
             }

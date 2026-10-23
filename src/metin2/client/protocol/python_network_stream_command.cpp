@@ -126,7 +126,7 @@ namespace metin2::inline client::inline protocol {
         if (apo_phase_wnd_[PHASE_WINDOW_GAME]) {
             bool is_true;
             if (py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                    "BINARY_ServerCommand_Run",
+                    "server_command_run",
                     Py_BuildValue("(s)", command),
                     &is_true)) {
                 if (is_true)
@@ -135,7 +135,7 @@ namespace metin2::inline client::inline protocol {
         } else if (ser_command_parser_wnd_) {
             bool is_true;
             if (py_call_class_member_func(ser_command_parser_wnd_,
-                    "BINARY_ServerCommand_Run",
+                    "server_command_run",
                     Py_BuildValue("(s)", command),
                     &is_true)) {
                 if (is_true)
@@ -160,7 +160,7 @@ namespace metin2::inline client::inline protocol {
             }
 
         } else if (!strcasecmp(cmd, "gift")) {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "Gift_Show", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "gift_show", Py_BuildValue("()"));
         } else if (!strcasecmp(cmd, "cube")) {
             if (token_vector.size() < 2) {
                 metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
@@ -174,9 +174,9 @@ namespace metin2::inline client::inline protocol {
                 }
 
                 auto npc_vnum = (uint32_t)metin2::to_number<int>(token_vector[2].c_str());
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_Cube_Open", Py_BuildValue("(i)", npc_vnum));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "cube_open", Py_BuildValue("(i)", npc_vnum));
             } else if ("close" == token_vector[1]) {
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_Cube_Close", Py_BuildValue("()"));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "cube_close", Py_BuildValue("()"));
             } else if ("info" == token_vector[1]) {
                 if (5 != token_vector.size()) {
                     metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
@@ -186,7 +186,7 @@ namespace metin2::inline client::inline protocol {
                 uint32_t gold = metin2::to_number<int>(token_vector[2].c_str());
                 uint32_t item_vnum = metin2::to_number<int>(token_vector[3].c_str());
                 uint32_t count = metin2::to_number<int>(token_vector[4].c_str());
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_Cube_UpdateInfo", Py_BuildValue("(iii)", gold, item_vnum, count));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "cube_update_info", Py_BuildValue("(iii)", gold, item_vnum, count));
             } else if ("success" == token_vector[1]) {
                 if (4 != token_vector.size()) {
                     metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
@@ -195,9 +195,9 @@ namespace metin2::inline client::inline protocol {
 
                 uint32_t item_vnum = metin2::to_number<int>(token_vector[2].c_str());
                 uint32_t count = metin2::to_number<int>(token_vector[3].c_str());
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_Cube_Succeed", Py_BuildValue("(ii)", item_vnum, count));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "cube_succeed", Py_BuildValue("(ii)", item_vnum, count));
             } else if ("fail" == token_vector[1]) {
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_Cube_Failed", Py_BuildValue("()"));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "cube_failed", Py_BuildValue("()"));
             } else if ("r_list" == token_vector[1]) {
                 // Result list: /cube r_list <npc vnum> <result count> <result text>, where the
                 // results are separated by "/", for example: 20383 4 72723,1/72725,1/72730.1/50001,5
@@ -208,7 +208,7 @@ namespace metin2::inline client::inline protocol {
 
                 auto npc_vnum = (uint32_t)metin2::to_number<int>(token_vector[2].c_str());
 
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_Cube_ResultList", Py_BuildValue("(is)", npc_vnum, token_vector[4].c_str()));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "cube_result_list", Py_BuildValue("(is)", npc_vnum, token_vector[4].c_str()));
             } else if ("m_info" == token_vector[1]) {
                 // Material list: /cube m_info <request start index> <result count> <material text>, where
                 // the material text holds the materials of every item in the range, for example:
@@ -222,7 +222,7 @@ namespace metin2::inline client::inline protocol {
                 auto request_start_index = (uint32_t)metin2::to_number<int>(token_vector[2].c_str());
                 auto result_count = (uint32_t)metin2::to_number<int>(token_vector[3].c_str());
 
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_Cube_MaterialInfo", Py_BuildValue("(iis)", request_start_index, result_count, token_vector[4].c_str()));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "cube_material_info", Py_BuildValue("(iis)", request_start_index, result_count, token_vector[4].c_str()));
             }
         } else if (!strcasecmp(cmd, "ObserverCount")) {
             if (2 != token_vector.size()) {
@@ -233,7 +233,7 @@ namespace metin2::inline client::inline protocol {
             uint32_t observer_count = metin2::to_number<int>(token_vector[1].c_str());
 
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                "BINARY_BettingGuildWar_UpdateObserverCount",
+                "betting_guild_war_update_observer_count",
                 Py_BuildValue("(i)", observer_count));
         } else if (!strcasecmp(cmd, "ObserverMode")) {
             if (2 != token_vector.size()) {
@@ -247,7 +247,7 @@ namespace metin2::inline client::inline protocol {
             rk_player.set_observer_mode(mode ? true : false);
 
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
-                "BINARY_BettingGuildWar_SetObserverMode",
+                "betting_guild_war_set_observer_mode",
                 Py_BuildValue("(i)", mode));
         } else if (!strcasecmp(cmd, "ObserverTeamInfo")) {
         } else if (!strcasecmp(cmd, "StoneDetect")) {
@@ -324,7 +324,7 @@ namespace metin2::inline client::inline protocol {
             player.stop_stamina_consume(current_stamina);
         } else if (!strcasecmp(cmd, "messenger_auth")) {
             const std::string &name = token_vector[1].c_str();
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnMessengerAddFriendQuestion", Py_BuildValue("(s)", name.c_str()));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_messenger_add_friend_question", Py_BuildValue("(s)", name.c_str()));
         } else if (!strcasecmp(cmd, "combo")) {
             int flag = metin2::to_number<int>(token_vector[1].c_str());
             abstract_player &player = get_abstract_player();
@@ -332,7 +332,7 @@ namespace metin2::inline client::inline protocol {
             combo_skill_flag_ = flag ? true : false;
         } else if (!strcasecmp(cmd, "setblockmode")) {
             int flag = metin2::to_number<int>(token_vector[1].c_str());
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnBlockMode", Py_BuildValue("(i)", flag));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_block_mode", Py_BuildValue("(i)", flag));
         } else if (!strcasecmp(cmd, "french_kiss")) {
             int vid1 = metin2::to_number<int>(token_vector[1].c_str());
             int vid2 = metin2::to_number<int>(token_vector[2].c_str());

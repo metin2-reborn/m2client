@@ -650,25 +650,25 @@ namespace metin2::inline ui {
     }
 
     void slot_window::on_select_empty_slot(int slot_number) {
-        py_call_class_member_func(handler_, "OnSelectEmptySlot", Py_BuildValue("(i)", slot_number));
+        py_call_class_member_func(handler_, "on_select_empty_slot", Py_BuildValue("(i)", slot_number));
     }
     void slot_window::on_select_item_slot(int slot_number) {
-        py_call_class_member_func(handler_, "OnSelectItemSlot", Py_BuildValue("(i)", slot_number));
+        py_call_class_member_func(handler_, "on_select_item_slot", Py_BuildValue("(i)", slot_number));
 
         if (widgets::get_window_manager().is_attaching())
             on_over_out_item();
     }
     void slot_window::on_unselect_empty_slot(int slot_number) {
-        py_call_class_member_func(handler_, "OnUnselectEmptySlot", Py_BuildValue("(i)", slot_number));
+        py_call_class_member_func(handler_, "on_unselect_empty_slot", Py_BuildValue("(i)", slot_number));
     }
     void slot_window::on_unselect_item_slot(int slot_number) {
-        py_call_class_member_func(handler_, "OnUnselectItemSlot", Py_BuildValue("(i)", slot_number));
+        py_call_class_member_func(handler_, "on_unselect_item_slot", Py_BuildValue("(i)", slot_number));
     }
     void slot_window::on_use_slot() {
         slot *slot_value;
         if (picked_slot_pointer(&slot_value))
             if (slot_value->is_item) {
-                py_call_class_member_func(handler_, "OnUseSlot", Py_BuildValue("(i)", slot_value->slot_number));
+                py_call_class_member_func(handler_, "on_use_slot", Py_BuildValue("(i)", slot_value->slot_number));
             }
     }
 
@@ -684,7 +684,7 @@ namespace metin2::inline ui {
             return true;
 
         tool_tip_slot_number_ = slot_number;
-        py_call_class_member_func(handler_, "OnOverInItem", Py_BuildValue("(i)", slot_number));
+        py_call_class_member_func(handler_, "on_over_in_item", Py_BuildValue("(i)", slot_number));
 
         return true;
     }
@@ -694,12 +694,12 @@ namespace metin2::inline ui {
             return;
 
         tool_tip_slot_number_ = SLOT_NUMBER_NONE;
-        py_call_class_member_func(handler_, "OnOverOutItem", Py_BuildValue("()"));
+        py_call_class_member_func(handler_, "on_over_out_item", Py_BuildValue("()"));
     }
 
     void slot_window::on_pressed_slot_button(uint32_t type, uint32_t slot_number, bool is_left) {
         if (slot_button::SLOT_BUTTON_TYPE_PLUS == type) {
-            py_call_class_member_func(handler_, "OnPressedSlotButton", Py_BuildValue("(i)", slot_number));
+            py_call_class_member_func(handler_, "on_pressed_slot_button", Py_BuildValue("(i)", slot_number));
         } else if (slot_button::SLOT_BUTTON_TYPE_COVER == type) {
             if (is_left) {
                 on_mouse_left_button_down();

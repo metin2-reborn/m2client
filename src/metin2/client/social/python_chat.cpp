@@ -464,7 +464,7 @@ namespace metin2::inline client::inline social {
         auto itor = whisper_map_value_.begin();
         for (; itor != whisper_map_value_.end(); ++itor) {
             std::string name = itor->first;
-            py_call_class_member_func(ppy_object, "MakeWhisperButton", Py_BuildValue("(s)", name.c_str()));
+            py_call_class_member_func(ppy_object, "make_whisper_button", Py_BuildValue("(s)", name.c_str()));
         }
     }
 

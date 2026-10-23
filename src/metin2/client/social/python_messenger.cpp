@@ -12,21 +12,21 @@ namespace metin2::inline client::inline social {
         friend_name_map_value_.insert(key);
 
         if (messenger_handler_)
-            py_call_class_member_func(messenger_handler_, "OnLogin", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_FRIEND, key));
+            py_call_class_member_func(messenger_handler_, "on_login", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_FRIEND, key));
     }
 
     void python_messenger::on_friend_logout(const char *key) {
         friend_name_map_value_.insert(key);
 
         if (messenger_handler_)
-            py_call_class_member_func(messenger_handler_, "OnLogout", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_FRIEND, key));
+            py_call_class_member_func(messenger_handler_, "on_logout", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_FRIEND, key));
     }
 
     void python_messenger::set_mobile(const char *key, uint8_t state) {
         friend_name_map_value_.insert(key);
 
         if (messenger_handler_)
-            py_call_class_member_func(messenger_handler_, "OnMobile", Py_BuildValue("(isi)", MESSENGER_GRUOP_INDEX_FRIEND, key, state));
+            py_call_class_member_func(messenger_handler_, "on_mobile", Py_BuildValue("(isi)", MESSENGER_GRUOP_INDEX_FRIEND, key, state));
     }
 
     auto python_messenger::is_friend_by_key(const char *key) -> bool {
@@ -48,34 +48,34 @@ namespace metin2::inline client::inline social {
         guild_member_state_map_value_.erase(name);
 
         if (messenger_handler_)
-            py_call_class_member_func(messenger_handler_, "OnRemoveList", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, name));
+            py_call_class_member_func(messenger_handler_, "on_remove_list", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, name));
     }
 
     void python_messenger::remove_all_guild_member() {
         guild_member_state_map_value_.clear();
 
         if (messenger_handler_)
-            py_call_class_member_func(messenger_handler_, "OnRemoveAllList", Py_BuildValue("(i)", MESSENGER_GRUOP_INDEX_GUILD));
+            py_call_class_member_func(messenger_handler_, "on_remove_all_list", Py_BuildValue("(i)", MESSENGER_GRUOP_INDEX_GUILD));
     }
 
     void python_messenger::login_guild_member(const char *name) {
         guild_member_state_map_value_[name] = 1;
         if (messenger_handler_)
-            py_call_class_member_func(messenger_handler_, "OnLogin", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, name));
+            py_call_class_member_func(messenger_handler_, "on_login", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, name));
     }
 
     void python_messenger::logout_guild_member(const char *name) {
         guild_member_state_map_value_[name] = 0;
         if (messenger_handler_)
-            py_call_class_member_func(messenger_handler_, "OnLogout", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, name));
+            py_call_class_member_func(messenger_handler_, "on_logout", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, name));
     }
 
     void python_messenger::refresh_guild_member() {
         for (auto itor = guild_member_state_map_value_.begin(); itor != guild_member_state_map_value_.end(); ++itor) {
             if (itor->second)
-                py_call_class_member_func(messenger_handler_, "OnLogin", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, (itor->first).c_str()));
+                py_call_class_member_func(messenger_handler_, "on_login", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, (itor->first).c_str()));
             else
-                py_call_class_member_func(messenger_handler_, "OnLogout", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, (itor->first).c_str()));
+                py_call_class_member_func(messenger_handler_, "on_logout", Py_BuildValue("(is)", MESSENGER_GRUOP_INDEX_GUILD, (itor->first).c_str()));
         }
     }
 

@@ -106,7 +106,7 @@ namespace metin2::inline client::inline app {
 
         cursor_num_ = cursor_num;
 
-        py_call_class_member_func(mouse_handler_, "ChangeCursor", Py_BuildValue("(i)", cursor_num_));
+        py_call_class_member_func(mouse_handler_, "change_cursor", Py_BuildValue("(i)", cursor_num_));
 
         return true;
     }

@@ -150,7 +150,7 @@ namespace metin2::inline client::inline protocol {
         player.set_name(main_chr_packet.name_value);
         player.set_main_character_index(main_actor_vid());
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOAD], "LoadData", Py_BuildValue("(ii)", main_chr_packet.x, main_chr_packet.y));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOAD], "load_data", Py_BuildValue("(ii)", main_chr_packet.x, main_chr_packet.y));
 
         send_client_version_packet();
         return true;
@@ -174,7 +174,7 @@ namespace metin2::inline client::inline protocol {
 
         set_field_music_file_name(main_chr_packet.bgm_name);
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOAD], "LoadData", Py_BuildValue("(ii)", main_chr_packet.x, main_chr_packet.y));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOAD], "load_data", Py_BuildValue("(ii)", main_chr_packet.x, main_chr_packet.y));
 
         send_client_version_packet();
         return true;
@@ -198,7 +198,7 @@ namespace metin2::inline client::inline protocol {
 
         set_field_music_file_info(main_chr_packet.bgm_name, main_chr_packet.bgm_vol);
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOAD], "LoadData", Py_BuildValue("(ii)", main_chr_packet.x, main_chr_packet.y));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOAD], "load_data", Py_BuildValue("(ii)", main_chr_packet.x, main_chr_packet.y));
 
         send_client_version_packet();
         return true;
@@ -233,7 +233,7 @@ namespace metin2::inline client::inline protocol {
         for (uint32_t i = 0; i < POINT_MAX_NUM; ++i)
             get_python_player().set_status(i, points_packet.points[i]);
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "RefreshStatus", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_status", Py_BuildValue("()"));
         return true;
     }
 

@@ -438,7 +438,7 @@ namespace metin2::inline client::inline quest {
         case EVENT_TYPE_DONE:
             {
                 make_next_button(event_set_value, BUTTON_TYPE_DONE);
-                py_call_class_member_func(event_set_value->event_handler_value, "DoneEvent", Py_BuildValue("()"));
+                py_call_class_member_func(event_set_value->event_handler_value, "done_event", Py_BuildValue("()"));
                 event_set_value->adjust_line += 2;
                 break;
             }
@@ -457,19 +457,19 @@ namespace metin2::inline client::inline quest {
 
         case EVENT_TYPE_LEFT_IMAGE:
             {
-                py_call_class_member_func(event_set_value->event_handler_value, "OnLeftImage", Py_BuildValue("(s)", get_argument("src", script_command.arg_list_value)));
+                py_call_class_member_func(event_set_value->event_handler_value, "on_left_image", Py_BuildValue("(s)", get_argument("src", script_command.arg_list_value)));
                 break;
             }
 
         case EVENT_TYPE_TOP_IMAGE:
             {
-                py_call_class_member_func(event_set_value->event_handler_value, "OnTopImage", Py_BuildValue("(s)", get_argument("src", script_command.arg_list_value)));
+                py_call_class_member_func(event_set_value->event_handler_value, "on_top_image", Py_BuildValue("(s)", get_argument("src", script_command.arg_list_value)));
                 break;
             }
 
         case EVENT_TYPE_BACKGROUND_IMAGE:
             {
-                py_call_class_member_func(event_set_value->event_handler_value, "OnBackgroundImage", Py_BuildValue("(s)", get_argument("src", script_command.arg_list_value)));
+                py_call_class_member_func(event_set_value->event_handler_value, "on_background_image", Py_BuildValue("(s)", get_argument("src", script_command.arg_list_value)));
                 break;
             }
 
@@ -479,7 +479,7 @@ namespace metin2::inline client::inline quest {
                 int y = metin2::to_number<int>(get_argument("y", script_command.arg_list_value));
                 const char *src = get_argument("src", script_command.arg_list_value);
 
-                py_call_class_member_func(event_set_value->event_handler_value, "OnImage", Py_BuildValue("(iis)", x, y, src));
+                py_call_class_member_func(event_set_value->event_handler_value, "on_image", Py_BuildValue("(iis)", x, y, src));
                 break;
             }
 
@@ -494,9 +494,9 @@ namespace metin2::inline client::inline quest {
                 if (image_file.empty()) {
                     const char *image_type = get_argument("image_type", script_command.arg_list_value);
                     int item_index = metin2::to_number<int>(get_argument("idx", script_command.arg_list_value));
-                    py_call_class_member_func(event_set_value->event_handler_value, "OnInsertItemIcon", Py_BuildValue("(sissii)", image_type, item_index, title, desc, index, total));
+                    py_call_class_member_func(event_set_value->event_handler_value, "on_insert_item_icon", Py_BuildValue("(sissii)", image_type, item_index, title, desc, index, total));
                 } else {
-                    py_call_class_member_func(event_set_value->event_handler_value, "OnInsertImage", Py_BuildValue("(ssssii)", image_file.c_str(), title, title, desc, index, total));
+                    py_call_class_member_func(event_set_value->event_handler_value, "on_insert_image", Py_BuildValue("(ssssii)", image_file.c_str(), title, title, desc, index, total));
                 }
                 event_set_value->adjust_line += 2;
                 break;
@@ -520,7 +520,7 @@ namespace metin2::inline client::inline quest {
 
         case EVENT_TYPE_QUEST_BUTTON_CLOSE:
             {
-                py_call_class_member_func(interface_, "BINARY_ClearQuest",
+                py_call_class_member_func(interface_, "clear_quest",
                     Py_BuildValue("(i)", metin2::to_number<int>(get_argument("idx", script_command.arg_list_value))));
                 break;
             }
@@ -536,12 +536,12 @@ namespace metin2::inline client::inline quest {
                 // Workaround until the quest UI is reworked: the server sends this Korean quest name
                 // ("broken dragon soul stone?...."), which is shown highlighted.
                 if (!strcmp(name, "조각난 용혼석?....")) {
-                    py_call_class_member_func(interface_, "BINARY_RecvQuest", Py_BuildValue("(isss)", idx, name, "highlight", ""));
+                    py_call_class_member_func(interface_, "recv_quest_icon", Py_BuildValue("(isss)", idx, name, "highlight", ""));
                 } else {
                     if (file.empty()) {
-                        py_call_class_member_func(interface_, "RecvQuest", Py_BuildValue("(is)", idx, name));
+                        py_call_class_member_func(interface_, "recv_quest", Py_BuildValue("(is)", idx, name));
                     } else {
-                        py_call_class_member_func(interface_, "BINARY_RecvQuest",
+                        py_call_class_member_func(interface_, "recv_quest_icon",
                             Py_BuildValue("(isss)", idx, name, type.c_str(), file.c_str()));
                     }
                 }
@@ -588,25 +588,25 @@ namespace metin2::inline client::inline quest {
         case EVENT_TYPE_FADE_OUT:
             {
                 auto speed = (float)metin2::to_number<double>(get_argument("speed", script_command.arg_list_value));
-                py_call_class_member_func(event_set_value->event_handler_value, "FadeOut", Py_BuildValue("(f)", speed));
+                py_call_class_member_func(event_set_value->event_handler_value, "fade_out", Py_BuildValue("(f)", speed));
                 event_set_value->is_wait_flag = true;
                 break;
             }
         case EVENT_TYPE_FADE_IN:
             {
-                py_call_class_member_func(event_set_value->event_handler_value, "FadeIn", Py_BuildValue("(f)", metin2::to_number<double>(get_argument("speed", script_command.arg_list_value))));
+                py_call_class_member_func(event_set_value->event_handler_value, "fade_in", Py_BuildValue("(f)", metin2::to_number<double>(get_argument("speed", script_command.arg_list_value))));
                 event_set_value->is_wait_flag = true;
                 break;
             }
         case EVENT_TYPE_WHITE_OUT:
             {
-                py_call_class_member_func(event_set_value->event_handler_value, "WhiteOut", Py_BuildValue("(f)", metin2::to_number<double>(get_argument("speed", script_command.arg_list_value))));
+                py_call_class_member_func(event_set_value->event_handler_value, "white_out", Py_BuildValue("(f)", metin2::to_number<double>(get_argument("speed", script_command.arg_list_value))));
                 event_set_value->is_wait_flag = true;
                 break;
             }
         case EVENT_TYPE_WHITE_IN:
             {
-                py_call_class_member_func(event_set_value->event_handler_value, "WhiteIn", Py_BuildValue("(f)", metin2::to_number<double>(get_argument("speed", script_command.arg_list_value))));
+                py_call_class_member_func(event_set_value->event_handler_value, "white_in", Py_BuildValue("(f)", metin2::to_number<double>(get_argument("speed", script_command.arg_list_value))));
                 event_set_value->is_wait_flag = true;
                 break;
             }
@@ -624,7 +624,7 @@ namespace metin2::inline client::inline quest {
             }
         case EVENT_TYPE_TITLE_IMAGE:
             {
-                py_call_class_member_func(event_set_value->event_handler_value, "OnTitleImage", Py_BuildValue("(s)", get_argument("src", script_command.arg_list_value)));
+                py_call_class_member_func(event_set_value->event_handler_value, "on_title_image", Py_BuildValue("(s)", get_argument("src", script_command.arg_list_value)));
                 break;
             }
         case EVENT_TYPE_DUNGEON_RESULT:
@@ -639,7 +639,7 @@ namespace metin2::inline client::inline quest {
                 int total_time = metin2::to_number<int>(get_argument("total_time", script_command.arg_list_value));
                 int bonus_exp = metin2::to_number<int>(get_argument("bonus_exp", script_command.arg_list_value));
 
-                py_call_class_member_func(interface_, "ShowDungeonResult",
+                py_call_class_member_func(interface_, "show_dungeon_result",
                     Py_BuildValue("(iiiiiiiii)",
                         killstone_count,
                         killmob_count,
@@ -693,13 +693,13 @@ namespace metin2::inline client::inline quest {
             {
                 int width_value = metin2::to_number<int>(get_argument("width", script_command.arg_list_value));
                 int height = metin2::to_number<int>(get_argument("height", script_command.arg_list_value));
-                py_call_class_member_func(event_set_value->event_handler_value, "OnSize", Py_BuildValue("(ii)", width_value, height));
+                py_call_class_member_func(event_set_value->event_handler_value, "on_size", Py_BuildValue("(ii)", width_value, height));
                 break;
             }
         case EVENT_TYPE_INPUT:
             {
                 insert_line(*event_set_value);
-                py_call_class_member_func(event_set_value->event_handler_value, "OnInput", Py_BuildValue("()"));
+                py_call_class_member_func(event_set_value->event_handler_value, "on_input", Py_BuildValue("()"));
                 break;
             }
         case EVENT_TYPE_CONFIRM_WAIT:
@@ -726,13 +726,13 @@ namespace metin2::inline client::inline quest {
                     set->confirm_time_text_line = nullptr;
                     set->confirm_end_time = 0;
 
-                    py_call_class_member_func(set->event_handler_value, "CloseSelf", Py_BuildValue("()"));
+                    py_call_class_member_func(set->event_handler_value, "close_self", Py_BuildValue("()"));
                 }
                 break;
             }
         case EVENT_TYPE_SELECT_ITEM:
             {
-                py_call_class_member_func(interface_, "BINARY_OpenSelectItemWindow", Py_BuildValue("()"));
+                py_call_class_member_func(interface_, "open_select_item_window", Py_BuildValue("()"));
                 break;
             }
         }
@@ -809,20 +809,20 @@ namespace metin2::inline client::inline quest {
 
     void python_event_manager::make_next_button(event_set *event_set_value, int button_type_value) {
         add_space(*event_set_value, c_fLine_Temp + 5);
-        py_call_class_member_func(event_set_value->event_handler_value, "MakeNextButton", Py_BuildValue("(i)", button_type_value));
+        py_call_class_member_func(event_set_value->event_handler_value, "make_next_button", Py_BuildValue("(i)", button_type_value));
     }
 
     void python_event_manager::make_question(event_set *event_set_value, event_script::arg_list &argument_list) {
         if (argument_list.empty())
             return;
 
-        py_call_class_member_func(event_set_value->event_handler_value, "MakeQuestion", Py_BuildValue("(i)", argument_list.size()));
+        py_call_class_member_func(event_set_value->event_handler_value, "make_question", Py_BuildValue("(i)", argument_list.size()));
         event_set_value->answer = argument_list.size();
 
         int index = 0;
         for (auto itor = argument_list.begin(); itor != argument_list.end(); ++itor) {
             event_script::arg &argument = *itor;
-            py_call_class_member_func(event_set_value->event_handler_value, "AppendQuestion", Py_BuildValue("(si)", argument.value.c_str(), index));
+            py_call_class_member_func(event_set_value->event_handler_value, "append_question", Py_BuildValue("(si)", argument.value.c_str(), index));
             ++index;
         }
     }

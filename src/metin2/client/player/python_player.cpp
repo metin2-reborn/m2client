@@ -197,7 +197,7 @@ namespace metin2::inline client::inline player {
 
             set_status(POINT_STAMINA, uint32_t(current_stamina_));
 
-            py_call_class_member_func(ppy_game_window_, "RefreshStamina", Py_BuildValue("()"));
+            py_call_class_member_func(ppy_game_window_, "refresh_stamina", Py_BuildValue("()"));
         }
 
         update_auto_attack();
@@ -267,9 +267,9 @@ namespace metin2::inline client::inline player {
 
             if (area_id != in_guild_area_id_) {
                 if (0xffffffff != area_id) {
-                    py_call_class_member_func(ppy_game_window_, "BINARY_Guild_EnterGuildArea", Py_BuildValue("(i)", area_id));
+                    py_call_class_member_func(ppy_game_window_, "guild_enter_guild_area", Py_BuildValue("(i)", area_id));
                 } else {
-                    py_call_class_member_func(ppy_game_window_, "BINARY_Guild_ExitGuildArea", Py_BuildValue("(i)", area_id));
+                    py_call_class_member_func(ppy_game_window_, "guild_exit_guild_area", Py_BuildValue("(i)", area_id));
                 }
 
                 in_guild_area_id_ = area_id;
@@ -465,9 +465,9 @@ namespace metin2::inline client::inline player {
             if (main_instance && target_instance) {
                 if (!main_instance->is_targetable_instance(*target_instance)) {
                     set_target(0);
-                    py_call_class_member_func(ppy_game_window_, "CloseTargetBoard", Py_BuildValue("()"));
+                    py_call_class_member_func(ppy_game_window_, "close_target_board", Py_BuildValue("()"));
                 } else {
-                    py_call_class_member_func(ppy_game_window_, "RefreshTargetBoardByVID", Py_BuildValue("(i)", vid));
+                    py_call_class_member_func(ppy_game_window_, "refresh_target_board_by_vid", Py_BuildValue("(i)", vid));
                 }
             }
         }
@@ -478,7 +478,7 @@ namespace metin2::inline client::inline player {
     }
 
     void python_player::notify_change_pk_mode() {
-        py_call_class_member_func(ppy_game_window_, "OnChangePKMode", Py_BuildValue("()"));
+        py_call_class_member_func(ppy_game_window_, "on_change_pk_mode", Py_BuildValue("()"));
     }
 
     auto python_player::get_item_data(item_pos cell) const -> const packet_item * {
@@ -586,7 +586,7 @@ namespace metin2::inline client::inline player {
             return;
 
         (const_cast<packet_item *>(get_item_data(cell)))->count = count;
-        py_call_class_member_func(ppy_game_window_, "RefreshInventory", Py_BuildValue("()"));
+        py_call_class_member_func(ppy_game_window_, "refresh_inventory", Py_BuildValue("()"));
     }
 
     void python_player::set_item_metin_socket(item_pos cell, uint32_t metin_socket_index, uint32_t metin_number) {
@@ -620,7 +620,7 @@ namespace metin2::inline client::inline player {
         else
             player_status_value_.quick_page_index = quick_page_index;
 
-        py_call_class_member_func(ppy_game_window_, "RefreshInventory", Py_BuildValue("()"));
+        py_call_class_member_func(ppy_game_window_, "refresh_inventory", Py_BuildValue("()"));
     }
 
     auto python_player::local_quick_slot_index_to_global_quick_slot_index(uint32_t local_slot_index) -> uint32_t {
@@ -714,7 +714,7 @@ namespace metin2::inline client::inline player {
             }
         case SLOT_TYPE_EMOTION:
             {
-                py_call_class_member_func(ppy_game_window_, "BINARY_ActEmotion", Py_BuildValue("(i)", registered_item_pos));
+                py_call_class_member_func(ppy_game_window_, "act_emotion", Py_BuildValue("(i)", registered_item_pos));
                 break;
             }
         }
@@ -935,7 +935,7 @@ namespace metin2::inline client::inline player {
         }
 
         player_status_value_.skill[slot_index].active = true;
-        py_call_class_member_func(ppy_game_window_, "ActivateSkillSlot", Py_BuildValue("(i)", slot_index));
+        py_call_class_member_func(ppy_game_window_, "activate_skill_slot", Py_BuildValue("(i)", slot_index));
     }
 
     void python_player::deactivate_skill_slot(uint32_t slot_index) {
@@ -945,7 +945,7 @@ namespace metin2::inline client::inline player {
         }
 
         player_status_value_.skill[slot_index].active = false;
-        py_call_class_member_func(ppy_game_window_, "DeactivateSkillSlot", Py_BuildValue("(i)", slot_index));
+        py_call_class_member_func(ppy_game_window_, "deactivate_skill_slot", Py_BuildValue("(i)", slot_index));
     }
 
     auto python_player::is_skill_cool_time(uint32_t slot_index) -> bool {
@@ -1006,7 +1006,7 @@ namespace metin2::inline client::inline player {
                         return;
                     }
                     if (!is_party_member_by_name(owner_name) || item_data->is_anti_flag(item_data::ITEM_ANTIFLAG_DROP | item_data::ITEM_ANTIFLAG_GIVE)) {
-                        py_call_class_member_func(ppy_game_window_, "OnCannotPickItem", Py_BuildValue("()"));
+                        py_call_class_member_func(ppy_game_window_, "on_cannot_pick_item", Py_BuildValue("()"));
                         return;
                     }
                 }
@@ -1023,7 +1023,7 @@ namespace metin2::inline client::inline player {
             if (inst_main->is_holding_pick_axe())
                 if (inst_main->is_mounting_horse())
                     if (inst_victim.is_resource()) {
-                        py_call_class_member_func(ppy_game_window_, "OnCannotMining", Py_BuildValue("()"));
+                        py_call_class_member_func(ppy_game_window_, "on_cannot_mining", Py_BuildValue("()"));
                         return;
                     }
 
@@ -1044,7 +1044,7 @@ namespace metin2::inline client::inline player {
     void python_player::act_emotion(uint32_t emotion_id) {
         instance_base *inst_target = alive_target_instance_ptr();
         if (!inst_target) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotShotError", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_shot_error", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
             return;
         }
 

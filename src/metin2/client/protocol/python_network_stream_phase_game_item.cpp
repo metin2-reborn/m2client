@@ -96,7 +96,7 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(safebox_wrong_password), &safebox_wrong_password))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OnSafeBoxError", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_safe_box_error", Py_BuildValue("()"));
 
         return true;
     }
@@ -107,7 +107,7 @@ namespace metin2::inline client::inline protocol {
             return false;
 
         get_python_safe_box().open_safe_box(safe_box_size.size);
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OpenSafeboxWindow", Py_BuildValue("(i)", safe_box_size.size));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "open_safebox_window", Py_BuildValue("(i)", safe_box_size.size));
 
         return true;
     }
@@ -131,7 +131,7 @@ namespace metin2::inline client::inline protocol {
             return false;
 
         get_python_safe_box().open_mall(mall_open.size);
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "OpenMallWindow", Py_BuildValue("(i)", mall_open.size));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "open_mall_window", Py_BuildValue("(i)", mall_open.size));
 
         return true;
     }
@@ -213,7 +213,7 @@ namespace metin2::inline client::inline protocol {
         player.set_item_data(packet_item_set.cell, item_data);
 
         if (packet_item_set.highlight)
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_Highlight_Item", Py_BuildValue("(ii)", packet_item_set.cell.window_type, packet_item_set.cell.cell));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "highlight_item", Py_BuildValue("(ii)", packet_item_set.cell.window_type, packet_item_set.cell.cell));
 
         refresh_inventory_window();
         return true;
@@ -409,12 +409,12 @@ namespace metin2::inline client::inline protocol {
 
         if (is_equip_item_in_slot_impl(pos)) {
             if (get_python_exchange().is_trading()) {
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_AppendNotifyMessage", Py_BuildValue("(s)", "CANNOT_EQUIP_EXCHANGE"));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "append_notify_message", Py_BuildValue("(s)", "CANNOT_EQUIP_EXCHANGE"));
                 return true;
             }
 
             if (get_python_shop().is_open()) {
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_AppendNotifyMessage", Py_BuildValue("(s)", "CANNOT_EQUIP_SHOP"));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "append_notify_message", Py_BuildValue("(s)", "CANNOT_EQUIP_SHOP"));
                 return true;
             }
 
@@ -536,14 +536,14 @@ namespace metin2::inline client::inline protocol {
         if (is_equip_item_in_slot_impl(pos)) {
             if (get_python_exchange().is_trading()) {
                 if (pos.is_equip_cell() || change_pos.is_equip_cell()) {
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_AppendNotifyMessage", Py_BuildValue("(s)", "CANNOT_EQUIP_EXCHANGE"));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "append_notify_message", Py_BuildValue("(s)", "CANNOT_EQUIP_EXCHANGE"));
                     return true;
                 }
             }
 
             if (get_python_shop().is_open()) {
                 if (pos.is_equip_cell() || change_pos.is_equip_cell()) {
-                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_AppendNotifyMessage", Py_BuildValue("(s)", "CANNOT_EQUIP_SHOP"));
+                    py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "append_notify_message", Py_BuildValue("(s)", "CANNOT_EQUIP_SHOP"));
                     return true;
                 }
             }
@@ -778,7 +778,7 @@ namespace metin2::inline client::inline protocol {
 
         switch (dragon_soul.sub_type) {
         case DS_SUB_HEADER_OPEN:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_DragonSoulRefineWindow_Open", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "dragon_soul_refine_window_open", Py_BuildValue("()"));
             break;
         case DS_SUB_HEADER_REFINE_FAIL:
         case DS_SUB_HEADER_REFINE_FAIL_MAX_REFINE:
@@ -786,10 +786,10 @@ namespace metin2::inline client::inline protocol {
         case DS_SUB_HEADER_REFINE_FAIL_NOT_ENOUGH_MONEY:
         case DS_SUB_HEADER_REFINE_FAIL_NOT_ENOUGH_MATERIAL:
         case DS_SUB_HEADER_REFINE_FAIL_TOO_MUCH_MATERIAL:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_DragonSoulRefineWindow_RefineFail", Py_BuildValue("(iii)", dragon_soul.sub_type, dragon_soul.pos.window_type, dragon_soul.pos.cell));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "dragon_soul_refine_window_refine_fail", Py_BuildValue("(iii)", dragon_soul.sub_type, dragon_soul.pos.window_type, dragon_soul.pos.cell));
             break;
         case DS_SUB_HEADER_REFINE_SUCCEED:
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "BINARY_DragonSoulRefineWindow_RefineSucceed",
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "dragon_soul_refine_window_refine_succeed",
                 Py_BuildValue("(ii)", dragon_soul.pos.window_type, dragon_soul.pos.cell));
             break;
         }

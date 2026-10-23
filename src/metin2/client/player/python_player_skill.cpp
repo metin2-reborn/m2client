@@ -17,11 +17,11 @@ namespace metin2::inline world::inline actors {
 namespace metin2::inline client::inline player {
 
     void python_player::clear_affects() {
-        py_call_class_member_func(ppy_game_window_, "ClearAffects", Py_BuildValue("()"));
+        py_call_class_member_func(ppy_game_window_, "clear_affects", Py_BuildValue("()"));
     }
 
     void python_player::set_affect(uint32_t affect) {
-        py_call_class_member_func(ppy_game_window_, "SetAffect", Py_BuildValue("(i)", affect));
+        py_call_class_member_func(ppy_game_window_, "set_affect", Py_BuildValue("(i)", affect));
 
         uint32_t skill_index_value;
         if (!affect_index_to_skill_index(affect, &skill_index_value))
@@ -43,7 +43,7 @@ namespace metin2::inline client::inline player {
 
     void python_player::reset_affect(uint32_t affect) {
         // Forward every affect, or non-skill effects do not disappear.
-        py_call_class_member_func(ppy_game_window_, "ResetAffect", Py_BuildValue("(i)", affect));
+        py_call_class_member_func(ppy_game_window_, "reset_affect", Py_BuildValue("(i)", affect));
 
         uint32_t skill_index_value;
         if (!affect_index_to_skill_index(affect, &skill_index_value))
@@ -90,14 +90,14 @@ namespace metin2::inline client::inline player {
 
         if (!is_right_button_skill_mode()) {
             if (!is_target()) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
                 return;
             }
 
             click_skill_slot(slot_index);
         } else {
             dwcur_skill_slot_index_ = slot_index;
-            py_call_class_member_func(ppy_game_window_, "ChangeCurrentSkill", Py_BuildValue("(i)", slot_index));
+            py_call_class_member_func(ppy_game_window_, "change_current_skill", Py_BuildValue("(i)", slot_index));
         }
     }
 
@@ -146,7 +146,7 @@ namespace metin2::inline client::inline player {
             use_skill(slot_index);
         } else {
             dwcur_skill_slot_index_ = slot_index;
-            py_call_class_member_func(ppy_game_window_, "ChangeCurrentSkill", Py_BuildValue("(i)", slot_index));
+            py_call_class_member_func(ppy_game_window_, "change_current_skill", Py_BuildValue("(i)", slot_index));
         }
     }
 
@@ -166,21 +166,21 @@ namespace metin2::inline client::inline player {
 
         if (inst_main->is_mounting_horse()) {
             if (!skill_data->is_horse_skill()) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NOT_HORSE_SKILL"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NOT_HORSE_SKILL"));
                 return false;
             }
         }
 
         if (skill_data->is_horse_skill()) {
             if (!inst_main->is_mounting_horse()) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "HAVE_TO_RIDE"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "HAVE_TO_RIDE"));
                 return false;
             }
         }
 
         if (skill_data->is_attack_skill()) {
             if (inst_main->is_in_safe()) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "IN_SAFE"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "IN_SAFE"));
 
                 return false;
             }
@@ -193,7 +193,7 @@ namespace metin2::inline client::inline player {
         // Assassin only: item 27995 is the empty bottle.
         if (skill_data->is_need_empty_bottle()) {
             if (!has_item(27995)) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NEED_EMPTY_BOTTLE"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NEED_EMPTY_BOTTLE"));
                 return false;
             }
         }
@@ -201,25 +201,25 @@ namespace metin2::inline client::inline player {
         // Assassin only: item 27996 is the poison bottle.
         if (skill_data->is_need_poison_bottle()) {
             if (!has_item(27996)) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NEED_POISON_BOTTLE"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NEED_POISON_BOTTLE"));
                 return false;
             }
         }
 
         if (inst_main->is_fishing_mode()) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "REMOVE_FISHING_ROD"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "REMOVE_FISHING_ROD"));
             return false;
         }
 
         if (sys_is_level_limit_) {
             if (skill_inst.level_value <= 0) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NOT_YET_LEARN"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NOT_YET_LEARN"));
                 return false;
             }
         }
 
         if (!skill_data->can_use_weapon_type(inst_main->weapon_type())) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NOT_MATCHABLE_WEAPON"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NOT_MATCHABLE_WEAPON"));
             return false;
         }
 
@@ -237,23 +237,23 @@ namespace metin2::inline client::inline player {
         if (check_dash_affect(*inst_main)) {
             if (!skill_data->is_charge_skill()) {
                 if (check_rest_skill_cool_time(slot_index)) {
-                    py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "WAIT_COOLTIME"));
+                    py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "WAIT_COOLTIME"));
                     return false;
                 }
             }
         } else {
             if (check_rest_skill_cool_time(slot_index)) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "WAIT_COOLTIME"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "WAIT_COOLTIME"));
                 return false;
             }
 
             if (check_short_life(skill_inst, *skill_data)) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NOT_ENOUGH_HP"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NOT_ENOUGH_HP"));
                 return false;
             }
 
             if (check_short_mana(skill_inst, *skill_data)) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NOT_ENOUGH_SP"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NOT_ENOUGH_SP"));
                 return false;
             }
         }
@@ -366,7 +366,7 @@ namespace metin2::inline client::inline player {
 
         background_interface &bg = get_background_interface();
         if (bg.is_block(p_pos_target.x, p_pos_target.y)) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "CANNOT_APPROACH"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "CANNOT_APPROACH"));
             return false;
         }
 
@@ -459,7 +459,7 @@ namespace metin2::inline client::inline player {
                 if (skill_data_value->is_only_for_alliance()) {
                     if (inst_main == inst_target) {
                         if (!skill_data_value->can_use_for_me()) {
-                            py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "CANNOT_USE_SELF"));
+                            py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "CANNOT_USE_SELF"));
                             return false;
                         }
                     } else if (!inst_main->is_attackable_instance(*inst_target) && inst_target->is_pc()) {
@@ -477,13 +477,13 @@ namespace metin2::inline client::inline player {
                             inst_target = inst_main;
                             metin2::log::debug("Skill for allies targeted an enemy, retargeted at the player");
                         } else {
-                            py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "ONLY_FOR_ALLIANCE"));
+                            py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "ONLY_FOR_ALLIANCE"));
                             return false;
                         }
                     }
                 } else {
                     if (inst_target->is_in_safe()) {
-                        py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "CANNOT_ATTACK_ENEMY_IN_SAFE_AREA"));
+                        py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "CANNOT_ATTACK_ENEMY_IN_SAFE_AREA"));
                         return false;
                     }
 
@@ -491,7 +491,7 @@ namespace metin2::inline client::inline player {
                         if (!process_enemy_skill_target_range(*inst_main, *inst_target, *skill_data_value, slot_index))
                             return false;
                     } else {
-                        py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "CANNOT_ATTACK"));
+                        py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "CANNOT_ATTACK"));
                         return false;
                     }
                 }
@@ -512,7 +512,7 @@ namespace metin2::inline client::inline player {
                         if (!process_enemy_skill_target_range(*inst_main, *inst_target, *skill_data_value, slot_index))
                             return false;
                     } else {
-                        py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
+                        py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
                         return false;
                     }
                 }
@@ -522,10 +522,10 @@ namespace metin2::inline client::inline player {
                     inst_main->set_fly_target_instance(*inst_main);
                     metin2::log::debug("No target, skill used on the player");
                 } else if (skill_data_value->is_need_corpse()) {
-                    py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "ONLY_FOR_CORPSE"));
+                    py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "ONLY_FOR_CORPSE"));
                     return false;
                 } else {
-                    py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
+                    py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NEED_TARGET"));
                     return false;
                 }
             }
@@ -669,7 +669,7 @@ namespace metin2::inline client::inline player {
 
         skill_inst.cool_time = skill_inst.cool_time * spd / 100;
 
-        py_call_class_member_func(ppy_game_window_, "RunUseSkillEvent", Py_BuildValue("(if)", skill_slot_index, skill_inst.cool_time));
+        py_call_class_member_func(ppy_game_window_, "run_use_skill_event", Py_BuildValue("(if)", skill_slot_index, skill_inst.cool_time));
     }
 
     auto python_player::has_enough_arrow() -> bool {
@@ -680,7 +680,7 @@ namespace metin2::inline client::inline player {
                     return true;
                 }
 
-        py_call_class_member_func(ppy_game_window_, "OnCannotShotError", Py_BuildValue("(is)", main_character_index(), "EMPTY_ARROW"));
+        py_call_class_member_func(ppy_game_window_, "on_cannot_shot_error", Py_BuildValue("(is)", main_character_index(), "EMPTY_ARROW"));
         return false;
     }
 
@@ -728,13 +728,13 @@ namespace metin2::inline client::inline player {
             return;
 
         if (check_rest_skill_cool_time(skill_slot_index)) {
-            py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "WAIT_COOLTIME"));
+            py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "WAIT_COOLTIME"));
             return;
         }
 
         if (skill_data->is_only_for_guild_war()) {
             if (!get_python_guild().is_doing_guild_war()) {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "ONLY_FOR_GUILD_WAR"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "ONLY_FOR_GUILD_WAR"));
                 return;
             }
         }
@@ -785,7 +785,7 @@ namespace metin2::inline client::inline player {
             if (inst_main->is_fishing_mode()) {
                 new_fishing();
             } else {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "EQUIP_FISHING_ROD"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "EQUIP_FISHING_ROD"));
             }
             return true;
         }
@@ -799,7 +799,7 @@ namespace metin2::inline client::inline player {
             if (level > 0) {
                 get_python_network_stream().send_use_skill_packet(skill_index);
             } else {
-                py_call_class_member_func(ppy_game_window_, "OnCannotUseSkill", Py_BuildValue("(is)", main_character_index(), "NOT_YET_LEARN"));
+                py_call_class_member_func(ppy_game_window_, "on_cannot_use_skill", Py_BuildValue("(is)", main_character_index(), "NOT_YET_LEARN"));
             }
 
             return true;

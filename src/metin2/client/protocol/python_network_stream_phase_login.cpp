@@ -84,7 +84,7 @@ namespace metin2::inline client::inline protocol {
             account_connector &account_connector = get_account_connector();
             account_connector.clear_login_info();
 
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOGIN], "OnLoginStart", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOGIN], "on_login_start", Py_BuildValue("()"));
 
             clear_select_character_data();
         }
@@ -117,7 +117,7 @@ namespace metin2::inline client::inline protocol {
 
         if (direct_enter_mode_is_set()) {
         } else {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "Refresh", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "refresh", Py_BuildValue("()"));
         }
 
         return true;
@@ -127,7 +127,7 @@ namespace metin2::inline client::inline protocol {
         if (direct_enter_mode_is_set()) {
             close_phase();
         } else {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOGIN], "OnConnectFailure", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOGIN], "on_connect_failure", Py_BuildValue("()"));
         }
     }
 
@@ -136,7 +136,7 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(packet_gc_login_failure), &packet_failure))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOGIN], "OnLoginFailure", Py_BuildValue("(s)", packet_string(packet_failure.status).c_str()));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOGIN], "on_login_failure", Py_BuildValue("(s)", packet_string(packet_failure.status).c_str()));
         return true;
     }
 

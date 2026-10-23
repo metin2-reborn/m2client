@@ -20,12 +20,12 @@ namespace metin2::inline client::inline protocol {
         phase_leave_func_.set(this, &python_network_stream::leave_select_phase);
 
         if (direct_enter_mode_is_set()) {
-            py_call_class_member_func(handler_, "SetLoadingPhase", Py_BuildValue("()"));
+            py_call_class_member_func(handler_, "set_loading_phase", Py_BuildValue("()"));
         } else {
             if (is_selected_empire())
-                py_call_class_member_func(handler_, "SetSelectCharacterPhase", Py_BuildValue("()"));
+                py_call_class_member_func(handler_, "set_select_character_phase", Py_BuildValue("()"));
             else
-                py_call_class_member_func(handler_, "SetSelectEmpirePhase", Py_BuildValue("()"));
+                py_call_class_member_func(handler_, "set_select_empire_phase", Py_BuildValue("()"));
         }
     }
 
@@ -201,7 +201,7 @@ namespace metin2::inline client::inline protocol {
         }
 
         simple_player_infos_[create_success_packet.account_character_slot] = create_success_packet.simple_player_infomation;
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_CREATE], "OnCreateSuccess", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_CREATE], "on_create_success", Py_BuildValue("()"));
         return true;
     }
 
@@ -211,8 +211,8 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(packet_gc_create_failure), &packet))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_CREATE], "OnCreateFailure", Py_BuildValue("(i)", packet.type_value));
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "OnCreateFailure", Py_BuildValue("(i)", packet.type_value));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_CREATE], "on_create_failure", Py_BuildValue("(i)", packet.type_value));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "on_create_failure", Py_BuildValue("(i)", packet.type_value));
         return true;
     }
 
@@ -228,7 +228,7 @@ namespace metin2::inline client::inline protocol {
         guild_ids_[packet.account_index] = 0;
         guild_name_[packet.account_index] = "";
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "OnDeleteSuccess", Py_BuildValue("(i)", packet.account_index));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "on_delete_success", Py_BuildValue("(i)", packet.account_index));
         return true;
     }
 
@@ -237,7 +237,7 @@ namespace metin2::inline client::inline protocol {
         if (!recv(sizeof(packet_gc_blank), &packet_blank))
             return false;
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "OnDeleteFailure", Py_BuildValue("()"));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "on_delete_failure", Py_BuildValue("()"));
         return true;
     }
 
@@ -252,12 +252,12 @@ namespace metin2::inline client::inline protocol {
                 simple_player_infos_[i].change_name = false;
                 snprintf(simple_player_infos_[i].name_value, sizeof(simple_player_infos_[i].name_value), "%s", name.c_str());
 
-                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "OnChangeName", Py_BuildValue("(is)", i, name.c_str()));
+                py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "on_change_name", Py_BuildValue("(is)", i, name.c_str()));
                 return true;
             }
         }
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "OnCreateFailure", Py_BuildValue("(i)", 100));
+        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_SELECT], "on_create_failure", Py_BuildValue("(i)", 100));
         return true;
     }
 }

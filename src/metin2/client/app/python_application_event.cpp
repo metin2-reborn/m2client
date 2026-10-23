@@ -145,10 +145,10 @@ namespace metin2::inline client::inline app {
 
         widgets::get_window_manager().mouse_position(lx, ly);
 
-        py_call_class_member_func(mouse_handler_, "Update", Py_BuildValue("(ii)", lx, ly));
+        py_call_class_member_func(mouse_handler_, "update", Py_BuildValue("(ii)", lx, ly));
     }
 
     void python_application::on_mouse_render() {
-        py_call_class_member_func(mouse_handler_, "Render", Py_BuildValue("()"));
+        py_call_class_member_func(mouse_handler_, "render", Py_BuildValue("()"));
     }
 }

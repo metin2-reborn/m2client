@@ -77,7 +77,7 @@ namespace metin2::inline client::inline protocol {
         if (direct_enter_mode_is_set()) {
             // Direct enter mode skips the login window.
         } else {
-            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOGIN], "OnHandShake", Py_BuildValue("()"));
+            py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_LOGIN], "on_hand_shake", Py_BuildValue("()"));
         }
     }
 
