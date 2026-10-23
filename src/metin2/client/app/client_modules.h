@@ -3,7 +3,6 @@
 namespace metin2::inline client::inline app {
     void init_app_module();
     void init_settings_module();
-    void init_ime_module();
     void init_sound_module();
     void init_effects_module();
     void init_files_module();

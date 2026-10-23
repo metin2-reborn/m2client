@@ -23,8 +23,6 @@ namespace metin2::inline window {
 
     void push_key(int vk, bool down) {
         push_event(key_event{vk, down});
-        if (down && (vk == 0x08 || vk == 0x09 || vk == 0x0D || vk == 0x1B))
-            push_event(char_event{static_cast<char32_t>(vk)});
     }
 
     void request_quit() {

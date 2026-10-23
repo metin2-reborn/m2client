@@ -44,10 +44,6 @@ namespace metin2::inline client::inline app {
         virtual void set_event_camera(const camera_setting &camera_setting_value) = 0;
         virtual void blend_event_camera(const camera_setting &camera_setting_value, float blend_time) = 0;
         virtual void set_default_camera() = 0;
-
-        virtual void run_ime_update() = 0;
-        virtual void run_ime_tab_event() = 0;
-        virtual void run_ime_return_event() = 0;
     };
 
     auto get_abstract_application() -> abstract_application &;

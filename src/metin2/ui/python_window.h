@@ -135,6 +135,11 @@ namespace metin2::inline ui {
             virtual auto on_ime_tab_event() -> bool;
             virtual auto on_ime_return_event() -> bool;
             virtual auto on_ime_key_down_event(int ikey) -> bool;
+            // A typed character for the focused window; only edit lines take it.
+            virtual auto on_char(char32_t codepoint) -> bool { return false; }
+
+            // Whether `ancestor` is this window or one of its parents.
+            auto is_within(ui_window *ancestor) -> bool;
 
             virtual auto on_mouse_left_button_down() -> bool;
             virtual auto on_mouse_left_button_up() -> bool;
@@ -259,20 +264,15 @@ namespace metin2::inline ui {
 
             ~text_line() override;
 
-            void set_max(int max_value);
             void set_horizontal_align(int type);
             void set_vertical_align(int type);
-            void set_secret(bool flag);
+            virtual void set_secret(bool flag);
             void set_outline(bool flag);
             void set_feather(bool flag);
-            void set_multi_line(bool flag);
+            virtual void set_multi_line(bool flag);
             void set_font_name(const char *font_name);
             void set_font_color(uint32_t color);
             void set_limit_width(float width_value);
-
-            void show_cursor();
-            void hide_cursor();
-            auto cursor_position() -> int;
 
             void set_text(const char *text);
             auto get_text() -> const char *;

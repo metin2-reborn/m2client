@@ -1099,6 +1099,5 @@ namespace metin2::inline client::inline app {
         PyModule_AddIntConstant(module, "CAMERA_TO_POSITIVE", python_application::CAMERA_TO_POSITIVE);
         PyModule_AddIntConstant(module, "CAMERA_TO_NEGATIVE", python_application::CAMERA_TO_NEGITIVE);
         PyModule_AddIntConstant(module, "CAMERA_STOP", python_application::CAMERA_STOP);
-
     }
 }

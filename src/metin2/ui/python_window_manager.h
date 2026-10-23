@@ -84,7 +84,10 @@ namespace metin2::inline ui {
             void run_mouse_middle_button_down(int32_t x, int32_t y);
             void run_mouse_middle_button_up(int32_t x, int32_t y);
 
-            void run_ime_update();
+            // The window that receives typed text: the active window while it renders and, under a
+            // lock window, lies inside it; nullptr otherwise.
+            auto edit_target() -> ui_window *;
+            void run_char(char32_t codepoint);
             void run_ime_tab_event();
             void run_ime_return_event();
             void run_ime_key_down(int vkey);

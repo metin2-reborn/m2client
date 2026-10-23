@@ -35,6 +35,7 @@ namespace metin2::inline core {
         auto to_wide(std::string_view s) -> std::wstring;
         auto to_u32(std::string_view s) -> std::u32string;
         auto from_wide(std::wstring_view w) -> std::string;
+        auto from_u32(std::u32string_view s) -> std::string;
 
         // Number of code points.
         auto length(std::string_view s) noexcept -> std::size_t;

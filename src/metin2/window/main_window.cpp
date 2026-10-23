@@ -2,6 +2,7 @@
 
 #include <metin2/dev/automation.h>
 #include <metin2/input/keymap.h>
+#include <metin2/input/keys.h>
 
 #include <raylib.h>
 // raylib keeps its GLFW window; the pointer lock and the custom cursors need GLFW calls.
@@ -223,6 +224,11 @@ namespace metin2::inline window {
         return text ? text : "";
     }
 
+    void set_clipboard_text(std::string_view text) {
+        if (created)
+            SetClipboardText(std::string(text).c_str());
+    }
+
     auto frame_count() -> uint64_t {
         return frames;
     }
@@ -308,9 +314,11 @@ namespace metin2::inline window {
                 continue;
             }
             if (now >= it->next_repeat) {
-                // Printable keys repeat through their characters instead.
-                if (it->vk < 0x30 || (it->vk >= 0x5B && it->vk < 0x60) || it->vk >= 0x70)
-                    push_key(it->vk, true);
+                // Printable keys repeat through their characters instead; Enter, Tab and Escape act once.
+                const int vk = it->vk;
+                const bool editing_key = vk < 0x30 && vk != VK_RETURN && vk != VK_TAB && vk != VK_ESCAPE;
+                if (editing_key || (vk >= 0x5B && vk < 0x60) || vk >= 0x70)
+                    push_key(vk, true);
                 it->next_repeat = now + 0.033;
             }
             ++it;

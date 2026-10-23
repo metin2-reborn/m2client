@@ -3,7 +3,6 @@
 #include <metin2/core/utf8.h>
 #include <metin2/core/utils.h>
 #include <metin2/gpu/types.h>
-#include <metin2/input/ime.h>
 #include <metin2/log/log.h>
 #include "state_manager.h"
 #include "text_tag.h"
@@ -51,15 +50,15 @@ namespace metin2::inline graphics {
         return 0;
     }
 
-    void graphic_text_instance::text_pos(uint32_t index, float *x, float *y) {
-        index = static_cast<uint32_t>(std::min<size_t>(index, char_info_vector_.size()));
+    void graphic_text_instance::character_position(std::size_t index, float *x, float *y) {
+        index = std::min(index, char_info_vector_.size());
 
         float sx = 0;
         float sy = 0;
         float font_max_height = 0;
 
-        for (uint32_t i = 0; i < index; ++i) {
-            if (sx + float(char_info_vector_[i]->width) > limit_width_) {
+        for (std::size_t i = 0; i < index; ++i) {
+            if (is_multi_line_ && sx + float(char_info_vector_[i]->width) > limit_width_) {
                 sx = 0;
                 sy += font_max_height;
             }
@@ -70,6 +69,57 @@ namespace metin2::inline graphics {
 
         *x = sx;
         *y = sy;
+    }
+
+    auto graphic_text_instance::character_x(std::size_t index) -> float {
+        float x = 0.0f, y = 0.0f;
+        character_position(index, &x, &y);
+        return x;
+    }
+
+    auto graphic_text_instance::character_index_at(float x, float y) -> std::size_t {
+        float sx = 0;
+        float sy = 0;
+        float font_max_height = 0;
+
+        for (std::size_t i = 0; i < char_info_vector_.size(); ++i) {
+            const auto width = float(char_info_vector_[i]->width);
+            const auto advance = float(char_info_vector_[i]->advance);
+            if (is_multi_line_ && sx + width > limit_width_) {
+                if (y < sy + font_max_height)
+                    return i; // the point is right of this row
+                sx = 0;
+                sy += font_max_height;
+            }
+            font_max_height = std::max(float(char_info_vector_[i]->height), font_max_height);
+            if (y < sy + font_max_height && x < sx + advance / 2.0f)
+                return i;
+            sx += advance;
+        }
+        return char_info_vector_.size();
+    }
+
+    void graphic_text_instance::aligned_origin(float *x, float *y) {
+        *x = position_value_.x;
+        *y = position_value_.y + 1.0f;
+
+        switch (h_align_) {
+        case HORIZONTAL_ALIGN_RIGHT:
+            *x -= text_width_;
+            break;
+        case HORIZONTAL_ALIGN_CENTER:
+            *x -= float(text_width_ / 2);
+            break;
+        }
+
+        switch (v_align_) {
+        case VERTICAL_ALIGN_BOTTOM:
+            *y -= text_height_;
+            break;
+        case VERTICAL_ALIGN_CENTER:
+            *y -= float(text_height_) / 2.0f;
+            break;
+        }
     }
 
     void graphic_text_instance::update() {
@@ -167,28 +217,11 @@ namespace metin2::inline graphics {
         if (!font_texture)
             return;
 
-        float stan_x = position_value_.x;
-        float stan_y = position_value_.y + 1.0f;
-
-        switch (h_align_) {
-        case HORIZONTAL_ALIGN_RIGHT:
-            stan_x -= text_width_;
-            break;
-
-        case HORIZONTAL_ALIGN_CENTER:
-            stan_x -= float(text_width_ / 2);
-            break;
-        }
-
-        switch (v_align_) {
-        case VERTICAL_ALIGN_BOTTOM:
-            stan_y -= text_height_;
-            break;
-
-        case VERTICAL_ALIGN_CENTER:
-            stan_y -= float(text_height_) / 2.0f;
-            break;
-        }
+        float stan_x;
+        float stan_y;
+        aligned_origin(&stan_x, &stan_y);
+        const float visible_left = stan_x; // glyphs scrolled out to the left of the aligned origin are skipped
+        stan_x -= scroll_x_;
 
         STATEMANAGER.save_render_state(gpu::state::SRC_BLEND, gpu::blend::SRC_ALPHA);
         STATEMANAGER.save_render_state(gpu::state::DEST_BLEND, gpu::blend::INV_SRC_ALPHA);
@@ -240,6 +273,11 @@ namespace metin2::inline graphics {
                     font_width = float(cur_char_info->width);
                     font_height = float(cur_char_info->height);
                     font_advance = float(cur_char_info->advance);
+
+                    if (cur_x < visible_left) {
+                        cur_x += font_advance;
+                        continue;
+                    }
 
                     // Text is clipped (or wrapped) at limit_width_.
                     if ((cur_x + font_width) - position_value_.x > limit_width_) {
@@ -337,6 +375,11 @@ namespace metin2::inline graphics {
                 font_max_height = std::max<float>(font_height, cur_char_info->height);
                 font_advance = float(cur_char_info->advance);
 
+                if (cur_x < visible_left) {
+                    cur_x += font_advance;
+                    continue;
+                }
+
                 // Text is clipped (or wrapped) at limit_width_.
                 if ((cur_x + font_width) - position_value_.x > limit_width_) {
                     if (is_multi_line_) {
@@ -391,47 +434,6 @@ namespace metin2::inline graphics {
             }
         }
 
-        if (is_cursor_) {
-            float sx, sy, ex, ey;
-            diffuse diffuse;
-
-            text_pos(cime::cur_pos(), &sx, &sy);
-
-            diffuse = 0xffffffff;
-            ex = sx + 2;
-
-            sx += position_value_.x;
-            sy += position_value_.y;
-            ex += position_value_.x;
-            ey = sy + text_height_;
-
-            switch (v_align_) {
-            case VERTICAL_ALIGN_BOTTOM:
-                sy -= text_height_;
-                break;
-
-            case VERTICAL_ALIGN_CENTER:
-                sy -= float(text_height_) / 2.0f;
-                break;
-            }
-
-            pdt_vertex vertices[4];
-            vertices[0].diffuse_value = diffuse;
-            vertices[1].diffuse_value = diffuse;
-            vertices[2].diffuse_value = diffuse;
-            vertices[3].diffuse_value = diffuse;
-            vertices[0].position_value = position(sx, sy, 0.0f);
-            vertices[1].position_value = position(ex, sy, 0.0f);
-            vertices[2].position_value = position(sx, ey, 0.0f);
-            vertices[3].position_value = position(ex, ey, 0.0f);
-
-            STATEMANAGER.set_texture(0, nullptr);
-
-            graphic_base::set_default_index_buffer(graphic_base::DEFAULT_IB_FILL_RECT);
-            if (graphic_base::set_pdt_stream(vertices, 4))
-                STATEMANAGER.draw_indexed_primitive(gpu::primitive::TRIANGLE_LIST, 0, 4, 0, 2);
-        }
-
         STATEMANAGER.restore_render_state(gpu::state::SRC_BLEND);
         STATEMANAGER.restore_render_state(gpu::state::DEST_BLEND);
 
@@ -471,14 +473,6 @@ namespace metin2::inline graphics {
     void graphic_text_instance::delete_value(graphic_text_instance *inst) {
         inst->destroy();
         pool_value.free(inst);
-    }
-
-    void graphic_text_instance::show_cursor() {
-        is_cursor_ = true;
-    }
-
-    void graphic_text_instance::hide_cursor() {
-        is_cursor_ = false;
     }
 
     void graphic_text_instance::set_color(uint32_t color) {
@@ -521,10 +515,6 @@ namespace metin2::inline graphics {
 
     void graphic_text_instance::set_vertical_align(int v_align) {
         v_align_ = v_align;
-    }
-
-    void graphic_text_instance::set_max(int max_value) {
-        max_ = max_value;
     }
 
     void graphic_text_instance::set_limit_width(float width_value) {
@@ -590,19 +580,6 @@ namespace metin2::inline graphics {
         *ret_height = text_height_;
     }
 
-    auto graphic_text_instance::pixel_position_to_character_position(int pixel_position) -> int {
-        int icur_position = 0;
-        for (int i = 0; i < (int)char_info_vector_.size(); ++i) {
-            graphic_font_texture::character_infomation *cur_char_info = char_info_vector_[i];
-            icur_position += cur_char_info->width;
-
-            if (pixel_position < icur_position)
-                return i;
-        }
-
-        return -1;
-    }
-
     auto graphic_text_instance::get_horizontal_align() -> int {
         return h_align_;
     }
@@ -613,10 +590,9 @@ namespace metin2::inline graphics {
         h_align_ = HORIZONTAL_ALIGN_LEFT;
         v_align_ = VERTICAL_ALIGN_TOP;
 
-        max_ = 0;
         limit_width_ = 1600.0f; // The widest supported resolution.
+        scroll_x_ = 0.0f;
 
-        is_cursor_ = false;
         is_secret_ = false;
         is_multi_line_ = false;
 

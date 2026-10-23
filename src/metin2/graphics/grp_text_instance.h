@@ -35,15 +35,11 @@ namespace metin2::inline graphics {
         void update();
         void render(rectangle *clip_rect = nullptr);
 
-        void show_cursor();
-        void hide_cursor();
-
         void set_color(uint32_t color);
         void set_color(float r, float g, float b, float a = 1.0f);
 
         void set_horizonal_align(int h_align);
         void set_vertical_align(int v_align);
-        void set_max(int max_value);
         void set_text_pointer(graphic_text *text);
         void set_value_string(const std::string &value);
         void set_value(const char *value, size_t len = -1);
@@ -58,13 +54,23 @@ namespace metin2::inline graphics {
         auto value_string_reference() -> const std::string &;
         auto text_line_count() -> uint16_t;
 
-        auto pixel_position_to_character_position(int pixel_position) -> int;
         auto get_horizontal_align() -> int;
+
+        // Glyph geometry for edit lines, in pixels relative to the aligned origin (see aligned_origin):
+        // the top left of glyph `index` (glyph_count() gives the end of the text), wrapping like render().
+        void character_position(std::size_t index, float *x, float *y);
+        auto character_x(std::size_t index) -> float;
+        // The glyph boundary nearest to (x, y), 0..glyph_count(); y picks the wrapped row.
+        auto character_index_at(float x, float y) -> std::size_t;
+        auto glyph_count() -> std::size_t { return char_info_vector_.size(); }
+        // Where the first glyph is drawn once the alignment is applied.
+        void aligned_origin(float *x, float *y);
+        // Rendering starts this many pixels into the text; glyphs left of the origin are skipped.
+        void set_scroll_x(float scroll_x) { scroll_x_ = scroll_x; }
 
       protected:
         void initialize_impl();
         auto draw_character(graphic_font_texture *font_texture, wchar_t text, uint32_t color) -> int;
-        void text_pos(uint32_t index, float *x, float *y);
 
       protected:
         struct hyperlink {
@@ -85,10 +91,9 @@ namespace metin2::inline graphics {
         uint8_t h_align_;
         uint8_t v_align_;
 
-        uint16_t max_;
         float limit_width_;
+        float scroll_x_;
 
-        bool is_cursor_;
         bool is_secret_;
         bool is_multi_line_;
 

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace metin2::inline window {
@@ -61,6 +62,7 @@ namespace metin2::inline window {
     void set_mouse_override(std::optional<point> position);
 
     auto clipboard_text() -> std::string;
+    void set_clipboard_text(std::string_view text);
 
     // Turns raylib's window and input state into queued events. Runs at the top of every loop and
     // after every presented frame; the automation harness takes its turn here too.

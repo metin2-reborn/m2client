@@ -1,6 +1,7 @@
 #include <metin2/log/log.h>
 #include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
+#include "python_edit_line.h"
 #include "python_grid_slot_window.h"
 #include "python_modules.h"
 #include "python_slot_window.h"
@@ -1023,17 +1024,113 @@ namespace metin2::inline ui {
         Py_RETURN_NONE;
     }
 
-    auto wnd_text_set_max(PyObject *self, PyObject *args) -> PyObject * {
-        widgets::ui_window *window;
-        int max_value;
+    auto as_edit_line(widgets::ui_window *window) -> widgets::edit_line * {
+        auto *line = dynamic_cast<widgets::edit_line *>(window);
+        if (!line)
+            PyErr_SetString(PyExc_TypeError, "window is not an edit line");
+        return line;
+    }
 
-        if (!PyArg_ParseTuple(args, "O&i", window_converter, &window, &max_value)) {
+    auto wnd_edit_set_max(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        int bytes;
+        if (!PyArg_ParseTuple(args, "O&i", window_converter, &window, &bytes)) {
             return nullptr;
         }
-
-        ((widgets::text_line *)window)->set_max(max_value);
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        line->set_max_bytes(bytes);
         Py_RETURN_NONE;
     }
+    auto wnd_edit_set_user_max(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        int bytes;
+        if (!PyArg_ParseTuple(args, "O&i", window_converter, &window, &bytes)) {
+            return nullptr;
+        }
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        line->set_max_visible_bytes(bytes);
+        Py_RETURN_NONE;
+    }
+    auto wnd_edit_set_number_mode(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        int flag;
+        if (!PyArg_ParseTuple(args, "O&i", window_converter, &window, &flag)) {
+            return nullptr;
+        }
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        line->set_number_mode(flag != 0);
+        Py_RETURN_NONE;
+    }
+    auto wnd_edit_set_caret(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        int index;
+        if (!PyArg_ParseTuple(args, "O&i", window_converter, &window, &index)) {
+            return nullptr;
+        }
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        line->set_caret(index);
+        Py_RETURN_NONE;
+    }
+    auto wnd_edit_get_caret(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        if (!PyArg_ParseTuple(args, "O&", window_converter, &window)) {
+            return nullptr;
+        }
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        return Py_BuildValue("i", line->caret());
+    }
+    auto wnd_edit_select_all(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        if (!PyArg_ParseTuple(args, "O&", window_converter, &window)) {
+            return nullptr;
+        }
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        line->select_all();
+        Py_RETURN_NONE;
+    }
+    auto wnd_edit_insert_text(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        char *text;
+        if (!PyArg_ParseTuple(args, "O&s", window_converter, &window, &text)) {
+            return nullptr;
+        }
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        return Py_BuildValue("i", line->insert_text(text) ? 1 : 0);
+    }
+    auto wnd_edit_erase_backward(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        if (!PyArg_ParseTuple(args, "O&", window_converter, &window)) {
+            return nullptr;
+        }
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        return Py_BuildValue("i", line->erase_backward() ? 1 : 0);
+    }
+    // Inserts into the edit line that has the focus, e.g. an item link from the inventory.
+    auto wnd_mgr_insert_text_into_focus(PyObject *self, PyObject *args) -> PyObject * {
+        char *text;
+        if (!PyArg_ParseTuple(args, "s", &text)) {
+            return nullptr;
+        }
+        auto *line = dynamic_cast<widgets::edit_line *>(widgets::get_window_manager().edit_target());
+        return Py_BuildValue("i", line && line->insert_text(text) ? 1 : 0);
+    }
+
     auto wnd_text_set_horizontal_align(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *window;
         int type;
@@ -1187,33 +1284,6 @@ namespace metin2::inline ui {
         text_line->text_size(&width_value, &height);
 
         return Py_BuildValue("(ii)", width_value, height);
-    }
-
-    auto wnd_text_show_cursor(PyObject *self, PyObject *args) -> PyObject * {
-        widgets::ui_window *window;
-        if (!PyArg_ParseTuple(args, "O&", window_converter, &window)) {
-            return nullptr;
-        }
-
-        ((widgets::text_line *)window)->show_cursor();
-        Py_RETURN_NONE;
-    }
-    auto wnd_text_hide_cursor(PyObject *self, PyObject *args) -> PyObject * {
-        widgets::ui_window *window;
-        if (!PyArg_ParseTuple(args, "O&", window_converter, &window)) {
-            return nullptr;
-        }
-
-        ((widgets::text_line *)window)->hide_cursor();
-        Py_RETURN_NONE;
-    }
-    auto wnd_text_get_cursor_position(PyObject *self, PyObject *args) -> PyObject * {
-        widgets::ui_window *window;
-        if (!PyArg_ParseTuple(args, "O&", window_converter, &window)) {
-            return nullptr;
-        }
-
-        return Py_BuildValue("i", ((widgets::text_line *)window)->cursor_position());
     }
 
     auto wnd_number_set_number(PyObject *self, PyObject *args) -> PyObject * {
@@ -1634,6 +1704,7 @@ namespace metin2::inline ui {
                 {"register_slot_window", wnd_mgr_register_window<widgets::slot_window>, METH_VARARGS},
                 {"register_grid_slot_window", wnd_mgr_register_window<widgets::grid_slot_window>, METH_VARARGS},
                 {"register_text_line", wnd_mgr_register_window<widgets::text_line>, METH_VARARGS},
+                {"register_edit_line", wnd_mgr_register_window<widgets::edit_line>, METH_VARARGS},
                 {"register_mark_box", wnd_mgr_register_window<widgets::mark_box>, METH_VARARGS},
                 {"register_image_box", wnd_mgr_register_window<widgets::image_box>, METH_VARARGS},
                 {"register_expanded_image_box", wnd_mgr_register_window<widgets::expanded_image_box>, METH_VARARGS},
@@ -1729,7 +1800,6 @@ namespace metin2::inline ui {
                 {"set_color", wnd_bar_set_color, METH_VARARGS},
 
                 // TextLine
-                {"set_max", wnd_text_set_max, METH_VARARGS},
                 {"set_horizontal_align", wnd_text_set_horizontal_align, METH_VARARGS},
                 {"set_vertical_align", wnd_text_set_vertical_align, METH_VARARGS},
                 {"set_secret", wnd_text_set_secret, METH_VARARGS},
@@ -1742,9 +1812,16 @@ namespace metin2::inline ui {
                 {"set_limit_width", wnd_text_set_limit_width, METH_VARARGS},
                 {"get_text", wnd_text_get_text, METH_VARARGS},
                 {"get_text_size", wnd_text_get_text_size, METH_VARARGS},
-                {"show_cursor", wnd_text_show_cursor, METH_VARARGS},
-                {"hide_cursor", wnd_text_hide_cursor, METH_VARARGS},
-                {"get_cursor_position", wnd_text_get_cursor_position, METH_VARARGS},
+                // EditLine
+                {"set_max", wnd_edit_set_max, METH_VARARGS},
+                {"set_user_max", wnd_edit_set_user_max, METH_VARARGS},
+                {"set_number_mode", wnd_edit_set_number_mode, METH_VARARGS},
+                {"set_caret", wnd_edit_set_caret, METH_VARARGS},
+                {"get_caret", wnd_edit_get_caret, METH_VARARGS},
+                {"select_all", wnd_edit_select_all, METH_VARARGS},
+                {"insert_text", wnd_edit_insert_text, METH_VARARGS},
+                {"erase_backward", wnd_edit_erase_backward, METH_VARARGS},
+                {"insert_text_into_focus", wnd_mgr_insert_text_into_focus, METH_VARARGS},
                 // NumberLine
                 {"set_number", wnd_number_set_number, METH_VARARGS},
                 {"set_number_horizontal_align_center", wnd_number_set_number_horizontal_align_center, METH_VARARGS},

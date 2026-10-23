@@ -242,10 +242,6 @@ namespace metin2::inline client::inline app {
         return config_value_.software_tiling == 1;
     }
 
-    auto python_system::is_use_default_ime() -> bool {
-        return config_value_.use_default_ime;
-    }
-
     namespace {
         constexpr const char *CONFIG_FILE = "metin2.toml";
         constexpr const char *INTERFACE_FILE = "interface.dat";
@@ -338,7 +334,6 @@ namespace metin2::inline client::inline app {
         reader.read("interface", "always_show_name", config_value_.always_show_name);
         reader.read("interface", "show_damage", config_value_.show_damage);
         reader.read("interface", "show_sales_text", config_value_.show_sales_text);
-        reader.read("interface", "use_default_ime", config_value_.use_default_ime);
         reader.read("interface", "font_antialias", config_value_.font_antialias);
         reader.read("interface", "font_scale", config_value_.font_scale);
         if (config_value_.font_scale <= 0.1f) {
@@ -417,7 +412,6 @@ namespace metin2::inline client::inline app {
                     {"always_show_name", config_value_.always_show_name},
                     {"show_damage", config_value_.show_damage},
                     {"show_sales_text", config_value_.show_sales_text},
-                    {"use_default_ime", config_value_.use_default_ime},
                     {"font_antialias", config_value_.font_antialias},
                     {"font_scale", static_cast<double>(config_value_.font_scale)},
                 }},

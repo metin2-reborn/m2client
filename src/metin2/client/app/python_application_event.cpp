@@ -120,18 +120,6 @@ namespace metin2::inline client::inline app {
         widgets::get_window_manager().run_key_up(index);
     }
 
-    void python_application::run_ime_update() {
-        widgets::get_window_manager().run_ime_update();
-    }
-
-    void python_application::run_ime_tab_event() {
-        widgets::get_window_manager().run_ime_tab_event();
-    }
-
-    void python_application::run_ime_return_event() {
-        widgets::get_window_manager().run_ime_return_event();
-    }
-
     void python_application::on_ime_key_down(int index) {
         widgets::get_window_manager().run_ime_key_down(index);
     }

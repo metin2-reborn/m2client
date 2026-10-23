@@ -78,7 +78,6 @@ namespace metin2::inline client::inline app {
         init_log_module();
         init_app_module();
         init_settings_module();
-        init_ime_module();
         init_sound_module();
         init_effects_module();
         init_graphics_module();

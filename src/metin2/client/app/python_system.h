@@ -73,7 +73,6 @@ namespace metin2::inline client::inline app {
             float font_scale;
             bool decompress_dds;
             bool no_sound_card;
-            bool use_default_ime;
             uint8_t software_tiling;
             bool view_chat;
             bool always_show_name;
@@ -109,7 +108,6 @@ namespace metin2::inline client::inline app {
         auto is_always_show_name() -> bool;
         auto is_show_damage() -> bool;
         auto is_show_sales_text() -> bool;
-        auto is_use_default_ime() -> bool;
         auto is_no_sound_card() -> bool;
         auto is_auto_tiling() -> bool;
         auto is_software_tiling() -> bool;

@@ -107,6 +107,14 @@ namespace metin2::inline core {
             return out;
         }
 
+        auto from_u32(std::u32string_view s) -> std::string {
+            std::string out;
+            out.reserve(s.size());
+            for (char32_t cp : s)
+                append(out, cp);
+            return out;
+        }
+
         auto length(std::string_view s) noexcept -> std::size_t {
             std::size_t n = 0;
             for (std::size_t pos = 0; pos < s.size(); ++n)

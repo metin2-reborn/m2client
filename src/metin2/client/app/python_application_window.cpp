@@ -1,7 +1,7 @@
 #include "python_application.h"
 
-#include <metin2/client/app/python_ime.h>
 #include <metin2/graphics/camera.h>
+#include <metin2/ui/python_window_manager.h>
 
 #include <cstdlib>
 
@@ -17,7 +17,7 @@ namespace metin2::inline client::inline app {
     }
 
     void python_application::on_char(char32_t codepoint) {
-        get_python_ime().on_char_input(codepoint);
+        widgets::get_window_manager().run_char(codepoint);
     }
 
     // A release only counts when the press happened inside the window (Windows' mouse capture).

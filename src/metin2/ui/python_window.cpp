@@ -593,6 +593,13 @@ namespace metin2::inline ui {
             return false;
         }
 
+        auto ui_window::is_within(ui_window *ancestor) -> bool {
+            for (ui_window *window = this; window; window = window->parent_)
+                if (window == ancestor)
+                    return true;
+            return false;
+        }
+
         auto ui_window::is_in(int32_t x, int32_t y) -> bool {
             if (x >= rect_.left && x <= rect_.right)
                 if (y >= rect_.top && y <= rect_.bottom)
@@ -728,9 +735,6 @@ namespace metin2::inline ui {
             text_instance_.destroy();
         }
 
-        void text_line::set_max(int max_value) {
-            text_instance_.set_max(max_value);
-        }
         void text_line::set_horizontal_align(int type) {
             text_instance_.set_horizonal_align(type);
         }
@@ -772,17 +776,6 @@ namespace metin2::inline ui {
         }
         auto text_line::get_text() -> const char * {
             return text_instance_.value_string_reference().c_str();
-        }
-        void text_line::show_cursor() {
-            text_instance_.show_cursor();
-        }
-        void text_line::hide_cursor() {
-            text_instance_.hide_cursor();
-        }
-        auto text_line::cursor_position() -> int {
-            int32_t lx, ly;
-            ui_window::mouse_local_position(lx, ly);
-            return text_instance_.pixel_position_to_character_position(lx);
         }
 
         void text_line::on_set_text(const char *text) {

@@ -48,8 +48,7 @@ namespace metin2::inline window {
         bool down;
     };
 
-    // A typed character. Backspace, Tab, Enter and Escape also arrive as characters (8, 9, 13, 27),
-    // which is what the edit lines act on.
+    // A typed printable character; control keys arrive as key_events only.
     struct char_event {
         char32_t codepoint;
     };
@@ -59,7 +58,6 @@ namespace metin2::inline window {
     void push_event(const event &e);
     auto pop_event() -> std::optional<event>;
 
-    // Queues the key event, plus the character Windows' TranslateMessage would add for it.
     void push_key(int vk, bool down);
 
     // Ends application::run() after the events already queued.

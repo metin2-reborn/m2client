@@ -1,6 +1,5 @@
 #include "python_application.h"
 
-#include <metin2/client/app/python_ime.h>
 #include <metin2/client/app/python_system.h>
 #include <metin2/client/background/python_background.h>
 #include <metin2/client/characters/python_character_manager.h>
@@ -49,7 +48,6 @@ namespace metin2::inline client::inline app {
         get_python_graphic();
         get_python_network_stream();
         get_python_player();
-        get_python_ime();
         get_python_item();
         get_python_shop();
         get_python_exchange();
@@ -651,10 +649,6 @@ namespace metin2::inline client::inline app {
             return false;
         }
 
-        if (get_python_system().is_use_default_ime()) {
-            get_python_ime().use_default_ime();
-        }
-
         // Full screen is a window of the configured size in the top left corner; the display mode is
         // not changed.
         is_windowed_ = windowed != 0;
@@ -703,8 +697,6 @@ namespace metin2::inline client::inline app {
 
         default_font_startup();
 
-        get_python_ime().create();
-        get_python_ime().set_text("", 0);
         get_python_text_tail().initialize();
 
         get_light_manager().initialize();

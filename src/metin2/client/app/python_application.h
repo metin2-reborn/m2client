@@ -184,9 +184,6 @@ namespace metin2::inline client::inline app {
         auto render_fps() -> uint32_t { return render_fps_; }
         auto face_count() -> uint32_t { return face_count_; }
 
-        void run_ime_update() override;
-        void run_ime_tab_event() override;
-        void run_ime_return_event() override;
         void run_press_exit_key();
 
         void enable_special_camera_mode();

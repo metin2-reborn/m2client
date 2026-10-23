@@ -1,6 +1,7 @@
 #include "python_window_manager.h"
 #include <metin2/core/stl.h>
 #include <metin2/core/timer.h>
+#include <metin2/input/keys.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
 #include <set>
@@ -586,18 +587,17 @@ namespace metin2::inline ui {
             middle_capture_window_ = nullptr;
         }
 
-        void window_manager::run_ime_update() {
-            if (lock_window_) {
-                lock_window_->on_ime_update();
-                return;
-            }
+        auto window_manager::edit_target() -> ui_window * {
+            if (!active_window_ || !active_window_->is_rendering())
+                return nullptr;
+            if (lock_window_ && !active_window_->is_within(lock_window_))
+                return nullptr;
+            return active_window_;
+        }
 
-            if (!active_window_)
-                return;
-            if (!active_window_->is_rendering())
-                return;
-
-            active_window_->on_ime_update();
+        void window_manager::run_char(char32_t codepoint) {
+            if (ui_window *target = edit_target())
+                target->on_char(codepoint);
         }
 
         void window_manager::run_ime_tab_event() {
@@ -651,17 +651,16 @@ namespace metin2::inline ui {
         }
 
         void window_manager::run_ime_key_down(int vkey) {
-            if (lock_window_) {
-                lock_window_->on_key_down(vkey);
+            if (ui_window *target = edit_target()) {
+                if (target->on_ime_key_down_event(vkey))
+                    return;
+            } else if (vkey == VK_RETURN) {
+                // Enter with nothing to type into still opens the chat line and closes dialogs.
+                run_ime_return_event();
                 return;
             }
-            if (active_window_)
-                if (active_window_->is_rendering()) {
-                    if (active_window_->on_ime_key_down_event(vkey))
-                        return;
-                }
-
-            // Sent only to the active edit line, not to every window.
+            if (lock_window_)
+                lock_window_->on_ime_key_down_event(vkey);
         }
 
         void window_manager::run_key_down(int vkey) {
