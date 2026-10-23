@@ -15,18 +15,7 @@
 
 namespace metin2::inline ui {
 
-    auto py_tuple_get_text_instance(PyObject *args, int pos, graphic_text_instance **text_instance) -> bool {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, pos, &handle))
-            return false;
-
-        if (!handle)
-            return false;
-
-        *text_instance = (graphic_text_instance *)handle;
-
-        return true;
-    }
+    constexpr auto text_instance_converter = &py_handle_converter<graphic_text_instance>;
 
     auto grp_text_generate(PyObject *self, PyObject *args) -> PyObject * {
         graphic_text_instance *text_instance = graphic_text_instance::new_value();
@@ -35,102 +24,91 @@ namespace metin2::inline ui {
 
     auto grp_text_set_position(PyObject *self, PyObject *args) -> PyObject * {
         graphic_text_instance *text_instance;
-        if (!py_tuple_get_text_instance(args, 0, &text_instance))
-            return py_build_exception();
+        int ix, iy;
 
-        int ix;
-        if (!py_tuple_get_integer(args, 1, &ix))
-            return py_build_exception();
-        int iy;
-        if (!py_tuple_get_integer(args, 2, &iy))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "O&ii", text_instance_converter, &text_instance, &ix, &iy)) {
+            return nullptr;
+        }
 
         text_instance->set_position((float)ix, (float)iy);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_text_set_text(PyObject *self, PyObject *args) -> PyObject * {
         graphic_text_instance *text_instance;
-        if (!py_tuple_get_text_instance(args, 0, &text_instance))
-            return py_build_exception();
-
         char *text;
-        if (!py_tuple_get_string(args, 1, &text))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "O&s", text_instance_converter, &text_instance, &text)) {
+            return nullptr;
+        }
 
         text_instance->set_value(text);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_text_outline(PyObject *self, PyObject *args) -> PyObject * {
         graphic_text_instance *text_instance;
-        if (!py_tuple_get_text_instance(args, 0, &text_instance))
-            return py_build_exception();
+        int value;
 
-        bool value;
-        if (!py_tuple_get_boolean(args, 1, &value))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "O&i", text_instance_converter, &text_instance, &value)) {
+            return nullptr;
+        }
 
         text_instance->set_outline(value);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_text_set_font_name(PyObject *self, PyObject *args) -> PyObject * {
         graphic_text_instance *text_instance;
-        if (!py_tuple_get_text_instance(args, 0, &text_instance))
-            return py_build_exception();
-
         char *sz_font_name;
-        if (!py_tuple_get_string(args, 1, &sz_font_name))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "O&s", text_instance_converter, &text_instance, &sz_font_name)) {
+            return nullptr;
+        }
 
         std::string st_font_name = sz_font_name;
         st_font_name += ".fnt";
 
         resource *resource = get_resource_manager().resource_pointer(st_font_name.c_str());
         text_instance->set_text_pointer(static_cast<graphic_text *>(resource));
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_text_set_font_color(PyObject *self, PyObject *args) -> PyObject * {
         graphic_text_instance *text_instance;
-        if (!py_tuple_get_text_instance(args, 0, &text_instance))
-            return py_build_exception();
+        uint32_t color;
+        float red, green, blue;
 
         if (2 == PyTuple_Size(args)) {
-            int color;
-            if (!py_tuple_get_integer(args, 1, &color))
-                return py_build_exception();
-            text_instance->set_color(uint32_t(color));
+            if (!PyArg_ParseTuple(args, "O&I", text_instance_converter, &text_instance, &color)) {
+                return nullptr;
+            }
+
+            text_instance->set_color(color);
         } else if (4 == PyTuple_Size(args)) {
-            float red;
-            if (!py_tuple_get_float(args, 1, &red))
-                return py_build_exception();
-            float green;
-            if (!py_tuple_get_float(args, 2, &green))
-                return py_build_exception();
-            float blue;
-            if (!py_tuple_get_float(args, 3, &blue))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "O&fff", text_instance_converter, &text_instance, &red, &green, &blue)) {
+                return nullptr;
+            }
+
             text_instance->set_color(red, green, blue);
         } else {
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_set_horizontal_align(PyObject *self, PyObject *args) -> PyObject * {
         graphic_text_instance *text_instance;
-        if (!py_tuple_get_text_instance(args, 0, &text_instance))
-            return py_build_exception();
-
         int align;
-        if (!py_tuple_get_integer(args, 1, &align))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "O&i", text_instance_converter, &text_instance, &align)) {
+            return nullptr;
+        }
 
         text_instance->set_horizonal_align(align);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     namespace {
@@ -170,28 +148,22 @@ namespace metin2::inline ui {
 
     auto grp_get_spliting_text_line_count(PyObject *self, PyObject *args) -> PyObject * {
         char *text;
-        if (!py_tuple_get_string(args, 0, &text))
-            return py_build_exception();
-
         int line_limitation;
-        if (!py_tuple_get_integer(args, 1, &line_limitation))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "si", &text, &line_limitation)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", static_cast<int>(split_text_lines(text, line_limitation).size()));
     }
 
     auto grp_get_spliting_text_line(PyObject *self, PyObject *args) -> PyObject * {
         char *text;
-        if (!py_tuple_get_string(args, 0, &text))
-            return py_build_exception();
+        int line_limitation, getting_line;
 
-        int line_limitation;
-        if (!py_tuple_get_integer(args, 1, &line_limitation))
-            return py_build_exception();
-
-        int getting_line;
-        if (!py_tuple_get_integer(args, 2, &getting_line))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "sii", &text, &line_limitation, &getting_line)) {
+            return nullptr;
+        }
 
         std::vector<std::string> lines = split_text_lines(text, line_limitation);
         const char *line = getting_line >= 0 && getting_line < static_cast<int>(lines.size()) ? lines[getting_line].c_str() : "";

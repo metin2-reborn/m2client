@@ -1336,9 +1336,6 @@ namespace metin2::inline client::inline player {
             player_status_value_.skill[j].fcur_efficient_percentage = 0.0f;
             player_status_value_.skill[j].fnext_efficient_percentage = 0.05f;
         }
-
-        if (ppy_game_window_)
-            py_call_class_member_func(ppy_game_window_, "BINARY_CheckGameButton", py_build_none());
     }
 
     void python_player::clear_skill_dict() {

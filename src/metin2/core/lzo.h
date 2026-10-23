@@ -4,7 +4,6 @@
 #include <lzo/lzo1x.h>
 
 namespace metin2::inline core {
-
     // One LZO1X compressed block, optionally TEA-encrypted ("MCOZ" container used by the packs).
     class lz_object {
       public:
@@ -67,6 +66,7 @@ namespace metin2::inline core {
 
     inline auto get_clzo() -> clzo & {
         static clzo instance;
+
         return instance;
     }
 }

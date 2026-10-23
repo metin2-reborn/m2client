@@ -1,16 +1,17 @@
-#include <metin2/geometry/culling_manager.h>
-#include <metin2/graphics/camera.h>
-#include <metin2/log/log.h>
-#include <metin2/world/terrain/map_outdoor.h>
+#include "python_background.h"
+
+#include "python_mini_map.h"
 
 #include <metin2/client/app/python_system.h>
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/client/protocol/python_network_stream.h>
 #include <metin2/core/timer.h>
+#include <metin2/geometry/culling_manager.h>
 #include <metin2/gpu/types.h>
+#include <metin2/graphics/camera.h>
+#include <metin2/log/log.h>
 #include <metin2/window/events.h>
-#include "python_background.h"
-#include "python_mini_map.h"
+#include <metin2/world/terrain/map_outdoor.h>
 
 #include <format>
 

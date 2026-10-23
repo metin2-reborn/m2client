@@ -1,26 +1,19 @@
 #pragma once
 
-#include <metin2/effects/effect_manager.h>
-#include <metin2/graphics/grp_device.h>
-#include <metin2/graphics/grp_light_manager.h>
-#include <metin2/input/input.h>
-#include <metin2/sound/sound_manager.h>
-#include <metin2/ui/python_window_manager.h>
-#include <metin2/window/application.h>
-#include <metin2/window/cursor.h>
-#include <metin2/world/actors/game_event_manager.h>
-#include <metin2/world/actors/race_manager.h>
-#include <metin2/world/flying/flying_object_manager.h>
-#include <metin2/world/items/item_manager.h>
+#include "abstract_application.h"
 
 #include <metin2/client/background/python_mini_map.h>
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/client/characters/python_non_player.h>
+#include <metin2/client/guilds/guild_mark_downloader.h>
+#include <metin2/client/guilds/guild_mark_uploader.h>
 #include <metin2/client/guilds/python_guild.h>
 #include <metin2/client/inventory/python_item.h>
 #include <metin2/client/player/python_player.h>
 #include <metin2/client/player/python_skill.h>
+#include <metin2/client/protocol/account_connector.h>
 #include <metin2/client/protocol/python_network_stream.h>
+#include <metin2/client/protocol/server_state_checker.h>
 #include <metin2/client/quest/python_event_manager.h>
 #include <metin2/client/quest/python_quest.h>
 #include <metin2/client/social/python_chat.h>
@@ -29,17 +22,21 @@
 #include <metin2/client/trade/python_exchange.h>
 #include <metin2/client/trade/python_safe_box.h>
 #include <metin2/client/trade/python_shop.h>
-
-#include <metin2/client/guilds/guild_mark_downloader.h>
-#include <metin2/client/guilds/guild_mark_uploader.h>
-
-#include <metin2/client/protocol/account_connector.h>
-
-#include <metin2/client/protocol/server_state_checker.h>
 #include <metin2/core/timer.h>
+#include <metin2/effects/effect_manager.h>
+#include <metin2/graphics/grp_device.h>
+#include <metin2/graphics/grp_light_manager.h>
+#include <metin2/input/input.h>
 #include <metin2/script/resource.h>
+#include <metin2/sound/sound_manager.h>
 #include <metin2/ui/python_graphic.h>
-#include "abstract_application.h"
+#include <metin2/ui/python_window_manager.h>
+#include <metin2/window/application.h>
+#include <metin2/window/cursor.h>
+#include <metin2/world/actors/game_event_manager.h>
+#include <metin2/world/actors/race_manager.h>
+#include <metin2/world/flying/flying_object_manager.h>
+#include <metin2/world/items/item_manager.h>
 
 namespace metin2::inline client::inline app {
     class python_application : public application, public input_keyboard, public abstract_application {

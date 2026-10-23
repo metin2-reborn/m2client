@@ -1,6 +1,8 @@
 #include "python_ime.h"
-#include <metin2/log/log.h>
+
 #include "abstract_application.h"
+
+#include <metin2/log/log.h>
 
 namespace metin2::inline client::inline app {
     python_ime::python_ime() : cime() {

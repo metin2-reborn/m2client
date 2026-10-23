@@ -125,65 +125,74 @@ namespace metin2::inline client::inline trade {
 
     auto safebox_get_item_id(PyObject *self, PyObject *args) -> PyObject * {
         int ipos;
-        if (!py_tuple_get_integer(args, 0, &ipos))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &ipos)) {
+            return nullptr;
+        }
 
         packet_item *instance;
-        if (!get_python_safe_box().item_data_ptr(ipos, &instance))
-            return py_build_exception();
+        if (!get_python_safe_box().item_data_ptr(ipos, &instance)) {
+            PyErr_Format(PyExc_ValueError, "No item at slot %d", ipos);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", instance->vnum);
     }
 
     auto safebox_get_item_count(PyObject *self, PyObject *args) -> PyObject * {
         int ipos;
-        if (!py_tuple_get_integer(args, 0, &ipos))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &ipos)) {
+            return nullptr;
+        }
 
         packet_item *instance;
-        if (!get_python_safe_box().item_data_ptr(ipos, &instance))
-            return py_build_exception();
+        if (!get_python_safe_box().item_data_ptr(ipos, &instance)) {
+            PyErr_Format(PyExc_ValueError, "No item at slot %d", ipos);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", instance->count);
     }
 
     auto safebox_get_item_flags(PyObject *self, PyObject *args) -> PyObject * {
         int ipos;
-        if (!py_tuple_get_integer(args, 0, &ipos))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &ipos)) {
+            return nullptr;
+        }
 
         packet_item *instance;
-        if (!get_python_safe_box().item_data_ptr(ipos, &instance))
-            return py_build_exception();
+        if (!get_python_safe_box().item_data_ptr(ipos, &instance)) {
+            PyErr_Format(PyExc_ValueError, "No item at slot %d", ipos);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", instance->flags_value);
     }
 
     auto safebox_get_item_metin_socket(PyObject *self, PyObject *args) -> PyObject * {
-        int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_bad_argument();
-        int socket_index;
-        if (!py_tuple_get_integer(args, 1, &socket_index))
-            return py_bad_argument();
+        int slot_index, socket_index;
+        if (!PyArg_ParseTuple(args, "ii", &slot_index, &socket_index)) {
+            return nullptr;
+        }
 
-        if (socket_index >= ITEM_SOCKET_SLOT_MAX_NUM)
-            return py_build_exception();
+        if (socket_index >= ITEM_SOCKET_SLOT_MAX_NUM) {
+            PyErr_Format(PyExc_ValueError, "Socket index %d out of range", socket_index);
+            return nullptr;
+        }
 
         packet_item *item_data;
-        if (!get_python_safe_box().item_data_ptr(slot_index, &item_data))
-            return py_build_exception();
+        if (!get_python_safe_box().item_data_ptr(slot_index, &item_data)) {
+            PyErr_Format(PyExc_ValueError, "No item at slot %d", slot_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", item_data->sockets[socket_index]);
     }
 
     auto safebox_get_item_attribute(PyObject *self, PyObject *args) -> PyObject * {
-        int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
-        int attr_slot_index;
-        if (!py_tuple_get_integer(args, 1, &attr_slot_index))
-            return py_build_exception();
+        int slot_index, attr_slot_index;
+        if (!PyArg_ParseTuple(args, "ii", &slot_index, &attr_slot_index)) {
+            return nullptr;
+        }
 
         if (attr_slot_index >= 0 && attr_slot_index < ITEM_ATTRIBUTE_SLOT_MAX_NUM) {
             packet_item *item_data;
@@ -200,53 +209,59 @@ namespace metin2::inline client::inline trade {
 
     auto safebox_get_mall_item_id(PyObject *self, PyObject *args) -> PyObject * {
         int ipos;
-        if (!py_tuple_get_integer(args, 0, &ipos))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &ipos)) {
+            return nullptr;
+        }
 
         packet_item *instance;
-        if (!get_python_safe_box().mall_item_data_ptr(ipos, &instance))
-            return py_build_exception();
+        if (!get_python_safe_box().mall_item_data_ptr(ipos, &instance)) {
+            PyErr_Format(PyExc_ValueError, "No item at slot %d", ipos);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", instance->vnum);
     }
 
     auto safebox_get_mall_item_count(PyObject *self, PyObject *args) -> PyObject * {
         int ipos;
-        if (!py_tuple_get_integer(args, 0, &ipos))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &ipos)) {
+            return nullptr;
+        }
 
         packet_item *instance;
-        if (!get_python_safe_box().mall_item_data_ptr(ipos, &instance))
-            return py_build_exception();
+        if (!get_python_safe_box().mall_item_data_ptr(ipos, &instance)) {
+            PyErr_Format(PyExc_ValueError, "No item at slot %d", ipos);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", instance->count);
     }
 
     auto safebox_get_mall_item_metin_socket(PyObject *self, PyObject *args) -> PyObject * {
-        int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_bad_argument();
-        int socket_index;
-        if (!py_tuple_get_integer(args, 1, &socket_index))
-            return py_bad_argument();
+        int slot_index, socket_index;
+        if (!PyArg_ParseTuple(args, "ii", &slot_index, &socket_index)) {
+            return nullptr;
+        }
 
-        if (socket_index >= ITEM_SOCKET_SLOT_MAX_NUM)
-            return py_build_exception();
+        if (socket_index >= ITEM_SOCKET_SLOT_MAX_NUM) {
+            PyErr_Format(PyExc_ValueError, "Socket index %d out of range", socket_index);
+            return nullptr;
+        }
 
         packet_item *item_data;
-        if (!get_python_safe_box().mall_item_data_ptr(slot_index, &item_data))
-            return py_build_exception();
+        if (!get_python_safe_box().mall_item_data_ptr(slot_index, &item_data)) {
+            PyErr_Format(PyExc_ValueError, "No item at slot %d", slot_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", item_data->sockets[socket_index]);
     }
 
     auto safebox_get_mall_item_attribute(PyObject *self, PyObject *args) -> PyObject * {
-        int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
-        int attr_slot_index;
-        if (!py_tuple_get_integer(args, 1, &attr_slot_index))
-            return py_build_exception();
+        int slot_index, attr_slot_index;
+        if (!PyArg_ParseTuple(args, "ii", &slot_index, &attr_slot_index)) {
+            return nullptr;
+        }
 
         if (attr_slot_index >= 0 && attr_slot_index < ITEM_ATTRIBUTE_SLOT_MAX_NUM) {
             packet_item *item_data;
@@ -279,9 +294,9 @@ namespace metin2::inline client::inline trade {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = init_python_module("metin2.trade.safebox", s_methods);
-        PyModule_AddIntConstant(module_value, "SAFEBOX_SLOT_X_COUNT", python_safe_box::SAFEBOX_SLOT_X_COUNT);
-        PyModule_AddIntConstant(module_value, "SAFEBOX_SLOT_Y_COUNT", python_safe_box::SAFEBOX_SLOT_Y_COUNT);
-        PyModule_AddIntConstant(module_value, "SAFEBOX_PAGE_SIZE", python_safe_box::SAFEBOX_PAGE_SIZE);
+        PyObject *module = init_python_module("metin2.trade.safebox", s_methods);
+        PyModule_AddIntConstant(module, "SAFEBOX_SLOT_X_COUNT", python_safe_box::SAFEBOX_SLOT_X_COUNT);
+        PyModule_AddIntConstant(module, "SAFEBOX_SLOT_Y_COUNT", python_safe_box::SAFEBOX_SLOT_Y_COUNT);
+        PyModule_AddIntConstant(module, "SAFEBOX_PAGE_SIZE", python_safe_box::SAFEBOX_PAGE_SIZE);
     }
 }

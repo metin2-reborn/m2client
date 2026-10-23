@@ -1,8 +1,5 @@
 #include "python_utils.h"
 
-#include <cstdarg>
-#include <cstdio>
-
 namespace metin2::inline script {
 
     static python_exception_sender_interface *exception_sender = nullptr;
@@ -13,114 +10,6 @@ namespace metin2::inline script {
 
     auto get_exception_sender() -> python_exception_sender_interface * {
         return exception_sender;
-    }
-
-    auto py_bad_argument() -> PyObject * {
-        PyErr_BadArgument();
-        return nullptr;
-    }
-
-    auto py_build_exception(const char *err, ...) -> PyObject * {
-        if (!err)
-            PyErr_Clear();
-        else {
-            char err_buf[512 + 1];
-            va_list args;
-            va_start(args, err);
-            vsnprintf(err_buf, sizeof(err_buf), err, args);
-            va_end(args);
-
-            PyErr_SetString(PyExc_RuntimeError, err_buf);
-        }
-
-        return py_build_none();
-    }
-
-    auto py_build_none() -> PyObject * {
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
-
-    static auto get_tuple_item(PyObject *args, int pos) -> PyObject * {
-        if (pos >= PyTuple_Size(args))
-            return nullptr;
-
-        return PyTuple_GetItem(args, pos);
-    }
-
-    auto py_tuple_get_object(PyObject *args, int pos, PyObject **ret) -> bool {
-        PyObject *item = get_tuple_item(args, pos);
-        if (!item)
-            return false;
-
-        *ret = item;
-        return true;
-    }
-
-    auto py_tuple_get_float(PyObject *args, int pos, float *ret) -> bool {
-        PyObject *item = get_tuple_item(args, pos);
-        if (!item)
-            return false;
-
-        *ret = float(PyFloat_AsDouble(item));
-        return true;
-    }
-
-    auto py_tuple_get_byte(PyObject *args, int pos, uint8_t *ret) -> bool {
-        int val = 0;
-        bool result = py_tuple_get_integer(args, pos, &val);
-        *ret = uint8_t(val);
-        return result;
-    }
-
-    auto py_tuple_get_integer(PyObject *args, int pos, uint8_t *ret) -> bool {
-        return py_tuple_get_byte(args, pos, ret);
-    }
-
-    auto py_tuple_get_integer(PyObject *args, int pos, uint16_t *ret) -> bool {
-        int val = 0;
-        bool result = py_tuple_get_integer(args, pos, &val);
-        *ret = uint16_t(val);
-        return result;
-    }
-
-    auto py_tuple_get_integer(PyObject *args, int pos, int *ret) -> bool {
-        PyObject *item = get_tuple_item(args, pos);
-        if (!item)
-            return false;
-
-        *ret = int(PyLong_AsLong(item));
-        return true;
-    }
-
-    auto py_tuple_get_integer(PyObject *args, int pos, intptr_t *ret) -> bool {
-        PyObject *item = get_tuple_item(args, pos);
-        if (!item)
-            return false;
-
-        *ret = intptr_t(PyInt_AsSsize_t(item));
-        return true;
-    }
-
-    auto py_tuple_get_string(PyObject *args, int pos, char **ret) -> bool {
-        PyObject *item = get_tuple_item(args, pos);
-        if (!item)
-            return false;
-
-        if (!PyString_Check(item))
-            return false;
-
-        *ret = PyString_AsString(item);
-        return true;
-    }
-
-    auto py_tuple_get_boolean(PyObject *args, int pos, bool *ret) -> bool {
-        PyObject *item = get_tuple_item(args, pos);
-        if (!item)
-            return false;
-
-        *ret = PyLong_AsLong(item) != 0;
-        return true;
     }
 
     // Calls poFunc (a new reference, released here) with poArgs (released here) and hands back the

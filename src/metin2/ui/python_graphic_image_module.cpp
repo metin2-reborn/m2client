@@ -11,63 +11,55 @@
 
 namespace metin2::inline ui {
 
-    auto py_tuple_get_image_instance(PyObject *args, int pos, graphic_image_instance **ret_image_instance) -> bool {
-        intptr_t handle;
+    constexpr auto image_instance_converter = &py_handle_converter<graphic_image_instance>;
 
-        if (!py_tuple_get_integer(args, pos, &handle))
-            return false;
+    auto expanded_image_instance_converter(PyObject *obj, void *out) -> int {
+        graphic_image_instance *image_instance;
+        if (!py_handle_converter<graphic_image_instance>(obj, &image_instance)) {
+            return 0;
+        }
 
-        if (!handle)
-            return false;
+        if (!image_instance->is_type(graphic_expanded_image_instance::type())) {
+            PyErr_SetString(PyExc_TypeError, "Image is not an expanded image");
+            return 0;
+        }
 
-        *ret_image_instance = (graphic_image_instance *)handle;
-        return true;
-    }
-
-    auto py_tuple_get_expanded_image_instance(PyObject *args, int pos, graphic_expanded_image_instance **ret_image_instance) -> bool {
-        intptr_t handle;
-
-        if (!py_tuple_get_integer(args, pos, &handle))
-            return false;
-
-        if (!handle)
-            return false;
-
-        if (!((graphic_image_instance *)handle)->is_type(graphic_expanded_image_instance::type()))
-            return false;
-
-        *ret_image_instance = (graphic_expanded_image_instance *)handle;
-
-        return true;
+        *static_cast<graphic_expanded_image_instance **>(out) = static_cast<graphic_expanded_image_instance *>(image_instance);
+        return 1;
     }
 
     auto grp_image_generate(PyObject *self, PyObject *args) -> PyObject * {
         char *file_name;
-
-        if (!py_tuple_get_string(args, 0, &file_name))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "s", &file_name)) {
+            return nullptr;
+        }
 
         if (!*file_name)
             return Py_BuildValue("i", 0);
 
         resource *resource = get_resource_manager().resource_pointer(file_name);
 
-        if (!resource->is_type(graphic_image::type()))
-            return py_build_exception("Resource is not an image (filename: %s)", file_name);
+        if (!resource->is_type(graphic_image::type())) {
+            PyErr_Format(PyExc_ValueError, "%s is not an image", file_name);
+            return nullptr;
+        }
 
         graphic_image_instance *image_instance = graphic_image_instance::new_value();
         image_instance->set_image_pointer(static_cast<graphic_image *>(resource));
 
-        if (image_instance->is_empty())
-            return py_build_exception("Cannot load image (filename: %s)", file_name);
+        if (image_instance->is_empty()) {
+            PyErr_Format(PyExc_IOError, "Cannot load image %s", file_name);
+            return nullptr;
+        }
 
         return Py_BuildValue("n", (Py_ssize_t)image_instance);
     }
 
     auto grp_image_generate_from_handle(PyObject *self, PyObject *args) -> PyObject * {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, 0, &handle))
-            return py_bad_argument();
+        Py_ssize_t handle;
+        if (!PyArg_ParseTuple(args, "n", &handle)) {
+            return nullptr;
+        }
 
         graphic_image_instance *image_instance = graphic_image_instance::new_value();
         image_instance->set_image_pointer((graphic_image *)handle);
@@ -77,86 +69,76 @@ namespace metin2::inline ui {
 
     auto grp_image_delete(PyObject *self, PyObject *args) -> PyObject * {
         graphic_image_instance *image_instance;
-
-        if (!py_tuple_get_image_instance(args, 0, &image_instance))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "O&", image_instance_converter, &image_instance)) {
+            return nullptr;
+        }
 
         if (!image_instance)
-            return py_build_none();
+            Py_RETURN_NONE;
 
         graphic_image_instance::delete_value(image_instance);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_image_render(PyObject *self, PyObject *args) -> PyObject * {
         graphic_image_instance *image_instance;
-        if (!py_tuple_get_image_instance(args, 0, &image_instance))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "O&", image_instance_converter, &image_instance)) {
+            return nullptr;
+        }
 
         image_instance->render();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_set_image_position(PyObject *self, PyObject *args) -> PyObject * {
         graphic_image_instance *image_instance;
-        if (!py_tuple_get_image_instance(args, 0, &image_instance))
-            return py_bad_argument();
+        float x, y;
 
-        float x;
-        if (!py_tuple_get_float(args, 1, &x))
-            return py_bad_argument();
-
-        float y;
-        if (!py_tuple_get_float(args, 2, &y))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "O&ff", image_instance_converter, &image_instance, &x, &y)) {
+            return nullptr;
+        }
 
         image_instance->set_position(x, y);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_set_image_diffuse_color(PyObject *self, PyObject *args) -> PyObject * {
         graphic_image_instance *image_instance;
-        if (!py_tuple_get_image_instance(args, 0, &image_instance))
-            return py_bad_argument();
+        float r, g, b, a;
 
-        float r;
-        if (!py_tuple_get_float(args, 1, &r))
-            return py_bad_argument();
-        float g;
-        if (!py_tuple_get_float(args, 2, &g))
-            return py_bad_argument();
-        float b;
-        if (!py_tuple_get_float(args, 3, &b))
-            return py_bad_argument();
-        float a;
-        if (!py_tuple_get_float(args, 4, &a))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "O&ffff", image_instance_converter, &image_instance, &r, &g, &b, &a)) {
+            return nullptr;
+        }
 
         image_instance->set_diffuse_color(r, g, b, a);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_get_width(PyObject *self, PyObject *args) -> PyObject * {
         graphic_image_instance *image_instance;
+        if (!PyArg_ParseTuple(args, "O&", image_instance_converter, &image_instance)) {
+            return nullptr;
+        }
 
-        if (!py_tuple_get_image_instance(args, 0, &image_instance))
-            return py_bad_argument();
-
-        if (image_instance->is_empty())
-            return py_build_exception("Image is empty");
+        if (image_instance->is_empty()) {
+            PyErr_SetString(PyExc_IOError, "Image is empty");
+            return nullptr;
+        }
 
         return Py_BuildValue("i", image_instance->width());
     }
 
     auto grp_get_height(PyObject *self, PyObject *args) -> PyObject * {
         graphic_image_instance *image_instance;
+        if (!PyArg_ParseTuple(args, "O&", image_instance_converter, &image_instance)) {
+            return nullptr;
+        }
 
-        if (!py_tuple_get_image_instance(args, 0, &image_instance))
-            return py_bad_argument();
-
-        if (image_instance->is_empty())
-            return py_build_exception("Image is empty");
+        if (image_instance->is_empty()) {
+            PyErr_SetString(PyExc_IOError, "Image is empty");
+            return nullptr;
+        }
 
         return Py_BuildValue("i", image_instance->height());
     }

@@ -9,28 +9,29 @@ namespace metin2::inline client::inline social {
 
     auto text_tail_clear(PyObject *self, PyObject *args) -> PyObject * {
         get_python_text_tail().clear();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_update_all_text_tail(PyObject *self, PyObject *args) -> PyObject * {
         get_python_text_tail().update_all_text_tail();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_update_showing_text_tail(PyObject *self, PyObject *args) -> PyObject * {
         get_python_text_tail().update_showing_text_tail();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_render(PyObject *self, PyObject *args) -> PyObject * {
         get_python_text_tail().render();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_get_position(PyObject *self, PyObject *args) -> PyObject * {
         int virtual_id;
-        if (!py_tuple_get_integer(args, 0, &virtual_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &virtual_id)) {
+            return nullptr;
+        }
 
         float x = 0.0f;
         float y = 0.0f;
@@ -50,66 +51,66 @@ namespace metin2::inline client::inline social {
 
     auto text_tail_is_chat(PyObject *self, PyObject *args) -> PyObject * {
         int virtual_id;
-        if (!py_tuple_get_integer(args, 0, &virtual_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &virtual_id)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_text_tail().is_chat_text_tail(virtual_id));
     }
 
     auto text_tail_register_info_tail(PyObject *self, PyObject *args) -> PyObject * {
         int virtual_id;
-        if (!py_tuple_get_integer(args, 0, &virtual_id))
-            return py_build_exception();
-
         char *text;
-        if (!py_tuple_get_string(args, 1, &text))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "is", &virtual_id, &text)) {
+            return nullptr;
+        }
 
         get_python_text_tail().register_info_tail(virtual_id, text);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_show_character_text_tail(PyObject *self, PyObject *args) -> PyObject * {
         int virtual_id;
-        if (!py_tuple_get_integer(args, 0, &virtual_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &virtual_id)) {
+            return nullptr;
+        }
 
         get_python_text_tail().show_character_text_tail(virtual_id);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_show_item_text_tail(PyObject *self, PyObject *args) -> PyObject * {
         int virtual_id;
-        if (!py_tuple_get_integer(args, 0, &virtual_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &virtual_id)) {
+            return nullptr;
+        }
 
         get_python_text_tail().show_item_text_tail(virtual_id);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_arrange_text_tail(PyObject *self, PyObject *args) -> PyObject * {
         get_python_text_tail().arrange_text_tail();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_hide_all_text_tail(PyObject *self, PyObject *args) -> PyObject * {
         get_python_text_tail().hide_all_text_tail();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_show_all_text_tail(PyObject *self, PyObject *args) -> PyObject * {
         get_python_text_tail().show_all_text_tail();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_pick(PyObject *self, PyObject *args) -> PyObject * {
-        int ix;
-        if (!py_tuple_get_integer(args, 0, &ix))
-            return py_build_exception();
-        int iy;
-        if (!py_tuple_get_integer(args, 1, &iy))
-            return py_build_exception();
+        int ix, iy;
+        if (!PyArg_ParseTuple(args, "ii", &ix, &iy)) {
+            return nullptr;
+        }
 
         int value = get_python_text_tail().pick(ix, iy);
         return Py_BuildValue("i", value);
@@ -117,20 +118,22 @@ namespace metin2::inline client::inline social {
 
     auto text_tail_select_item_name(PyObject *self, PyObject *args) -> PyObject * {
         int virtual_id;
-        if (!py_tuple_get_integer(args, 0, &virtual_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &virtual_id)) {
+            return nullptr;
+        }
 
         get_python_text_tail().select_item_name(virtual_id);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto text_tail_enable_pk_title(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &flag)) {
+            return nullptr;
+        }
 
         get_python_text_tail().enable_pk_title(flag);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     void init_social_text_tail_module() {

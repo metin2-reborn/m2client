@@ -93,39 +93,42 @@ namespace metin2::inline client::inline player {
 
     auto player_pick_close_item(PyObject *self, PyObject *args) -> PyObject * {
         get_python_player().pick_close_item();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_game_window(PyObject *self, PyObject *args) -> PyObject * {
         PyObject *py_handle;
-        if (!py_tuple_get_object(args, 0, &py_handle))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "O", &py_handle)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.set_game_window(py_handle);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_quick_camera_mode(PyObject *self, PyObject *args) -> PyObject * {
         int is_enable;
-        if (!py_tuple_get_integer(args, 0, &is_enable))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &is_enable)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.set_quick_camera_mode(is_enable ? true : false);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_main_character_index(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         get_python_player().set_main_character_index(vid);
         get_python_character_manager().set_main_instance(vid);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_get_main_character_index(PyObject *self, PyObject *args) -> PyObject * {
@@ -145,8 +148,9 @@ namespace metin2::inline client::inline player {
 
     auto player_is_main_character_index(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().is_main_character_index(vid));
     }
@@ -161,8 +165,9 @@ namespace metin2::inline client::inline player {
 
     auto player_is_pvp_instance(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         instance_base *main_instance = get_python_player().new_get_main_actor_ptr();
         instance_base *target_instance = get_python_character_manager().instance_ptr(vid);
@@ -176,8 +181,9 @@ namespace metin2::inline client::inline player {
 
     auto player_is_same_empire(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         instance_base *main_instance = get_python_player().new_get_main_actor_ptr();
         instance_base *target_instance = get_python_character_manager().instance_ptr(vid);
@@ -191,32 +197,36 @@ namespace metin2::inline client::inline player {
 
     auto player_is_challenge_instance(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().is_challenge_instance(vid));
     }
 
     auto player_is_revenge_instance(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().is_revenge_instance(vid));
     }
 
     auto player_is_cant_fight_instance(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().is_cant_fight_instance(vid));
     }
 
     auto player_get_character_distance(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         instance_base *main_instance = get_python_player().new_get_main_actor_ptr();
         instance_base *target_instance = get_python_character_manager().instance_ptr(vid);
@@ -251,107 +261,102 @@ namespace metin2::inline client::inline player {
 
     auto player_register_cache_effect(PyObject *self, PyObject *args) -> PyObject * {
         int eft;
-        if (!py_tuple_get_integer(args, 0, &eft))
-            return py_bad_argument();
-
         char *file_name;
-        if (!py_tuple_get_string(args, 1, &file_name))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "is", &eft, &file_name)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
-        if (!player.register_effect(eft, file_name, true))
-            return py_build_exception("CPythonPlayer::RegisterEffect(eEft=%d, szFileName=%s", eft, file_name);
+        if (!player.register_effect(eft, file_name, true)) {
+            PyErr_Format(PyExc_ValueError, "Cannot register effect %d (%s)", eft, file_name);
+            return nullptr;
+        }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_attack_key_state(PyObject *self, PyObject *args) -> PyObject * {
         int is_pressed;
-        if (!py_tuple_get_integer(args, 0, &is_pressed))
-            return py_build_exception("playerSetAttackKeyState(isPressed) - There is no first argument");
+        if (!PyArg_ParseTuple(args, "i", &is_pressed)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.set_attack_key_state(is_pressed ? true : false);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_single_dik_key_state(PyObject *self, PyObject *args) -> PyObject * {
-        int dik;
-        if (!py_tuple_get_integer(args, 0, &dik))
-            return py_build_exception("playerSetSingleDIKKeyState(eDIK, isPressed) - There is no first argument");
-
-        int is_pressed;
-        if (!py_tuple_get_integer(args, 1, &is_pressed))
-            return py_build_exception("playerSetSingleDIKKeyState(eDIK, isPressed) - There is no second argument");
+        int dik, is_pressed;
+        if (!PyArg_ParseTuple(args, "ii", &dik, &is_pressed)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.new_set_single_dik_key_state(dik, is_pressed ? true : false);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_end_key_walking_immediately(PyObject *self, PyObject *args) -> PyObject * {
         get_python_player().new_stop();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_end_mouse_walking(PyObject *self, PyObject *args) -> PyObject * {
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_reset_camera_rotation(PyObject *self, PyObject *args) -> PyObject * {
         get_python_player().new_reset_camera_rotation();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_auto_camera_rotation_speed(PyObject *self, PyObject *args) -> PyObject * {
         float cmr_rot_spd;
-        if (!py_tuple_get_float(args, 0, &cmr_rot_spd))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "f", &cmr_rot_spd)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.new_set_auto_camera_rotation_speed(cmr_rot_spd);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_mouse_state(PyObject *self, PyObject *args) -> PyObject * {
-        int mbt;
-        if (!py_tuple_get_integer(args, 0, &mbt))
-            return py_build_exception();
-
-        int mbs;
-        if (!py_tuple_get_integer(args, 1, &mbs))
-            return py_build_exception();
+        int mbt, mbs;
+        if (!PyArg_ParseTuple(args, "ii", &mbt, &mbs)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.new_set_mouse_state(mbt, mbs);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_mouse_func(PyObject *self, PyObject *args) -> PyObject * {
-        int mbt;
-        if (!py_tuple_get_integer(args, 0, &mbt))
-            return py_build_exception();
-
-        int mbs;
-        if (!py_tuple_get_integer(args, 1, &mbs))
-            return py_build_exception();
+        int mbt, mbs;
+        if (!PyArg_ParseTuple(args, "ii", &mbt, &mbs)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.new_set_mouse_func(mbt, mbs);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_mouse_middle_button_state(PyObject *self, PyObject *args) -> PyObject * {
         int mbs;
-        if (!py_tuple_get_integer(args, 0, &mbs))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &mbs)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.new_set_mouse_middle_button_state(mbs);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_get_name(PyObject *self, PyObject *args) -> PyObject * {
@@ -368,25 +373,28 @@ namespace metin2::inline client::inline player {
 
     auto player_set_play_time(PyObject *self, PyObject *args) -> PyObject * {
         int time;
-        if (!py_tuple_get_integer(args, 0, &time))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &time)) {
+            return nullptr;
+        }
 
         get_python_player().set_play_time(time);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_is_skill_cool_time(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().is_skill_cool_time(slot_index));
     }
 
     auto player_get_skill_cool_time(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         float cool_time = get_python_player().skill_cool_time(slot_index);
         float elapsed_cool_time = get_python_player().skill_elapsed_cool_time(slot_index);
@@ -395,25 +403,28 @@ namespace metin2::inline client::inline player {
 
     auto player_is_skill_active(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().is_skill_active(slot_index));
     }
 
     auto player_use_guild_skill(PyObject *self, PyObject *args) -> PyObject * {
         int skill_slot_index;
-        if (!py_tuple_get_integer(args, 0, &skill_slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &skill_slot_index)) {
+            return nullptr;
+        }
 
         get_python_player().use_guild_skill(skill_slot_index);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_affect_index_to_skill_index(PyObject *self, PyObject *args) -> PyObject * {
         int affect_index;
-        if (!py_tuple_get_integer(args, 0, &affect_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &affect_index)) {
+            return nullptr;
+        }
 
         uint32_t skill_index;
         if (!get_python_player().affect_index_to_skill_index(affect_index, &skill_index))
@@ -429,8 +440,9 @@ namespace metin2::inline client::inline player {
 
     auto player_get_status(PyObject *self, PyObject *args) -> PyObject * {
         int type;
-        if (!py_tuple_get_integer(args, 0, &type))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &type)) {
+            return nullptr;
+        }
 
         int32_t value = get_python_player().status(type);
 
@@ -478,92 +490,99 @@ namespace metin2::inline client::inline player {
     }
 
     auto player_set_skill(PyObject *self, PyObject *args) -> PyObject * {
-        int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
-
-        int skill_index;
-        if (!py_tuple_get_integer(args, 1, &skill_index))
-            return py_build_exception();
+        int slot_index, skill_index;
+        if (!PyArg_ParseTuple(args, "ii", &slot_index, &skill_index)) {
+            return nullptr;
+        }
 
         get_python_player().set_skill(slot_index, skill_index);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_get_skill_index(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().skill_index(slot_index));
     }
 
     auto player_get_skill_slot_index(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         uint32_t slot_index;
-        if (!get_python_player().skill_slot_index(skill_index, &slot_index))
-            return py_build_exception();
+        if (!get_python_player().skill_slot_index(skill_index, &slot_index)) {
+            PyErr_Format(PyExc_ValueError, "Skill %d is not in a slot", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", slot_index);
     }
 
     auto player_get_skill_grade(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().skill_grade(slot_index));
     }
 
     auto player_get_skill_level(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().skill_level(slot_index));
     }
 
     auto player_get_skill_current_efficient_percentage(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("f", get_python_player().skill_current_efficient_percentage(slot_index));
     }
     auto player_get_skill_next_efficient_percentage(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("f", get_python_player().skill_next_efficient_percentage(slot_index));
     }
 
     auto player_click_skill_slot(PyObject *self, PyObject *args) -> PyObject * {
         int skill_slot;
-        if (!py_tuple_get_integer(args, 0, &skill_slot))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_slot)) {
+            return nullptr;
+        }
 
         get_python_player().click_skill_slot(skill_slot);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_change_current_skill_number_only(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         get_python_player().change_current_skill_number_only(slot_index);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_clear_skill_dict(PyObject *self, PyObject *args) -> PyObject * {
         get_python_player().clear_skill_dict();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_get_item_index(PyObject *self, PyObject *args) -> PyObject * {
@@ -571,8 +590,9 @@ namespace metin2::inline client::inline player {
         case 1:
             {
                 int slot_index;
-                if (!py_tuple_get_integer(args, 0, &slot_index))
-                    return py_build_exception();
+                if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+                    return nullptr;
+                }
 
                 int item_index = get_python_player().item_index(item_pos(INVENTORY, slot_index));
                 return Py_BuildValue("i", item_index);
@@ -580,16 +600,16 @@ namespace metin2::inline client::inline player {
         case 2:
             {
                 item_pos cell;
-                if (!py_tuple_get_byte(args, 0, &cell.window_type))
-                    return py_build_exception();
-                if (!py_tuple_get_integer(args, 1, &cell.cell))
-                    return py_build_exception();
+                if (!PyArg_ParseTuple(args, "bH", &cell.window_type, &cell.cell)) {
+                    return nullptr;
+                }
 
                 int item_index = get_python_player().item_index(cell);
                 return Py_BuildValue("i", item_index);
             }
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
     }
 
@@ -598,8 +618,9 @@ namespace metin2::inline client::inline player {
         case 1:
             {
                 int slot_index;
-                if (!py_tuple_get_integer(args, 0, &slot_index))
-                    return py_build_exception();
+                if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+                    return nullptr;
+                }
 
                 uint32_t flags = get_python_player().item_flags(item_pos(INVENTORY, slot_index));
                 return Py_BuildValue("i", flags);
@@ -607,17 +628,16 @@ namespace metin2::inline client::inline player {
         case 2:
             {
                 item_pos cell;
-                if (!py_tuple_get_byte(args, 0, &cell.window_type))
-                    return py_build_exception();
-
-                if (!py_tuple_get_integer(args, 1, &cell.cell))
-                    return py_build_exception();
+                if (!PyArg_ParseTuple(args, "bH", &cell.window_type, &cell.cell)) {
+                    return nullptr;
+                }
 
                 uint32_t flags = get_python_player().item_flags(cell);
                 return Py_BuildValue("i", flags);
             }
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
     }
 
@@ -626,8 +646,9 @@ namespace metin2::inline client::inline player {
         case 1:
             {
                 int slot_index;
-                if (!py_tuple_get_integer(args, 0, &slot_index))
-                    return py_build_exception();
+                if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+                    return nullptr;
+                }
 
                 int item_num = get_python_player().item_count(item_pos(INVENTORY, slot_index));
                 return Py_BuildValue("i", item_num);
@@ -635,18 +656,17 @@ namespace metin2::inline client::inline player {
         case 2:
             {
                 item_pos cell;
-                if (!py_tuple_get_byte(args, 0, &cell.window_type))
-                    return py_build_exception();
-
-                if (!py_tuple_get_integer(args, 1, &cell.cell))
-                    return py_build_exception();
+                if (!PyArg_ParseTuple(args, "bH", &cell.window_type, &cell.cell)) {
+                    return nullptr;
+                }
 
                 int item_num = get_python_player().item_count(cell);
 
                 return Py_BuildValue("i", item_num);
             }
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
     }
 
@@ -655,45 +675,44 @@ namespace metin2::inline client::inline player {
         case 2:
             {
                 int slot_index;
-                if (!py_tuple_get_integer(args, 0, &slot_index))
-                    return py_build_exception();
-
                 uint8_t count;
-                if (!py_tuple_get_integer(args, 1, &count))
-                    return py_build_exception();
 
-                if (0 == count)
-                    return py_build_exception();
+                if (!PyArg_ParseTuple(args, "ib", &slot_index, &count)) {
+                    return nullptr;
+                }
+
+                if (0 == count) {
+                    PyErr_SetString(PyExc_ValueError, "Item count must not be zero");
+                    return nullptr;
+                }
 
                 get_python_player().set_item_count(item_pos(INVENTORY, slot_index), count);
-                return py_build_none();
+                Py_RETURN_NONE;
             }
         case 3:
             {
                 item_pos cell;
-                if (!py_tuple_get_byte(args, 0, &cell.window_type))
-                    return py_build_exception();
-
-                if (!py_tuple_get_integer(args, 1, &cell.cell))
-                    return py_build_exception();
-
                 uint8_t count;
-                if (!py_tuple_get_integer(args, 2, &count))
-                    return py_build_exception();
+
+                if (!PyArg_ParseTuple(args, "bHb", &cell.window_type, &cell.cell, &count)) {
+                    return nullptr;
+                }
 
                 get_python_player().set_item_count(cell, count);
 
-                return py_build_none();
+                Py_RETURN_NONE;
             }
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
     }
 
     auto player_get_item_count_by_vnum(PyObject *self, PyObject *args) -> PyObject * {
         int ivnum;
-        if (!py_tuple_get_integer(args, 0, &ivnum))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &ivnum)) {
+            return nullptr;
+        }
 
         int item_num = get_python_player().item_count_by_vnum(ivnum);
         return Py_BuildValue("i", item_num);
@@ -705,25 +724,22 @@ namespace metin2::inline client::inline player {
 
         switch (PyTuple_Size(args)) {
         case 2:
-            if (!py_tuple_get_integer(args, 0, &cell.cell))
-                return py_build_exception();
 
-            if (!py_tuple_get_integer(args, 1, &metin_socket_index))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "Hi", &cell.cell, &metin_socket_index)) {
+                return nullptr;
+            }
 
             break;
         case 3:
-            if (!py_tuple_get_byte(args, 0, &cell.window_type))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 1, &cell.cell))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 2, &metin_socket_index))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "bHi", &cell.window_type, &cell.cell, &metin_socket_index)) {
+                return nullptr;
+            }
 
             break;
 
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
         int metin_socket_value = get_python_player().item_metin_socket(cell, metin_socket_index);
         return Py_BuildValue("i", metin_socket_value);
@@ -734,25 +750,21 @@ namespace metin2::inline client::inline player {
         int attribute_slot_index;
         switch (PyTuple_Size(args)) {
         case 2:
-            if (!py_tuple_get_integer(args, 0, &cell.cell))
-                return py_build_exception();
 
-            if (!py_tuple_get_integer(args, 1, &attribute_slot_index))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "Hi", &cell.cell, &attribute_slot_index)) {
+                return nullptr;
+            }
 
             break;
         case 3:
-            if (!py_tuple_get_byte(args, 0, &cell.window_type))
-                return py_build_exception();
 
-            if (!py_tuple_get_integer(args, 1, &cell.cell))
-                return py_build_exception();
-
-            if (!py_tuple_get_integer(args, 2, &attribute_slot_index))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "bHi", &cell.window_type, &cell.cell, &attribute_slot_index)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
         uint8_t type;
         short value;
@@ -766,17 +778,18 @@ namespace metin2::inline client::inline player {
 
         switch (PyTuple_Size(args)) {
         case 1:
-            if (!py_tuple_get_integer(args, 0, &cell.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "H", &cell.cell)) {
+                return nullptr;
+            }
             break;
         case 2:
-            if (!py_tuple_get_byte(args, 0, &cell.window_type))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 1, &cell.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "bH", &cell.window_type, &cell.cell)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
         const packet_item *player_item = get_python_player().get_item_data(cell);
         item_data *item_data = nullptr;
@@ -814,17 +827,18 @@ namespace metin2::inline client::inline player {
 
         switch (PyTuple_Size(args)) {
         case 1:
-            if (!py_tuple_get_integer(args, 0, &cell.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "H", &cell.cell)) {
+                return nullptr;
+            }
             break;
         case 2:
-            if (!py_tuple_get_byte(args, 0, &cell.window_type))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 1, &cell.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "bH", &cell.window_type, &cell.cell)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
         item_data *item_data;
 
@@ -848,17 +862,19 @@ namespace metin2::inline client::inline player {
 
     auto player_set_quick_page(PyObject *self, PyObject *args) -> PyObject * {
         int page_index;
-        if (!py_tuple_get_integer(args, 0, &page_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &page_index)) {
+            return nullptr;
+        }
 
         get_python_player().set_quick_page(page_index);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_local_quick_slot_index_to_global_quick_slot_index(PyObject *self, PyObject *args) -> PyObject * {
         int local_slot_index;
-        if (!py_tuple_get_integer(args, 0, &local_slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &local_slot_index)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         return Py_BuildValue("i", player.local_quick_slot_index_to_global_quick_slot_index(local_slot_index));
@@ -866,8 +882,9 @@ namespace metin2::inline client::inline player {
 
     auto player_get_local_quick_slot(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         uint32_t wnd_type;
         uint32_t wnd_item_pos;
@@ -880,8 +897,9 @@ namespace metin2::inline client::inline player {
 
     auto player_get_global_quick_slot(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         uint32_t wnd_type;
         uint32_t wnd_item_pos;
@@ -893,79 +911,67 @@ namespace metin2::inline client::inline player {
     }
 
     auto player_request_add_local_quick_slot(PyObject *self, PyObject *args) -> PyObject * {
-        int slot_index;
-        int wnd_type;
-        int wnd_item_pos;
-
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
-
-        if (!py_tuple_get_integer(args, 1, &wnd_type))
-            return py_build_exception();
-
-        if (!py_tuple_get_integer(args, 2, &wnd_item_pos))
-            return py_build_exception();
+        int slot_index, wnd_type, wnd_item_pos;
+        if (!PyArg_ParseTuple(args, "iii", &slot_index, &wnd_type, &wnd_item_pos)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.request_add_local_quick_slot(slot_index, wnd_type, wnd_item_pos);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_request_add_to_empty_local_quick_slot(PyObject *self, PyObject *args) -> PyObject * {
-        int wnd_type;
-        if (!py_tuple_get_integer(args, 0, &wnd_type))
-            return py_build_exception();
-
-        int wnd_item_pos;
-        if (!py_tuple_get_integer(args, 1, &wnd_item_pos))
-            return py_build_exception();
+        int wnd_type, wnd_item_pos;
+        if (!PyArg_ParseTuple(args, "ii", &wnd_type, &wnd_item_pos)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.request_add_to_empty_local_quick_slot(wnd_type, wnd_item_pos);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_request_delete_global_quick_slot(PyObject *self, PyObject *args) -> PyObject * {
         int global_slot_index;
-        if (!py_tuple_get_integer(args, 0, &global_slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &global_slot_index)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.request_delete_global_quick_slot(global_slot_index);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_request_move_global_quick_slot_to_local_quick_slot(PyObject *self, PyObject *args) -> PyObject * {
-        int global_src_slot_index;
-        int local_dst_slot_index;
-
-        if (!py_tuple_get_integer(args, 0, &global_src_slot_index))
-            return py_build_exception();
-
-        if (!py_tuple_get_integer(args, 1, &local_dst_slot_index))
-            return py_build_exception();
+        int global_src_slot_index, local_dst_slot_index;
+        if (!PyArg_ParseTuple(args, "ii", &global_src_slot_index, &local_dst_slot_index)) {
+            return nullptr;
+        }
 
         python_player &player = get_python_player();
         player.request_move_global_quick_slot_to_local_quick_slot(global_src_slot_index, local_dst_slot_index);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_request_use_local_quick_slot(PyObject *self, PyObject *args) -> PyObject * {
         int local_position;
-        if (!py_tuple_get_integer(args, 0, &local_position))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &local_position)) {
+            return nullptr;
+        }
 
         get_python_player().request_use_local_quick_slot(local_position);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_is_belt_inventory_slot(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         char flag = get_python_player().is_belt_inventory_slot(item_pos(INVENTORY, slot_index));
 
@@ -974,8 +980,9 @@ namespace metin2::inline client::inline player {
 
     auto player_is_equipment_slot(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         if (uint32_t(slot_index) >= c_Equipment_Start)
             if (uint32_t(slot_index) <= c_DragonSoul_Equip_End)
@@ -986,11 +993,11 @@ namespace metin2::inline client::inline player {
 
     auto player_is_ds_equipment_slot(PyObject *self, PyObject *args) -> PyObject * {
         uint8_t window_type;
-        if (!py_tuple_get_integer(args, 0, &window_type))
-            return py_build_exception();
         int slot_index;
-        if (!py_tuple_get_integer(args, 1, &slot_index))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "bi", &window_type, &slot_index)) {
+            return nullptr;
+        }
 
         if (INVENTORY == window_type)
             if (uint32_t(slot_index) >= c_DragonSoul_Equip_Start)
@@ -1002,8 +1009,9 @@ namespace metin2::inline client::inline player {
 
     auto player_is_costume_slot(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         if (uint32_t(slot_index) >= c_Costume_Slot_Start)
             if (uint32_t(slot_index) <= c_Costume_Slot_End)
@@ -1021,24 +1029,27 @@ namespace metin2::inline client::inline player {
 
         switch (PyTuple_Size(args)) {
         case 1:
-            if (!py_tuple_get_integer(args, 0, &slot_index.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "H", &slot_index.cell)) {
+                return nullptr;
+            }
             break;
         case 2:
-            if (!py_tuple_get_integer(args, 0, &slot_index.window_type))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 0, &slot_index.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "bH", &slot_index.window_type, &slot_index.cell)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
 
         uint32_t item_index = get_python_player().item_index(slot_index);
         get_item_manager().select_item_data(item_index);
         item_data *item_data = get_item_manager().selected_item_data_pointer();
-        if (!item_data)
-            return py_build_exception("Can't find item data");
+        if (!item_data) {
+            PyErr_SetString(PyExc_ValueError, "Unknown item");
+            return nullptr;
+        }
 
         bool has_metin_socket = false;
         bool is_high_price = false;
@@ -1071,24 +1082,27 @@ namespace metin2::inline client::inline player {
         item_pos slot_index;
         switch (PyTuple_Size(args)) {
         case 1:
-            if (!py_tuple_get_integer(args, 0, &slot_index.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "H", &slot_index.cell)) {
+                return nullptr;
+            }
             break;
         case 2:
-            if (!py_tuple_get_integer(args, 0, &slot_index.window_type))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 1, &slot_index.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "bH", &slot_index.window_type, &slot_index.cell)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
 
         int item_index = get_python_player().item_index(slot_index);
         get_item_manager().select_item_data(item_index);
         item_data *item_data = get_item_manager().selected_item_data_pointer();
-        if (!item_data)
-            return py_build_exception("Can't find item data");
+        if (!item_data) {
+            PyErr_SetString(PyExc_ValueError, "Unknown item");
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_item_grade(item_data->get_name()));
     }
@@ -1115,21 +1129,18 @@ namespace metin2::inline client::inline player {
 
         switch (PyTuple_Size(args)) {
         case 2:
-            if (!py_tuple_get_integer(args, 0, &scroll_item_index))
-                return py_bad_argument();
-            if (!py_tuple_get_integer(args, 1, &target_slot_index.cell))
-                return py_bad_argument();
+            if (!PyArg_ParseTuple(args, "iH", &scroll_item_index, &target_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         case 3:
-            if (!py_tuple_get_integer(args, 0, &scroll_item_index))
-                return py_bad_argument();
-            if (!py_tuple_get_integer(args, 1, &target_slot_index.window_type))
-                return py_bad_argument();
-            if (!py_tuple_get_integer(args, 2, &target_slot_index.cell))
-                return py_bad_argument();
+            if (!PyArg_ParseTuple(args, "ibH", &scroll_item_index, &target_slot_index.window_type, &target_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_bad_argument();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
 
         if (get_python_player().is_equipment_slot(target_slot_index)) {
@@ -1180,34 +1191,35 @@ namespace metin2::inline client::inline player {
 
         switch (PyTuple_Size(args)) {
         case 2:
-            if (!py_tuple_get_integer(args, 0, &metin_item_id))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 1, &target_slot_index.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "iH", &metin_item_id, &target_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         case 3:
-            if (!py_tuple_get_integer(args, 0, &metin_item_id))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 1, &target_slot_index.window_type))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 2, &target_slot_index.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "ibH", &metin_item_id, &target_slot_index.window_type, &target_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
         if (get_python_player().is_equipment_slot(target_slot_index)) {
             return Py_BuildValue("i", ATTACH_METIN_CANT_ATTACH_TO_EQUIPMENT);
         }
 
         item_data *metin_item_data;
-        if (!get_item_manager().item_data_pointer(metin_item_id, &metin_item_data))
-            return py_build_exception("can't find item data");
+        if (!get_item_manager().item_data_pointer(metin_item_id, &metin_item_data)) {
+            PyErr_SetString(PyExc_ValueError, "Unknown item");
+            return nullptr;
+        }
 
         uint32_t target_item_index = get_python_player().item_index(target_slot_index);
         item_data *target_item_data;
-        if (!get_item_manager().item_data_pointer(target_item_index, &target_item_data))
-            return py_build_exception("can't find item data");
+        if (!get_item_manager().item_data_pointer(target_item_index, &target_item_data)) {
+            PyErr_SetString(PyExc_ValueError, "Unknown item");
+            return nullptr;
+        }
 
         uint32_t metin_wear_flags = metin_item_data->wear_flags();
         uint32_t target_wear_flags = target_item_data->wear_flags();
@@ -1252,27 +1264,26 @@ namespace metin2::inline client::inline player {
         item_pos target_slot_index;
         switch (PyTuple_Size(args)) {
         case 2:
-            if (!py_tuple_get_integer(args, 0, &scroll_item_index))
-                return py_bad_argument();
-            if (!py_tuple_get_integer(args, 1, &target_slot_index.cell))
-                return py_bad_argument();
+            if (!PyArg_ParseTuple(args, "iH", &scroll_item_index, &target_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         case 3:
-            if (!py_tuple_get_integer(args, 0, &scroll_item_index))
-                return py_bad_argument();
-            if (!py_tuple_get_integer(args, 1, &target_slot_index.window_type))
-                return py_bad_argument();
-            if (!py_tuple_get_integer(args, 2, &target_slot_index.cell))
-                return py_bad_argument();
+            if (!PyArg_ParseTuple(args, "ibH", &scroll_item_index, &target_slot_index.window_type, &target_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_bad_argument();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
 
         get_item_manager().select_item_data(scroll_item_index);
         item_data *scroll_item_data = get_item_manager().selected_item_data_pointer();
-        if (!scroll_item_data)
-            return py_build_exception("Can't find item data");
+        if (!scroll_item_data) {
+            PyErr_SetString(PyExc_ValueError, "Unknown item");
+            return nullptr;
+        }
         int scroll_type = scroll_item_data->get_type();
         int scroll_sub_type = scroll_item_data->sub_type();
         if (scroll_type != item_data::ITEM_TYPE_USE)
@@ -1283,8 +1294,10 @@ namespace metin2::inline client::inline player {
         int target_item_index = get_python_player().item_index(target_slot_index);
         get_item_manager().select_item_data(target_item_index);
         item_data *target_item_data = get_item_manager().selected_item_data_pointer();
-        if (!target_item_data)
-            return py_build_exception("Can't find item data");
+        if (!target_item_data) {
+            PyErr_SetString(PyExc_ValueError, "Unknown item");
+            return nullptr;
+        }
 
         if (target_item_data->is_flag(item_data::ITEM_FLAG_REFINEABLE)) {
             for (int slot_count = 0; slot_count < METIN_SOCKET_COUNT; ++slot_count)
@@ -1301,27 +1314,26 @@ namespace metin2::inline client::inline player {
         item_pos target_slot_index;
         switch (PyTuple_Size(args)) {
         case 2:
-            if (!py_tuple_get_integer(args, 0, &key_item_index))
-                return py_bad_argument();
-            if (!py_tuple_get_integer(args, 1, &target_slot_index.cell))
-                return py_bad_argument();
+            if (!PyArg_ParseTuple(args, "iH", &key_item_index, &target_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         case 3:
-            if (!py_tuple_get_integer(args, 0, &key_item_index))
-                return py_bad_argument();
-            if (!py_tuple_get_integer(args, 1, &target_slot_index.window_type))
-                return py_bad_argument();
-            if (!py_tuple_get_integer(args, 2, &target_slot_index.cell))
-                return py_bad_argument();
+            if (!PyArg_ParseTuple(args, "ibH", &key_item_index, &target_slot_index.window_type, &target_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_bad_argument();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
 
         get_item_manager().select_item_data(key_item_index);
         item_data *key_item_data = get_item_manager().selected_item_data_pointer();
-        if (!key_item_data)
-            return py_build_exception("Can't find item data");
+        if (!key_item_data) {
+            PyErr_SetString(PyExc_ValueError, "Unknown item");
+            return nullptr;
+        }
         int key_type = key_item_data->get_type();
         if (key_type != item_data::ITEM_TYPE_TREASURE_KEY)
             return Py_BuildValue("i", false);
@@ -1329,8 +1341,10 @@ namespace metin2::inline client::inline player {
         int target_item_index = get_python_player().item_index(target_slot_index);
         get_item_manager().select_item_data(target_item_index);
         item_data *target_item_data = get_item_manager().selected_item_data_pointer();
-        if (!target_item_data)
-            return py_build_exception("Can't find item data");
+        if (!target_item_data) {
+            PyErr_SetString(PyExc_ValueError, "Unknown item");
+            return nullptr;
+        }
         int target_type = target_item_data->get_type();
         if (target_type != item_data::ITEM_TYPE_TREASURE_BOX)
             return Py_BuildValue("i", false);
@@ -1342,63 +1356,70 @@ namespace metin2::inline client::inline player {
         item_pos scroll_slot_index;
         switch (PyTuple_Size(args)) {
         case 1:
-            if (!py_tuple_get_integer(args, 0, &scroll_slot_index.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "H", &scroll_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         case 2:
-            if (!py_tuple_get_integer(args, 0, &scroll_slot_index.window_type))
-                return py_build_exception();
-            if (!py_tuple_get_integer(args, 1, &scroll_slot_index.cell))
-                return py_build_exception();
+            if (!PyArg_ParseTuple(args, "bH", &scroll_slot_index.window_type, &scroll_slot_index.cell)) {
+                return nullptr;
+            }
             break;
         default:
-            return py_build_exception();
+            PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
+            return nullptr;
         }
 
         int scroll_item_index = get_python_player().item_index(scroll_slot_index);
         get_item_manager().select_item_data(scroll_item_index);
         item_data *scroll_item_data = get_item_manager().selected_item_data_pointer();
-        if (!scroll_item_data)
-            return py_build_exception("Can't find item data");
+        if (!scroll_item_data) {
+            PyErr_SetString(PyExc_ValueError, "Unknown item");
+            return nullptr;
+        }
 
         return Py_BuildValue("i", REFINE_SCROLL_TYPE_UP_GRADE == scroll_item_data->value(0));
     }
 
     auto player_clear_target(PyObject *self, PyObject *args) -> PyObject * {
         get_python_player().set_target(0);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_target(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         get_python_player().set_target(vid);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_open_character_menu(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         get_python_player().open_character_menu(vid);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_is_party_member(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_player().is_party_member_by_vid(vid));
     }
 
     auto player_is_party_leader(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         uint32_t pid;
         if (!get_python_player().party_member_vid_to_pid(vid, &pid))
@@ -1413,8 +1434,9 @@ namespace metin2::inline client::inline player {
 
     auto player_get_party_member_hp_percentage(PyObject *self, PyObject *args) -> PyObject * {
         int pid;
-        if (!py_tuple_get_integer(args, 0, &pid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &pid)) {
+            return nullptr;
+        }
 
         python_player::party_member_info *party_member_info;
         if (!get_python_player().party_member_ptr(pid, &party_member_info))
@@ -1425,8 +1447,9 @@ namespace metin2::inline client::inline player {
 
     auto player_get_party_member_state(PyObject *self, PyObject *args) -> PyObject * {
         int pid;
-        if (!py_tuple_get_integer(args, 0, &pid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &pid)) {
+            return nullptr;
+        }
 
         python_player::party_member_info *party_member_info;
         if (!get_python_player().party_member_ptr(pid, &party_member_info))
@@ -1437,8 +1460,9 @@ namespace metin2::inline client::inline player {
 
     auto player_get_party_member_affects(PyObject *self, PyObject *args) -> PyObject * {
         int pid;
-        if (!py_tuple_get_integer(args, 0, &pid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &pid)) {
+            return nullptr;
+        }
 
         python_player::party_member_info *party_member_info;
         if (!get_python_player().party_member_ptr(pid, &party_member_info))
@@ -1455,16 +1479,17 @@ namespace metin2::inline client::inline player {
 
     auto player_remove_party_member(PyObject *self, PyObject *args) -> PyObject * {
         int pid;
-        if (!py_tuple_get_integer(args, 0, &pid))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &pid)) {
+            return nullptr;
+        }
 
         get_python_player().remove_party_member(pid);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_exit_party(PyObject *self, PyObject *args) -> PyObject * {
         get_python_player().exit_party();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_get_pk_mode(PyObject *self, PyObject *args) -> PyObject * {
@@ -1473,10 +1498,11 @@ namespace metin2::inline client::inline player {
 
     auto player_set_weapon_attack_bonus_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &flag)) {
+            return nullptr;
+        }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_toggle_cool_time(PyObject *self, PyObject *args) -> PyObject * {
@@ -1493,22 +1519,23 @@ namespace metin2::inline client::inline player {
 
     auto player_register_emotion_icon(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
         char *file_name;
-        if (!py_tuple_get_string(args, 1, &file_name))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "is", &index, &file_name)) {
+            return nullptr;
+        }
 
         auto *image = (graphic_image *)get_resource_manager().resource_pointer(file_name);
         map_emotion_index_icon_image.insert(std::make_pair(index, image));
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_get_emotion_icon_image(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         if (map_emotion_index_icon_image.end() == map_emotion_index_icon_image.find(index))
             return Py_BuildValue("n", (Py_ssize_t)0);
@@ -1517,56 +1544,42 @@ namespace metin2::inline client::inline player {
     }
 
     auto player_set_item_data(PyObject *self, PyObject *args) -> PyObject * {
-        int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
-
-        int virtual_id;
-        if (!py_tuple_get_integer(args, 1, &virtual_id))
-            return py_build_exception();
-
-        int num;
-        if (!py_tuple_get_integer(args, 2, &num))
-            return py_build_exception();
+        int slot_index, virtual_id, num;
+        if (!PyArg_ParseTuple(args, "iii", &slot_index, &virtual_id, &num)) {
+            return nullptr;
+        }
 
         packet_item item_inst;
         memset(&item_inst, 0, sizeof(item_inst));
         item_inst.vnum = virtual_id;
         item_inst.count = num;
         get_python_player().set_item_data(item_pos(INVENTORY, slot_index), item_inst);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_set_auto_potion_info(PyObject *self, PyObject *args) -> PyObject * {
-        int potion_type = 0;
-        if (!py_tuple_get_integer(args, 0, &potion_type))
-            return py_bad_argument();
+        int potion_type, activated, current_amount, total_amount, inventory_slot_index;
+        if (!PyArg_ParseTuple(args, "iiiii", &potion_type, &activated, &current_amount, &total_amount, &inventory_slot_index)) {
+            return nullptr;
+        }
 
-        python_player *player = (&get_python_player());
+        python_player::auto_potion_info &potion_info = get_python_player().get_auto_potion_info(potion_type);
 
-        python_player::auto_potion_info &potion_info = player->get_auto_potion_info(potion_type);
+        potion_info.activated = activated != 0;
+        potion_info.current_amount = current_amount;
+        potion_info.total_amount = total_amount;
+        potion_info.inventory_slot_index = inventory_slot_index;
 
-        if (!py_tuple_get_boolean(args, 1, &potion_info.activated))
-            return py_bad_argument();
-
-        if (!py_tuple_get_integer(args, 2, &potion_info.current_amount))
-            return py_bad_argument();
-
-        if (!py_tuple_get_integer(args, 3, &potion_info.total_amount))
-            return py_bad_argument();
-
-        if (!py_tuple_get_integer(args, 4, &potion_info.inventory_slot_index))
-            return py_bad_argument();
-
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto player_get_auto_potion_info(PyObject *self, PyObject *args) -> PyObject * {
         python_player *player = (&get_python_player());
 
         int potion_type = 0;
-        if (!py_tuple_get_integer(args, 0, &potion_type))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &potion_type)) {
+            return nullptr;
+        }
 
         python_player::auto_potion_info &potion_info = player->get_auto_potion_info(potion_type);
 
@@ -1575,8 +1588,9 @@ namespace metin2::inline client::inline player {
 
     auto player_slot_type_to_inven_type(PyObject *self, PyObject *args) -> PyObject * {
         int slot_type = 0;
-        if (!py_tuple_get_integer(args, 0, &slot_type))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &slot_type)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", slot_type_to_inven_type((uint8_t)slot_type));
     }
@@ -1595,18 +1609,22 @@ namespace metin2::inline client::inline player {
         int32_t belt_grade = item->value(0);
 
         int pos = 0;
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &pos)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("b", belt_inventory_helper::is_available_cell(pos - c_Belt_Inventory_Slot_Start, belt_grade));
     }
 
     auto player_send_dragon_soul_refine(PyObject *self, PyObject *args) -> PyObject * {
         uint8_t sub_header;
-        PyObject *dic;
+        PyObject *dic = nullptr;
         item_pos refine_item_poses[DS_REFINE_WINDOW_MAX_NUM];
-        if (!py_tuple_get_byte(args, 0, &sub_header))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "b|O!", &sub_header, &PyDict_Type, &dic)) {
+            return nullptr;
+        }
+
         switch (sub_header) {
         case DS_SUB_HEADER_CLOSE:
             break;
@@ -1614,18 +1632,26 @@ namespace metin2::inline client::inline player {
         case DS_SUB_HEADER_DO_IMPROVEMENT:
         case DS_SUB_HEADER_DO_REFINE:
             {
-                if (!py_tuple_get_object(args, 1, &dic))
-                    return py_build_exception();
+                if (dic == nullptr) {
+                    PyErr_SetString(PyExc_TypeError, "Refining takes a {slot: (window, cell)} dict");
+                    return nullptr;
+                }
+
                 Py_ssize_t pos = 0;
                 PyObject *key, *value;
 
                 while (PyDict_Next(dic, &pos, &key, &value)) {
-                    int i = PyInt_AsLong(key);
-                    if (i > DS_REFINE_WINDOW_MAX_NUM)
-                        return py_build_exception();
+                    const int i = PyInt_AsLong(key);
+                    if (i < 0 || i >= DS_REFINE_WINDOW_MAX_NUM) {
+                        PyErr_Format(PyExc_ValueError, "Refine slot %d out of range", i);
+                        return nullptr;
+                    }
 
-                    if (!py_tuple_get_byte(value, 0, &refine_item_poses[i].window_type) || !py_tuple_get_integer(value, 1, &refine_item_poses[i].cell)) {
-                        return py_build_exception();
+                    if (!PyTuple_Check(value) || !PyArg_ParseTuple(value, "bH", &refine_item_poses[i].window_type, &refine_item_poses[i].cell)) {
+                        if (!PyErr_Occurred()) {
+                            PyErr_SetString(PyExc_TypeError, "Refine slot values must be (window, cell) tuples");
+                        }
+                        return nullptr;
                     }
                 }
             }
@@ -1635,7 +1661,7 @@ namespace metin2::inline client::inline player {
         python_network_stream &rns = get_python_network_stream();
         rns.send_dragon_soul_refine_packet(sub_header, refine_item_poses);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
     void init_player_module() {
         static PyMethodDef s_methods[] =
@@ -1769,223 +1795,223 @@ namespace metin2::inline client::inline player {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = init_python_module("metin2.player", s_methods);
-        PyModule_AddIntConstant(module_value, "LEVEL", POINT_LEVEL);
-        PyModule_AddIntConstant(module_value, "VOICE", POINT_VOICE);
-        PyModule_AddIntConstant(module_value, "EXP", POINT_EXP);
-        PyModule_AddIntConstant(module_value, "NEXT_EXP", POINT_NEXT_EXP);
-        PyModule_AddIntConstant(module_value, "HP", POINT_HP);
-        PyModule_AddIntConstant(module_value, "MAX_HP", POINT_MAX_HP);
-        PyModule_AddIntConstant(module_value, "SP", POINT_SP);
-        PyModule_AddIntConstant(module_value, "MAX_SP", POINT_MAX_SP);
-        PyModule_AddIntConstant(module_value, "STAMINA", POINT_STAMINA);
-        PyModule_AddIntConstant(module_value, "MAX_STAMINA", POINT_MAX_STAMINA);
-        PyModule_AddIntConstant(module_value, "ELK", POINT_GOLD);
-        PyModule_AddIntConstant(module_value, "ST", POINT_ST);
-        PyModule_AddIntConstant(module_value, "HT", POINT_HT);
-        PyModule_AddIntConstant(module_value, "DX", POINT_DX);
-        PyModule_AddIntConstant(module_value, "IQ", POINT_IQ);
-        PyModule_AddIntConstant(module_value, "ATT_POWER", POINT_ATT_POWER);
-        PyModule_AddIntConstant(module_value, "ATT_MIN", POINT_MIN_ATK);
-        PyModule_AddIntConstant(module_value, "ATT_MAX", POINT_MAX_ATK);
-        PyModule_AddIntConstant(module_value, "MIN_MAGIC_WEP", POINT_MIN_MAGIC_WEP);
-        PyModule_AddIntConstant(module_value, "MAX_MAGIC_WEP", POINT_MAX_MAGIC_WEP);
-        PyModule_AddIntConstant(module_value, "ATT_SPEED", POINT_ATT_SPEED);
-        PyModule_AddIntConstant(module_value, "ATT_BONUS", POINT_ATT_GRADE_BONUS);
-        PyModule_AddIntConstant(module_value, "EVADE_RATE", POINT_EVADE_RATE);
-        PyModule_AddIntConstant(module_value, "MOVING_SPEED", POINT_MOV_SPEED);
-        PyModule_AddIntConstant(module_value, "DEF_GRADE", POINT_DEF_GRADE);
-        PyModule_AddIntConstant(module_value, "DEF_BONUS", POINT_DEF_GRADE_BONUS);
-        PyModule_AddIntConstant(module_value, "CASTING_SPEED", POINT_CASTING_SPEED);
-        PyModule_AddIntConstant(module_value, "MAG_ATT", POINT_MAGIC_ATT_GRADE);
-        PyModule_AddIntConstant(module_value, "MAG_DEF", POINT_MAGIC_DEF_GRADE);
-        PyModule_AddIntConstant(module_value, "EMPIRE_POINT", POINT_EMPIRE_POINT);
-        PyModule_AddIntConstant(module_value, "STAT", POINT_STAT);
-        PyModule_AddIntConstant(module_value, "SKILL_PASSIVE", POINT_SUB_SKILL);
-        PyModule_AddIntConstant(module_value, "SKILL_SUPPORT", POINT_SUB_SKILL);
-        PyModule_AddIntConstant(module_value, "SKILL_ACTIVE", POINT_SKILL);
-        PyModule_AddIntConstant(module_value, "SKILL_HORSE", POINT_HORSE_SKILL);
-        PyModule_AddIntConstant(module_value, "PLAYTIME", POINT_PLAYTIME);
-        PyModule_AddIntConstant(module_value, "BOW_DISTANCE", POINT_BOW_DISTANCE);
-        PyModule_AddIntConstant(module_value, "HP_RECOVERY", POINT_HP_RECOVERY);
-        PyModule_AddIntConstant(module_value, "SP_RECOVERY", POINT_SP_RECOVERY);
-        PyModule_AddIntConstant(module_value, "ATTACKER_BONUS", POINT_PARTY_ATT_GRADE);
-        PyModule_AddIntConstant(module_value, "MAX_NUM", POINT_MAX_NUM);
-        PyModule_AddIntConstant(module_value, "POINT_CRITICAL_PCT", POINT_CRITICAL_PCT);
-        PyModule_AddIntConstant(module_value, "POINT_PENETRATE_PCT", POINT_PENETRATE_PCT);
-        PyModule_AddIntConstant(module_value, "POINT_MALL_ATTBONUS", POINT_MALL_ATTBONUS);
-        PyModule_AddIntConstant(module_value, "POINT_MALL_DEFBONUS", POINT_MALL_DEFBONUS);
-        PyModule_AddIntConstant(module_value, "POINT_MALL_EXPBONUS", POINT_MALL_EXPBONUS);
-        PyModule_AddIntConstant(module_value, "POINT_MALL_ITEMBONUS", POINT_MALL_ITEMBONUS);
-        PyModule_AddIntConstant(module_value, "POINT_MALL_GOLDBONUS", POINT_MALL_GOLDBONUS);
-        PyModule_AddIntConstant(module_value, "POINT_MAX_HP_PCT", POINT_MAX_HP_PCT);
-        PyModule_AddIntConstant(module_value, "POINT_MAX_SP_PCT", POINT_MAX_SP_PCT);
+        PyObject *module = init_python_module("metin2.player", s_methods);
+        PyModule_AddIntConstant(module, "LEVEL", POINT_LEVEL);
+        PyModule_AddIntConstant(module, "VOICE", POINT_VOICE);
+        PyModule_AddIntConstant(module, "EXP", POINT_EXP);
+        PyModule_AddIntConstant(module, "NEXT_EXP", POINT_NEXT_EXP);
+        PyModule_AddIntConstant(module, "HP", POINT_HP);
+        PyModule_AddIntConstant(module, "MAX_HP", POINT_MAX_HP);
+        PyModule_AddIntConstant(module, "SP", POINT_SP);
+        PyModule_AddIntConstant(module, "MAX_SP", POINT_MAX_SP);
+        PyModule_AddIntConstant(module, "STAMINA", POINT_STAMINA);
+        PyModule_AddIntConstant(module, "MAX_STAMINA", POINT_MAX_STAMINA);
+        PyModule_AddIntConstant(module, "ELK", POINT_GOLD);
+        PyModule_AddIntConstant(module, "ST", POINT_ST);
+        PyModule_AddIntConstant(module, "HT", POINT_HT);
+        PyModule_AddIntConstant(module, "DX", POINT_DX);
+        PyModule_AddIntConstant(module, "IQ", POINT_IQ);
+        PyModule_AddIntConstant(module, "ATT_POWER", POINT_ATT_POWER);
+        PyModule_AddIntConstant(module, "ATT_MIN", POINT_MIN_ATK);
+        PyModule_AddIntConstant(module, "ATT_MAX", POINT_MAX_ATK);
+        PyModule_AddIntConstant(module, "MIN_MAGIC_WEP", POINT_MIN_MAGIC_WEP);
+        PyModule_AddIntConstant(module, "MAX_MAGIC_WEP", POINT_MAX_MAGIC_WEP);
+        PyModule_AddIntConstant(module, "ATT_SPEED", POINT_ATT_SPEED);
+        PyModule_AddIntConstant(module, "ATT_BONUS", POINT_ATT_GRADE_BONUS);
+        PyModule_AddIntConstant(module, "EVADE_RATE", POINT_EVADE_RATE);
+        PyModule_AddIntConstant(module, "MOVING_SPEED", POINT_MOV_SPEED);
+        PyModule_AddIntConstant(module, "DEF_GRADE", POINT_DEF_GRADE);
+        PyModule_AddIntConstant(module, "DEF_BONUS", POINT_DEF_GRADE_BONUS);
+        PyModule_AddIntConstant(module, "CASTING_SPEED", POINT_CASTING_SPEED);
+        PyModule_AddIntConstant(module, "MAG_ATT", POINT_MAGIC_ATT_GRADE);
+        PyModule_AddIntConstant(module, "MAG_DEF", POINT_MAGIC_DEF_GRADE);
+        PyModule_AddIntConstant(module, "EMPIRE_POINT", POINT_EMPIRE_POINT);
+        PyModule_AddIntConstant(module, "STAT", POINT_STAT);
+        PyModule_AddIntConstant(module, "SKILL_PASSIVE", POINT_SUB_SKILL);
+        PyModule_AddIntConstant(module, "SKILL_SUPPORT", POINT_SUB_SKILL);
+        PyModule_AddIntConstant(module, "SKILL_ACTIVE", POINT_SKILL);
+        PyModule_AddIntConstant(module, "SKILL_HORSE", POINT_HORSE_SKILL);
+        PyModule_AddIntConstant(module, "PLAYTIME", POINT_PLAYTIME);
+        PyModule_AddIntConstant(module, "BOW_DISTANCE", POINT_BOW_DISTANCE);
+        PyModule_AddIntConstant(module, "HP_RECOVERY", POINT_HP_RECOVERY);
+        PyModule_AddIntConstant(module, "SP_RECOVERY", POINT_SP_RECOVERY);
+        PyModule_AddIntConstant(module, "ATTACKER_BONUS", POINT_PARTY_ATT_GRADE);
+        PyModule_AddIntConstant(module, "MAX_NUM", POINT_MAX_NUM);
+        PyModule_AddIntConstant(module, "POINT_CRITICAL_PCT", POINT_CRITICAL_PCT);
+        PyModule_AddIntConstant(module, "POINT_PENETRATE_PCT", POINT_PENETRATE_PCT);
+        PyModule_AddIntConstant(module, "POINT_MALL_ATTBONUS", POINT_MALL_ATTBONUS);
+        PyModule_AddIntConstant(module, "POINT_MALL_DEFBONUS", POINT_MALL_DEFBONUS);
+        PyModule_AddIntConstant(module, "POINT_MALL_EXPBONUS", POINT_MALL_EXPBONUS);
+        PyModule_AddIntConstant(module, "POINT_MALL_ITEMBONUS", POINT_MALL_ITEMBONUS);
+        PyModule_AddIntConstant(module, "POINT_MALL_GOLDBONUS", POINT_MALL_GOLDBONUS);
+        PyModule_AddIntConstant(module, "POINT_MAX_HP_PCT", POINT_MAX_HP_PCT);
+        PyModule_AddIntConstant(module, "POINT_MAX_SP_PCT", POINT_MAX_SP_PCT);
 
-        PyModule_AddIntConstant(module_value, "POINT_SKILL_DAMAGE_BONUS", POINT_SKILL_DAMAGE_BONUS);
-        PyModule_AddIntConstant(module_value, "POINT_NORMAL_HIT_DAMAGE_BONUS", POINT_NORMAL_HIT_DAMAGE_BONUS);
-        PyModule_AddIntConstant(module_value, "POINT_SKILL_DEFEND_BONUS", POINT_SKILL_DEFEND_BONUS);
-        PyModule_AddIntConstant(module_value, "POINT_NORMAL_HIT_DEFEND_BONUS", POINT_NORMAL_HIT_DEFEND_BONUS);
-        PyModule_AddIntConstant(module_value, "POINT_PC_BANG_EXP_BONUS", POINT_PC_BANG_EXP_BONUS);
-        PyModule_AddIntConstant(module_value, "POINT_PC_BANG_DROP_BONUS", POINT_PC_BANG_DROP_BONUS);
+        PyModule_AddIntConstant(module, "POINT_SKILL_DAMAGE_BONUS", POINT_SKILL_DAMAGE_BONUS);
+        PyModule_AddIntConstant(module, "POINT_NORMAL_HIT_DAMAGE_BONUS", POINT_NORMAL_HIT_DAMAGE_BONUS);
+        PyModule_AddIntConstant(module, "POINT_SKILL_DEFEND_BONUS", POINT_SKILL_DEFEND_BONUS);
+        PyModule_AddIntConstant(module, "POINT_NORMAL_HIT_DEFEND_BONUS", POINT_NORMAL_HIT_DEFEND_BONUS);
+        PyModule_AddIntConstant(module, "POINT_PC_BANG_EXP_BONUS", POINT_PC_BANG_EXP_BONUS);
+        PyModule_AddIntConstant(module, "POINT_PC_BANG_DROP_BONUS", POINT_PC_BANG_DROP_BONUS);
 
-        PyModule_AddIntConstant(module_value, "ENERGY", POINT_ENERGY);
-        PyModule_AddIntConstant(module_value, "ENERGY_END_TIME", POINT_ENERGY_END_TIME);
+        PyModule_AddIntConstant(module, "ENERGY", POINT_ENERGY);
+        PyModule_AddIntConstant(module, "ENERGY_END_TIME", POINT_ENERGY_END_TIME);
 
-        PyModule_AddIntConstant(module_value, "SKILL_GRADE_NORMAL", python_player::SKILL_NORMAL);
-        PyModule_AddIntConstant(module_value, "SKILL_GRADE_MASTER", python_player::SKILL_MASTER);
-        PyModule_AddIntConstant(module_value, "SKILL_GRADE_GRAND_MASTER", python_player::SKILL_GRAND_MASTER);
-        PyModule_AddIntConstant(module_value, "SKILL_GRADE_PERFECT_MASTER", python_player::SKILL_PERFECT_MASTER);
+        PyModule_AddIntConstant(module, "SKILL_GRADE_NORMAL", python_player::SKILL_NORMAL);
+        PyModule_AddIntConstant(module, "SKILL_GRADE_MASTER", python_player::SKILL_MASTER);
+        PyModule_AddIntConstant(module, "SKILL_GRADE_GRAND_MASTER", python_player::SKILL_GRAND_MASTER);
+        PyModule_AddIntConstant(module, "SKILL_GRADE_PERFECT_MASTER", python_player::SKILL_PERFECT_MASTER);
 
-        PyModule_AddIntConstant(module_value, "CATEGORY_ACTIVE", python_player::CATEGORY_ACTIVE);
-        PyModule_AddIntConstant(module_value, "CATEGORY_PASSIVE", python_player::CATEGORY_PASSIVE);
+        PyModule_AddIntConstant(module, "CATEGORY_ACTIVE", python_player::CATEGORY_ACTIVE);
+        PyModule_AddIntConstant(module, "CATEGORY_PASSIVE", python_player::CATEGORY_PASSIVE);
 
-        PyModule_AddIntConstant(module_value, "INVENTORY_PAGE_SIZE", c_Inventory_Page_Size);
-        PyModule_AddIntConstant(module_value, "INVENTORY_PAGE_COUNT", c_Inventory_Page_Count);
-        PyModule_AddIntConstant(module_value, "INVENTORY_SLOT_COUNT", c_Inventory_Count);
-        PyModule_AddIntConstant(module_value, "EQUIPMENT_SLOT_START", c_Equipment_Start);
-        PyModule_AddIntConstant(module_value, "EQUIPMENT_PAGE_COUNT", c_Equipment_Count);
+        PyModule_AddIntConstant(module, "INVENTORY_PAGE_SIZE", c_Inventory_Page_Size);
+        PyModule_AddIntConstant(module, "INVENTORY_PAGE_COUNT", c_Inventory_Page_Count);
+        PyModule_AddIntConstant(module, "INVENTORY_SLOT_COUNT", c_Inventory_Count);
+        PyModule_AddIntConstant(module, "EQUIPMENT_SLOT_START", c_Equipment_Start);
+        PyModule_AddIntConstant(module, "EQUIPMENT_PAGE_COUNT", c_Equipment_Count);
 
-        PyModule_AddIntConstant(module_value, "NEW_EQUIPMENT_SLOT_START", c_New_Equipment_Start);
-        PyModule_AddIntConstant(module_value, "NEW_EQUIPMENT_SLOT_COUNT", c_New_Equipment_Count);
+        PyModule_AddIntConstant(module, "NEW_EQUIPMENT_SLOT_START", c_New_Equipment_Start);
+        PyModule_AddIntConstant(module, "NEW_EQUIPMENT_SLOT_COUNT", c_New_Equipment_Count);
 
-        PyModule_AddIntConstant(module_value, "MBF_SKILL", python_player::MBF_SKILL);
-        PyModule_AddIntConstant(module_value, "MBF_ATTACK", python_player::MBF_ATTACK);
-        PyModule_AddIntConstant(module_value, "MBF_CAMERA", python_player::MBF_CAMERA);
-        PyModule_AddIntConstant(module_value, "MBF_SMART", python_player::MBF_SMART);
-        PyModule_AddIntConstant(module_value, "MBF_MOVE", python_player::MBF_MOVE);
-        PyModule_AddIntConstant(module_value, "MBF_AUTO", python_player::MBF_AUTO);
-        PyModule_AddIntConstant(module_value, "MBS_PRESS", python_player::MBS_PRESS);
-        PyModule_AddIntConstant(module_value, "MBS_CLICK", python_player::MBS_CLICK);
-        PyModule_AddIntConstant(module_value, "MBT_RIGHT", python_player::MBT_RIGHT);
-        PyModule_AddIntConstant(module_value, "MBT_LEFT", python_player::MBT_LEFT);
+        PyModule_AddIntConstant(module, "MBF_SKILL", python_player::MBF_SKILL);
+        PyModule_AddIntConstant(module, "MBF_ATTACK", python_player::MBF_ATTACK);
+        PyModule_AddIntConstant(module, "MBF_CAMERA", python_player::MBF_CAMERA);
+        PyModule_AddIntConstant(module, "MBF_SMART", python_player::MBF_SMART);
+        PyModule_AddIntConstant(module, "MBF_MOVE", python_player::MBF_MOVE);
+        PyModule_AddIntConstant(module, "MBF_AUTO", python_player::MBF_AUTO);
+        PyModule_AddIntConstant(module, "MBS_PRESS", python_player::MBS_PRESS);
+        PyModule_AddIntConstant(module, "MBS_CLICK", python_player::MBS_CLICK);
+        PyModule_AddIntConstant(module, "MBT_RIGHT", python_player::MBT_RIGHT);
+        PyModule_AddIntConstant(module, "MBT_LEFT", python_player::MBT_LEFT);
 
         // Shared with the server.
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_NONE", SLOT_TYPE_NONE);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_INVENTORY", SLOT_TYPE_INVENTORY);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_SKILL", SLOT_TYPE_SKILL);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_NONE", SLOT_TYPE_NONE);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_INVENTORY", SLOT_TYPE_INVENTORY);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_SKILL", SLOT_TYPE_SKILL);
         // Client-only slot types.
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_SHOP", SLOT_TYPE_SHOP);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_EXCHANGE_OWNER", SLOT_TYPE_EXCHANGE_OWNER);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_EXCHANGE_TARGET", SLOT_TYPE_EXCHANGE_TARGET);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_QUICK_SLOT", SLOT_TYPE_QUICK_SLOT);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_SAFEBOX", SLOT_TYPE_SAFEBOX);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_PRIVATE_SHOP", SLOT_TYPE_PRIVATE_SHOP);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_MALL", SLOT_TYPE_MALL);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_EMOTION", SLOT_TYPE_EMOTION);
-        PyModule_AddIntConstant(module_value, "SLOT_TYPE_DRAGON_SOUL_INVENTORY", SLOT_TYPE_DRAGON_SOUL_INVENTORY);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_SHOP", SLOT_TYPE_SHOP);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_EXCHANGE_OWNER", SLOT_TYPE_EXCHANGE_OWNER);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_EXCHANGE_TARGET", SLOT_TYPE_EXCHANGE_TARGET);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_QUICK_SLOT", SLOT_TYPE_QUICK_SLOT);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_SAFEBOX", SLOT_TYPE_SAFEBOX);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_PRIVATE_SHOP", SLOT_TYPE_PRIVATE_SHOP);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_MALL", SLOT_TYPE_MALL);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_EMOTION", SLOT_TYPE_EMOTION);
+        PyModule_AddIntConstant(module, "SLOT_TYPE_DRAGON_SOUL_INVENTORY", SLOT_TYPE_DRAGON_SOUL_INVENTORY);
 
-        PyModule_AddIntConstant(module_value, "RESERVED_WINDOW", RESERVED_WINDOW);
-        PyModule_AddIntConstant(module_value, "INVENTORY", INVENTORY);
-        PyModule_AddIntConstant(module_value, "EQUIPMENT", EQUIPMENT);
-        PyModule_AddIntConstant(module_value, "SAFEBOX", SAFEBOX);
-        PyModule_AddIntConstant(module_value, "MALL", MALL);
-        PyModule_AddIntConstant(module_value, "DRAGON_SOUL_INVENTORY", DRAGON_SOUL_INVENTORY);
-        PyModule_AddIntConstant(module_value, "GROUND", GROUND);
+        PyModule_AddIntConstant(module, "RESERVED_WINDOW", RESERVED_WINDOW);
+        PyModule_AddIntConstant(module, "INVENTORY", INVENTORY);
+        PyModule_AddIntConstant(module, "EQUIPMENT", EQUIPMENT);
+        PyModule_AddIntConstant(module, "SAFEBOX", SAFEBOX);
+        PyModule_AddIntConstant(module, "MALL", MALL);
+        PyModule_AddIntConstant(module, "DRAGON_SOUL_INVENTORY", DRAGON_SOUL_INVENTORY);
+        PyModule_AddIntConstant(module, "GROUND", GROUND);
 
-        PyModule_AddIntConstant(module_value, "ITEM_MONEY", -1);
+        PyModule_AddIntConstant(module, "ITEM_MONEY", -1);
 
-        PyModule_AddIntConstant(module_value, "SKILL_SLOT_COUNT", SKILL_MAX_NUM);
+        PyModule_AddIntConstant(module, "SKILL_SLOT_COUNT", SKILL_MAX_NUM);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_PICK", python_player::EFFECT_PICK);
+        PyModule_AddIntConstant(module, "EFFECT_PICK", python_player::EFFECT_PICK);
 
-        PyModule_AddIntConstant(module_value, "METIN_SOCKET_TYPE_NONE", python_player::METIN_SOCKET_TYPE_NONE);
-        PyModule_AddIntConstant(module_value, "METIN_SOCKET_TYPE_SILVER", python_player::METIN_SOCKET_TYPE_SILVER);
-        PyModule_AddIntConstant(module_value, "METIN_SOCKET_TYPE_GOLD", python_player::METIN_SOCKET_TYPE_GOLD);
-        PyModule_AddIntConstant(module_value, "METIN_SOCKET_MAX_NUM", ITEM_SOCKET_SLOT_MAX_NUM);
-        PyModule_AddIntConstant(module_value, "ATTRIBUTE_SLOT_MAX_NUM", ITEM_ATTRIBUTE_SLOT_MAX_NUM);
+        PyModule_AddIntConstant(module, "METIN_SOCKET_TYPE_NONE", python_player::METIN_SOCKET_TYPE_NONE);
+        PyModule_AddIntConstant(module, "METIN_SOCKET_TYPE_SILVER", python_player::METIN_SOCKET_TYPE_SILVER);
+        PyModule_AddIntConstant(module, "METIN_SOCKET_TYPE_GOLD", python_player::METIN_SOCKET_TYPE_GOLD);
+        PyModule_AddIntConstant(module, "METIN_SOCKET_MAX_NUM", ITEM_SOCKET_SLOT_MAX_NUM);
+        PyModule_AddIntConstant(module, "ATTRIBUTE_SLOT_MAX_NUM", ITEM_ATTRIBUTE_SLOT_MAX_NUM);
 
-        PyModule_AddIntConstant(module_value, "REFINE_CANT", REFINE_CANT);
-        PyModule_AddIntConstant(module_value, "REFINE_OK", REFINE_OK);
-        PyModule_AddIntConstant(module_value, "REFINE_ALREADY_MAX_SOCKET_COUNT", REFINE_ALREADY_MAX_SOCKET_COUNT);
-        PyModule_AddIntConstant(module_value, "REFINE_NEED_MORE_GOOD_SCROLL", REFINE_NEED_MORE_GOOD_SCROLL);
-        PyModule_AddIntConstant(module_value, "REFINE_CANT_MAKE_SOCKET_ITEM", REFINE_CANT_MAKE_SOCKET_ITEM);
-        PyModule_AddIntConstant(module_value, "REFINE_NOT_NEXT_GRADE_ITEM", REFINE_NOT_NEXT_GRADE_ITEM);
-        PyModule_AddIntConstant(module_value, "REFINE_CANT_REFINE_METIN_TO_EQUIPMENT", REFINE_CANT_REFINE_METIN_TO_EQUIPMENT);
-        PyModule_AddIntConstant(module_value, "REFINE_CANT_REFINE_ROD", REFINE_CANT_REFINE_ROD);
-        PyModule_AddIntConstant(module_value, "ATTACH_METIN_CANT", ATTACH_METIN_CANT);
-        PyModule_AddIntConstant(module_value, "ATTACH_METIN_OK", ATTACH_METIN_OK);
-        PyModule_AddIntConstant(module_value, "ATTACH_METIN_NOT_MATCHABLE_ITEM", ATTACH_METIN_NOT_MATCHABLE_ITEM);
-        PyModule_AddIntConstant(module_value, "ATTACH_METIN_NO_MATCHABLE_SOCKET", ATTACH_METIN_NO_MATCHABLE_SOCKET);
-        PyModule_AddIntConstant(module_value, "ATTACH_METIN_NOT_EXIST_GOLD_SOCKET", ATTACH_METIN_NOT_EXIST_GOLD_SOCKET);
-        PyModule_AddIntConstant(module_value, "ATTACH_METIN_CANT_ATTACH_TO_EQUIPMENT", ATTACH_METIN_CANT_ATTACH_TO_EQUIPMENT);
-        PyModule_AddIntConstant(module_value, "DETACH_METIN_CANT", DETACH_METIN_CANT);
-        PyModule_AddIntConstant(module_value, "DETACH_METIN_OK", DETACH_METIN_OK);
+        PyModule_AddIntConstant(module, "REFINE_CANT", REFINE_CANT);
+        PyModule_AddIntConstant(module, "REFINE_OK", REFINE_OK);
+        PyModule_AddIntConstant(module, "REFINE_ALREADY_MAX_SOCKET_COUNT", REFINE_ALREADY_MAX_SOCKET_COUNT);
+        PyModule_AddIntConstant(module, "REFINE_NEED_MORE_GOOD_SCROLL", REFINE_NEED_MORE_GOOD_SCROLL);
+        PyModule_AddIntConstant(module, "REFINE_CANT_MAKE_SOCKET_ITEM", REFINE_CANT_MAKE_SOCKET_ITEM);
+        PyModule_AddIntConstant(module, "REFINE_NOT_NEXT_GRADE_ITEM", REFINE_NOT_NEXT_GRADE_ITEM);
+        PyModule_AddIntConstant(module, "REFINE_CANT_REFINE_METIN_TO_EQUIPMENT", REFINE_CANT_REFINE_METIN_TO_EQUIPMENT);
+        PyModule_AddIntConstant(module, "REFINE_CANT_REFINE_ROD", REFINE_CANT_REFINE_ROD);
+        PyModule_AddIntConstant(module, "ATTACH_METIN_CANT", ATTACH_METIN_CANT);
+        PyModule_AddIntConstant(module, "ATTACH_METIN_OK", ATTACH_METIN_OK);
+        PyModule_AddIntConstant(module, "ATTACH_METIN_NOT_MATCHABLE_ITEM", ATTACH_METIN_NOT_MATCHABLE_ITEM);
+        PyModule_AddIntConstant(module, "ATTACH_METIN_NO_MATCHABLE_SOCKET", ATTACH_METIN_NO_MATCHABLE_SOCKET);
+        PyModule_AddIntConstant(module, "ATTACH_METIN_NOT_EXIST_GOLD_SOCKET", ATTACH_METIN_NOT_EXIST_GOLD_SOCKET);
+        PyModule_AddIntConstant(module, "ATTACH_METIN_CANT_ATTACH_TO_EQUIPMENT", ATTACH_METIN_CANT_ATTACH_TO_EQUIPMENT);
+        PyModule_AddIntConstant(module, "DETACH_METIN_CANT", DETACH_METIN_CANT);
+        PyModule_AddIntConstant(module, "DETACH_METIN_OK", DETACH_METIN_OK);
 
-        PyModule_AddIntConstant(module_value, "PARTY_STATE_NORMAL", python_player::PARTY_ROLE_NORMAL);
-        PyModule_AddIntConstant(module_value, "PARTY_STATE_LEADER", python_player::PARTY_ROLE_LEADER);
-        PyModule_AddIntConstant(module_value, "PARTY_STATE_ATTACKER", python_player::PARTY_ROLE_ATTACKER);
-        PyModule_AddIntConstant(module_value, "PARTY_STATE_TANKER", python_player::PARTY_ROLE_TANKER);
-        PyModule_AddIntConstant(module_value, "PARTY_STATE_BUFFER", python_player::PARTY_ROLE_BUFFER);
-        PyModule_AddIntConstant(module_value, "PARTY_STATE_SKILL_MASTER", python_player::PARTY_ROLE_SKILL_MASTER);
-        PyModule_AddIntConstant(module_value, "PARTY_STATE_BERSERKER", python_player::PARTY_ROLE_BERSERKER);
-        PyModule_AddIntConstant(module_value, "PARTY_STATE_DEFENDER", python_player::PARTY_ROLE_DEFENDER);
-        PyModule_AddIntConstant(module_value, "PARTY_STATE_MAX_NUM", python_player::PARTY_ROLE_MAX_NUM);
+        PyModule_AddIntConstant(module, "PARTY_STATE_NORMAL", python_player::PARTY_ROLE_NORMAL);
+        PyModule_AddIntConstant(module, "PARTY_STATE_LEADER", python_player::PARTY_ROLE_LEADER);
+        PyModule_AddIntConstant(module, "PARTY_STATE_ATTACKER", python_player::PARTY_ROLE_ATTACKER);
+        PyModule_AddIntConstant(module, "PARTY_STATE_TANKER", python_player::PARTY_ROLE_TANKER);
+        PyModule_AddIntConstant(module, "PARTY_STATE_BUFFER", python_player::PARTY_ROLE_BUFFER);
+        PyModule_AddIntConstant(module, "PARTY_STATE_SKILL_MASTER", python_player::PARTY_ROLE_SKILL_MASTER);
+        PyModule_AddIntConstant(module, "PARTY_STATE_BERSERKER", python_player::PARTY_ROLE_BERSERKER);
+        PyModule_AddIntConstant(module, "PARTY_STATE_DEFENDER", python_player::PARTY_ROLE_DEFENDER);
+        PyModule_AddIntConstant(module, "PARTY_STATE_MAX_NUM", python_player::PARTY_ROLE_MAX_NUM);
 
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_TONGSOL", c_iSkillIndex_Tongsol);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_FISHING", c_iSkillIndex_Fishing);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_MINING", c_iSkillIndex_Mining);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_MAKING", c_iSkillIndex_Making);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_COMBO", c_iSkillIndex_Combo);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_LANGUAGE1", c_iSkillIndex_Language1);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_LANGUAGE2", c_iSkillIndex_Language2);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_LANGUAGE3", c_iSkillIndex_Language3);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_POLYMORPH", c_iSkillIndex_Polymorph);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_RIDING", c_iSkillIndex_Riding);
-        PyModule_AddIntConstant(module_value, "SKILL_INDEX_SUMMON", skill_index_summon);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_TONGSOL", c_iSkillIndex_Tongsol);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_FISHING", c_iSkillIndex_Fishing);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_MINING", c_iSkillIndex_Mining);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_MAKING", c_iSkillIndex_Making);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_COMBO", c_iSkillIndex_Combo);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_LANGUAGE1", c_iSkillIndex_Language1);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_LANGUAGE2", c_iSkillIndex_Language2);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_LANGUAGE3", c_iSkillIndex_Language3);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_POLYMORPH", c_iSkillIndex_Polymorph);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_RIDING", c_iSkillIndex_Riding);
+        PyModule_AddIntConstant(module, "SKILL_INDEX_SUMMON", skill_index_summon);
 
-        PyModule_AddIntConstant(module_value, "PK_MODE_PEACE", PK_MODE_PEACE);
-        PyModule_AddIntConstant(module_value, "PK_MODE_REVENGE", PK_MODE_REVENGE);
-        PyModule_AddIntConstant(module_value, "PK_MODE_FREE", PK_MODE_FREE);
-        PyModule_AddIntConstant(module_value, "PK_MODE_PROTECT", PK_MODE_PROTECT);
-        PyModule_AddIntConstant(module_value, "PK_MODE_GUILD", PK_MODE_GUILD);
-        PyModule_AddIntConstant(module_value, "PK_MODE_MAX_NUM", PK_MODE_MAX_NUM);
+        PyModule_AddIntConstant(module, "PK_MODE_PEACE", PK_MODE_PEACE);
+        PyModule_AddIntConstant(module, "PK_MODE_REVENGE", PK_MODE_REVENGE);
+        PyModule_AddIntConstant(module, "PK_MODE_FREE", PK_MODE_FREE);
+        PyModule_AddIntConstant(module, "PK_MODE_PROTECT", PK_MODE_PROTECT);
+        PyModule_AddIntConstant(module, "PK_MODE_GUILD", PK_MODE_GUILD);
+        PyModule_AddIntConstant(module, "PK_MODE_MAX_NUM", PK_MODE_MAX_NUM);
 
-        PyModule_AddIntConstant(module_value, "BLOCK_EXCHANGE", BLOCK_EXCHANGE);
-        PyModule_AddIntConstant(module_value, "BLOCK_PARTY", BLOCK_PARTY_INVITE);
-        PyModule_AddIntConstant(module_value, "BLOCK_GUILD", BLOCK_GUILD_INVITE);
-        PyModule_AddIntConstant(module_value, "BLOCK_WHISPER", BLOCK_WHISPER);
-        PyModule_AddIntConstant(module_value, "BLOCK_FRIEND", BLOCK_MESSENGER_INVITE);
-        PyModule_AddIntConstant(module_value, "BLOCK_PARTY_REQUEST", BLOCK_PARTY_REQUEST);
+        PyModule_AddIntConstant(module, "BLOCK_EXCHANGE", BLOCK_EXCHANGE);
+        PyModule_AddIntConstant(module, "BLOCK_PARTY", BLOCK_PARTY_INVITE);
+        PyModule_AddIntConstant(module, "BLOCK_GUILD", BLOCK_GUILD_INVITE);
+        PyModule_AddIntConstant(module, "BLOCK_WHISPER", BLOCK_WHISPER);
+        PyModule_AddIntConstant(module, "BLOCK_FRIEND", BLOCK_MESSENGER_INVITE);
+        PyModule_AddIntConstant(module, "BLOCK_PARTY_REQUEST", BLOCK_PARTY_REQUEST);
 
-        PyModule_AddIntConstant(module_value, "PARTY_EXP_NON_DISTRIBUTION", PARTY_EXP_DISTRIBUTION_NON_PARITY);
-        PyModule_AddIntConstant(module_value, "PARTY_EXP_DISTRIBUTION_PARITY", PARTY_EXP_DISTRIBUTION_PARITY);
+        PyModule_AddIntConstant(module, "PARTY_EXP_NON_DISTRIBUTION", PARTY_EXP_DISTRIBUTION_NON_PARITY);
+        PyModule_AddIntConstant(module, "PARTY_EXP_DISTRIBUTION_PARITY", PARTY_EXP_DISTRIBUTION_PARITY);
 
-        PyModule_AddIntConstant(module_value, "EMOTION_CLAP", EMOTION_CLAP);
-        PyModule_AddIntConstant(module_value, "EMOTION_CHEERS_1", EMOTION_CHEERS_1);
-        PyModule_AddIntConstant(module_value, "EMOTION_CHEERS_2", EMOTION_CHEERS_2);
-        PyModule_AddIntConstant(module_value, "EMOTION_DANCE_1", EMOTION_DANCE_1);
-        PyModule_AddIntConstant(module_value, "EMOTION_DANCE_2", EMOTION_DANCE_2);
-        PyModule_AddIntConstant(module_value, "EMOTION_DANCE_3", EMOTION_DANCE_3);
-        PyModule_AddIntConstant(module_value, "EMOTION_DANCE_4", EMOTION_DANCE_4);
-        PyModule_AddIntConstant(module_value, "EMOTION_DANCE_5", EMOTION_DANCE_5);
-        PyModule_AddIntConstant(module_value, "EMOTION_DANCE_6", EMOTION_DANCE_6);
-        PyModule_AddIntConstant(module_value, "EMOTION_CONGRATULATION", EMOTION_CONGRATULATION);
-        PyModule_AddIntConstant(module_value, "EMOTION_FORGIVE", EMOTION_FORGIVE);
-        PyModule_AddIntConstant(module_value, "EMOTION_ANGRY", EMOTION_ANGRY);
-        PyModule_AddIntConstant(module_value, "EMOTION_ATTRACTIVE", EMOTION_ATTRACTIVE);
-        PyModule_AddIntConstant(module_value, "EMOTION_SAD", EMOTION_SAD);
-        PyModule_AddIntConstant(module_value, "EMOTION_SHY", EMOTION_SHY);
-        PyModule_AddIntConstant(module_value, "EMOTION_CHEERUP", EMOTION_CHEERUP);
-        PyModule_AddIntConstant(module_value, "EMOTION_BANTER", EMOTION_BANTER);
-        PyModule_AddIntConstant(module_value, "EMOTION_JOY", EMOTION_JOY);
+        PyModule_AddIntConstant(module, "EMOTION_CLAP", EMOTION_CLAP);
+        PyModule_AddIntConstant(module, "EMOTION_CHEERS_1", EMOTION_CHEERS_1);
+        PyModule_AddIntConstant(module, "EMOTION_CHEERS_2", EMOTION_CHEERS_2);
+        PyModule_AddIntConstant(module, "EMOTION_DANCE_1", EMOTION_DANCE_1);
+        PyModule_AddIntConstant(module, "EMOTION_DANCE_2", EMOTION_DANCE_2);
+        PyModule_AddIntConstant(module, "EMOTION_DANCE_3", EMOTION_DANCE_3);
+        PyModule_AddIntConstant(module, "EMOTION_DANCE_4", EMOTION_DANCE_4);
+        PyModule_AddIntConstant(module, "EMOTION_DANCE_5", EMOTION_DANCE_5);
+        PyModule_AddIntConstant(module, "EMOTION_DANCE_6", EMOTION_DANCE_6);
+        PyModule_AddIntConstant(module, "EMOTION_CONGRATULATION", EMOTION_CONGRATULATION);
+        PyModule_AddIntConstant(module, "EMOTION_FORGIVE", EMOTION_FORGIVE);
+        PyModule_AddIntConstant(module, "EMOTION_ANGRY", EMOTION_ANGRY);
+        PyModule_AddIntConstant(module, "EMOTION_ATTRACTIVE", EMOTION_ATTRACTIVE);
+        PyModule_AddIntConstant(module, "EMOTION_SAD", EMOTION_SAD);
+        PyModule_AddIntConstant(module, "EMOTION_SHY", EMOTION_SHY);
+        PyModule_AddIntConstant(module, "EMOTION_CHEERUP", EMOTION_CHEERUP);
+        PyModule_AddIntConstant(module, "EMOTION_BANTER", EMOTION_BANTER);
+        PyModule_AddIntConstant(module, "EMOTION_JOY", EMOTION_JOY);
 
-        PyModule_AddIntConstant(module_value, "EMOTION_KISS", EMOTION_KISS);
-        PyModule_AddIntConstant(module_value, "EMOTION_FRENCH_KISS", EMOTION_FRENCH_KISS);
-        PyModule_AddIntConstant(module_value, "EMOTION_SLAP", EMOTION_SLAP);
+        PyModule_AddIntConstant(module, "EMOTION_KISS", EMOTION_KISS);
+        PyModule_AddIntConstant(module, "EMOTION_FRENCH_KISS", EMOTION_FRENCH_KISS);
+        PyModule_AddIntConstant(module, "EMOTION_SLAP", EMOTION_SLAP);
 
-        PyModule_AddIntConstant(module_value, "AUTO_POTION_TYPE_HP", python_player::AUTO_POTION_TYPE_HP);
-        PyModule_AddIntConstant(module_value, "AUTO_POTION_TYPE_SP", python_player::AUTO_POTION_TYPE_SP);
+        PyModule_AddIntConstant(module, "AUTO_POTION_TYPE_HP", python_player::AUTO_POTION_TYPE_HP);
+        PyModule_AddIntConstant(module, "AUTO_POTION_TYPE_SP", python_player::AUTO_POTION_TYPE_SP);
 
-        PyModule_AddIntConstant(module_value, "DRAGON_SOUL_PAGE_SIZE", c_DragonSoul_Inventory_Box_Size);
-        PyModule_AddIntConstant(module_value, "DRAGON_SOUL_PAGE_COUNT", DRAGON_SOUL_GRADE_MAX);
-        PyModule_AddIntConstant(module_value, "DRAGON_SOUL_SLOT_COUNT", c_DragonSoul_Inventory_Count);
-        PyModule_AddIntConstant(module_value, "DRAGON_SOUL_EQUIPMENT_SLOT_START", c_DragonSoul_Equip_Start);
-        PyModule_AddIntConstant(module_value, "DRAGON_SOUL_EQUIPMENT_PAGE_COUNT", DS_DECK_MAX_NUM);
-        PyModule_AddIntConstant(module_value, "DRAGON_SOUL_EQUIPMENT_FIRST_SIZE", c_DragonSoul_Equip_Slot_Max);
+        PyModule_AddIntConstant(module, "DRAGON_SOUL_PAGE_SIZE", c_DragonSoul_Inventory_Box_Size);
+        PyModule_AddIntConstant(module, "DRAGON_SOUL_PAGE_COUNT", DRAGON_SOUL_GRADE_MAX);
+        PyModule_AddIntConstant(module, "DRAGON_SOUL_SLOT_COUNT", c_DragonSoul_Inventory_Count);
+        PyModule_AddIntConstant(module, "DRAGON_SOUL_EQUIPMENT_SLOT_START", c_DragonSoul_Equip_Start);
+        PyModule_AddIntConstant(module, "DRAGON_SOUL_EQUIPMENT_PAGE_COUNT", DS_DECK_MAX_NUM);
+        PyModule_AddIntConstant(module, "DRAGON_SOUL_EQUIPMENT_FIRST_SIZE", c_DragonSoul_Equip_Slot_Max);
 
-        PyModule_AddIntConstant(module_value, "DRAGON_SOUL_REFINE_CLOSE", DS_SUB_HEADER_CLOSE);
-        PyModule_AddIntConstant(module_value, "DS_SUB_HEADER_DO_UPGRADE", DS_SUB_HEADER_DO_UPGRADE);
-        PyModule_AddIntConstant(module_value, "DS_SUB_HEADER_DO_IMPROVEMENT", DS_SUB_HEADER_DO_IMPROVEMENT);
-        PyModule_AddIntConstant(module_value, "DS_SUB_HEADER_DO_REFINE", DS_SUB_HEADER_DO_REFINE);
+        PyModule_AddIntConstant(module, "DRAGON_SOUL_REFINE_CLOSE", DS_SUB_HEADER_CLOSE);
+        PyModule_AddIntConstant(module, "DS_SUB_HEADER_DO_UPGRADE", DS_SUB_HEADER_DO_UPGRADE);
+        PyModule_AddIntConstant(module, "DS_SUB_HEADER_DO_IMPROVEMENT", DS_SUB_HEADER_DO_IMPROVEMENT);
+        PyModule_AddIntConstant(module, "DS_SUB_HEADER_DO_REFINE", DS_SUB_HEADER_DO_REFINE);
     }
 }

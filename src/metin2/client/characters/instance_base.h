@@ -1,15 +1,13 @@
 #pragma once
 
-#include <memory>
-
+#include <metin2/client/player/affect_flag_container.h>
 #include <metin2/world/actors/actor_instance.h>
 #include <metin2/world/actors/race_data.h>
 
 #include <list>
-#include <metin2/client/player/affect_flag_container.h>
+#include <memory>
 
 namespace metin2::inline client::inline characters {
-
     class instance_base {
       public:
         struct create_data {
@@ -1040,12 +1038,14 @@ namespace metin2::inline client::inline characters {
         case 5:
         case 7:
             return 1;
+
         case 1:
         case 3:
         case 4:
         case 6:
             return 0;
         }
+
         return 0;
     }
 }

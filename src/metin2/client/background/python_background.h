@@ -122,22 +122,15 @@ namespace metin2::inline client::inline background {
 
       private:
         snow_environment snow_environment_value_;
-
         int day_mode_;
         int x_mas_tree_grade_;
-
         int shadow_level_;
         int view_distance_num_;
-
         bool visible_guild_area_;
-
         uint32_t render_shadow_time_;
-
         uint32_t base_x_;
         uint32_t base_y_;
-
         sviewdistanceset view_distance_set_[NUM_DISTANCE_SET];
-
         std::set<int> set_showing_portal_id_;
         std::set<std::string> set_dungeon_map_name_;
         std::map<uint32_t, uint32_t> map_target_id_chr_id_;

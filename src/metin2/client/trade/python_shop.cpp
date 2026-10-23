@@ -164,20 +164,20 @@ namespace metin2::inline client::inline trade {
     python_shop::~python_shop(void) = default;
 
     auto shop_open(PyObject *self, PyObject *args) -> PyObject * {
-        int is_private_shop = false;
-        py_tuple_get_integer(args, 0, &is_private_shop);
-        int is_main_private_shop = false;
-        py_tuple_get_integer(args, 1, &is_main_private_shop);
+        int is_private_shop = 0, is_main_private_shop = 0;
+        if (!PyArg_ParseTuple(args, "|ii", &is_private_shop, &is_main_private_shop)) {
+            return nullptr;
+        }
 
         python_shop &shop = get_python_shop();
         shop.open(is_private_shop, is_main_private_shop);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto shop_close(PyObject *self, PyObject *args) -> PyObject * {
         python_shop &shop = get_python_shop();
         shop.close();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto shop_is_open(PyObject *self, PyObject *args) -> PyObject * {
@@ -197,8 +197,9 @@ namespace metin2::inline client::inline trade {
 
     auto shop_get_item_id(PyObject *self, PyObject *args) -> PyObject * {
         int pos;
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &pos)) {
+            return nullptr;
+        }
 
         const shop_item_data *item_data;
         if (get_python_shop().get_item_data(pos, &item_data))
@@ -209,8 +210,9 @@ namespace metin2::inline client::inline trade {
 
     auto shop_get_item_count(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         const shop_item_data *item_data;
         if (get_python_shop().get_item_data(index, &item_data))
@@ -221,8 +223,9 @@ namespace metin2::inline client::inline trade {
 
     auto shop_get_item_price(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         const shop_item_data *item_data;
         if (get_python_shop().get_item_data(index, &item_data))
@@ -232,12 +235,10 @@ namespace metin2::inline client::inline trade {
     }
 
     auto shop_get_item_metin_socket(PyObject *self, PyObject *args) -> PyObject * {
-        int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
-        int metin_socket_index;
-        if (!py_tuple_get_integer(args, 1, &metin_socket_index))
-            return py_build_exception();
+        int index, metin_socket_index;
+        if (!PyArg_ParseTuple(args, "ii", &index, &metin_socket_index)) {
+            return nullptr;
+        }
 
         const shop_item_data *item_data;
         if (get_python_shop().get_item_data(index, &item_data))
@@ -247,12 +248,10 @@ namespace metin2::inline client::inline trade {
     }
 
     auto shop_get_item_attribute(PyObject *self, PyObject *args) -> PyObject * {
-        int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
-        int attr_slot_index;
-        if (!py_tuple_get_integer(args, 1, &attr_slot_index))
-            return py_build_exception();
+        int index, attr_slot_index;
+        if (!PyArg_ParseTuple(args, "ii", &index, &attr_slot_index)) {
+            return nullptr;
+        }
 
         if (attr_slot_index >= 0 && attr_slot_index < ITEM_ATTRIBUTE_SLOT_MAX_NUM) {
             const shop_item_data *item_data;
@@ -265,54 +264,50 @@ namespace metin2::inline client::inline trade {
 
     auto shop_clear_private_shop_stock(PyObject *self, PyObject *args) -> PyObject * {
         get_python_shop().clear_private_shop_stock();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
     auto shop_add_private_shop_item_stock(PyObject *self, PyObject *args) -> PyObject * {
         uint8_t item_window_type;
-        if (!py_tuple_get_integer(args, 0, &item_window_type))
-            return py_build_exception();
         uint16_t item_slot_index;
-        if (!py_tuple_get_integer(args, 1, &item_slot_index))
-            return py_build_exception();
-        int display_slot_index;
-        if (!py_tuple_get_integer(args, 2, &display_slot_index))
-            return py_build_exception();
-        int price;
-        if (!py_tuple_get_integer(args, 3, &price))
-            return py_build_exception();
+        int display_slot_index, price;
+
+        if (!PyArg_ParseTuple(args, "bHii", &item_window_type, &item_slot_index, &display_slot_index, &price)) {
+            return nullptr;
+        }
 
         get_python_shop().add_private_shop_item_stock(item_pos(item_window_type, item_slot_index), display_slot_index, price);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
     auto shop_del_private_shop_item_stock(PyObject *self, PyObject *args) -> PyObject * {
         uint8_t item_window_type;
-        if (!py_tuple_get_integer(args, 0, &item_window_type))
-            return py_build_exception();
         uint16_t item_slot_index;
-        if (!py_tuple_get_integer(args, 1, &item_slot_index))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "bH", &item_window_type, &item_slot_index)) {
+            return nullptr;
+        }
 
         get_python_shop().del_private_shop_item_stock(item_pos(item_window_type, item_slot_index));
-        return py_build_none();
+        Py_RETURN_NONE;
     }
     auto shop_get_private_shop_item_price(PyObject *self, PyObject *args) -> PyObject * {
         uint8_t item_window_type;
-        if (!py_tuple_get_integer(args, 0, &item_window_type))
-            return py_build_exception();
         uint16_t item_slot_index;
-        if (!py_tuple_get_integer(args, 1, &item_slot_index))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "bH", &item_window_type, &item_slot_index)) {
+            return nullptr;
+        }
 
         int value = get_python_shop().private_shop_item_price(item_pos(item_window_type, item_slot_index));
         return Py_BuildValue("i", value);
     }
     auto shop_build_private_shop(PyObject *self, PyObject *args) -> PyObject * {
         char *name;
-        if (!py_tuple_get_string(args, 0, &name))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "s", &name)) {
+            return nullptr;
+        }
 
         get_python_shop().build_private_shop(name);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto shop_get_tab_count(PyObject *self, PyObject *args) -> PyObject * {
@@ -321,16 +316,18 @@ namespace metin2::inline client::inline trade {
 
     auto shop_get_tab_name(PyObject *self, PyObject *args) -> PyObject * {
         uint8_t tab_idx;
-        if (!py_tuple_get_integer(args, 0, &tab_idx))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "b", &tab_idx)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("s", get_python_shop().tab_name(tab_idx));
     }
 
     auto shop_get_tab_coin_type(PyObject *self, PyObject *args) -> PyObject * {
         uint8_t tab_idx;
-        if (!py_tuple_get_integer(args, 0, &tab_idx))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "b", &tab_idx)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_shop().tab_coin_type(tab_idx));
     }
@@ -359,10 +356,10 @@ namespace metin2::inline client::inline trade {
                 {"BuildPrivateShop", shop_build_private_shop, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
-        PyObject *module_value = init_python_module("metin2.trade.shop", s_methods);
+        PyObject *module = init_python_module("metin2.trade.shop", s_methods);
 
-        PyModule_AddIntConstant(module_value, "SHOP_SLOT_COUNT", SHOP_HOST_ITEM_MAX_NUM);
-        PyModule_AddIntConstant(module_value, "SHOP_COIN_TYPE_GOLD", SHOP_COIN_TYPE_GOLD);
-        PyModule_AddIntConstant(module_value, "SHOP_COIN_TYPE_SECONDARY_COIN", SHOP_COIN_TYPE_SECONDARY_COIN);
+        PyModule_AddIntConstant(module, "SHOP_SLOT_COUNT", SHOP_HOST_ITEM_MAX_NUM);
+        PyModule_AddIntConstant(module, "SHOP_COIN_TYPE_GOLD", SHOP_COIN_TYPE_GOLD);
+        PyModule_AddIntConstant(module, "SHOP_COIN_TYPE_SECONDARY_COIN", SHOP_COIN_TYPE_SECONDARY_COIN);
     }
 }

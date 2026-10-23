@@ -7,7 +7,7 @@ namespace metin2::inline client::inline trade {
 
     auto exchange_init_trading(PyObject *self, PyObject *args) -> PyObject * {
         get_python_exchange().end();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto exchange_get_elk_from_self(PyObject *self, PyObject *args) -> PyObject * {
@@ -28,36 +28,36 @@ namespace metin2::inline client::inline trade {
 
     auto exchange_get_item_vnum_from_self(PyObject *self, PyObject *args) -> PyObject * {
         int pos;
-
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &pos)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_exchange().item_vnum_from_self((char)pos));
     }
 
     auto exchange_get_item_vnum_from_target(PyObject *target, PyObject *args) -> PyObject * {
         int pos;
-
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &pos)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_exchange().item_vnum_from_target((char)pos));
     }
 
     auto exchange_get_item_count_from_self(PyObject *self, PyObject *args) -> PyObject * {
         int pos;
-
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &pos)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_exchange().item_count_from_self((char)pos));
     }
 
     auto exchange_get_item_count_from_target(PyObject *target, PyObject *args) -> PyObject * {
         int pos;
-
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &pos)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_exchange().item_count_from_target((char)pos));
     }
@@ -67,32 +67,26 @@ namespace metin2::inline client::inline trade {
     }
 
     auto exchange_get_item_metin_socket_from_target(PyObject *target, PyObject *args) -> PyObject * {
-        int pos;
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_build_exception();
-        int metin_socket_pos;
-        if (!py_tuple_get_integer(args, 1, &metin_socket_pos))
-            return py_build_exception();
+        int pos, metin_socket_pos;
+        if (!PyArg_ParseTuple(args, "ii", &pos, &metin_socket_pos)) {
+            return nullptr;
+        }
         return Py_BuildValue("i", get_python_exchange().item_metin_socket_from_target(pos, metin_socket_pos));
     }
 
     auto exchange_get_item_metin_socket_from_self(PyObject *target, PyObject *args) -> PyObject * {
-        int pos;
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_build_exception();
-        int metin_socket_pos;
-        if (!py_tuple_get_integer(args, 1, &metin_socket_pos))
-            return py_build_exception();
+        int pos, metin_socket_pos;
+        if (!PyArg_ParseTuple(args, "ii", &pos, &metin_socket_pos)) {
+            return nullptr;
+        }
         return Py_BuildValue("i", get_python_exchange().item_metin_socket_from_self(pos, metin_socket_pos));
     }
 
     auto exchange_get_item_attribute_from_target(PyObject *target, PyObject *args) -> PyObject * {
-        int pos;
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_build_exception();
-        int attr_slot_pos;
-        if (!py_tuple_get_integer(args, 1, &attr_slot_pos))
-            return py_build_exception();
+        int pos, attr_slot_pos;
+        if (!PyArg_ParseTuple(args, "ii", &pos, &attr_slot_pos)) {
+            return nullptr;
+        }
 
         uint8_t type;
         short value;
@@ -102,12 +96,10 @@ namespace metin2::inline client::inline trade {
     }
 
     auto exchange_get_item_attribute_from_self(PyObject *target, PyObject *args) -> PyObject * {
-        int pos;
-        if (!py_tuple_get_integer(args, 0, &pos))
-            return py_build_exception();
-        int attr_slot_pos;
-        if (!py_tuple_get_integer(args, 1, &attr_slot_pos))
-            return py_build_exception();
+        int pos, attr_slot_pos;
+        if (!PyArg_ParseTuple(args, "ii", &pos, &attr_slot_pos)) {
+            return nullptr;
+        }
 
         uint8_t type;
         short value;
@@ -144,7 +136,7 @@ namespace metin2::inline client::inline trade {
                 {nullptr, nullptr},
         };
 
-        PyObject *module_value = init_python_module("metin2.trade.exchange", s_methods);
-        PyModule_AddIntConstant(module_value, "EXCHANGE_ITEM_MAX_NUM", python_exchange::EXCHANGE_ITEM_MAX_NUM);
+        PyObject *module = init_python_module("metin2.trade.exchange", s_methods);
+        PyModule_AddIntConstant(module, "EXCHANGE_ITEM_MAX_NUM", python_exchange::EXCHANGE_ITEM_MAX_NUM);
     }
 }

@@ -1,33 +1,32 @@
 #include "python_application.h"
 
-#include <metin2/script/python_utils.h>
-
 #include "resource_ids.h"
+
+#include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline app {
     auto python_application::create_cursors() -> bool {
         cursor_visible_ = true;
         liar_cursor_on_ = false;
 
-        int resource_id[CURSOR_COUNT] =
-            {
-                IDC_CURSOR_NORMAL,
-                IDC_CURSOR_ATTACK,
-                IDC_CURSOR_ATTACK,
-                IDC_CURSOR_TALK,
-                IDC_CURSOR_NO,
-                IDC_CURSOR_PICK,
+        int resource_id[CURSOR_COUNT] = {
+            IDC_CURSOR_NORMAL,
+            IDC_CURSOR_ATTACK,
+            IDC_CURSOR_ATTACK,
+            IDC_CURSOR_TALK,
+            IDC_CURSOR_NO,
+            IDC_CURSOR_PICK,
 
-                IDC_CURSOR_DOOR,
-                IDC_CURSOR_CHAIR,
-                IDC_CURSOR_CHAIR, // Magic
-                IDC_CURSOR_BUY,   // Buy
-                IDC_CURSOR_SELL,  // Sell
+            IDC_CURSOR_DOOR,
+            IDC_CURSOR_CHAIR,
+            IDC_CURSOR_CHAIR, // Magic
+            IDC_CURSOR_BUY,   // Buy
+            IDC_CURSOR_SELL,  // Sell
 
-                IDC_CURSOR_CAMERA_ROTATE, // Camera Rotate
-                IDC_CURSOR_HSIZE,         // Horizontal Size
-                IDC_CURSOR_VSIZE,         // Vertical Size
-                IDC_CURSOR_HVSIZE,        // Horizontal & Vertical Size
+            IDC_CURSOR_CAMERA_ROTATE, // Camera Rotate
+            IDC_CURSOR_HSIZE,         // Horizontal Size
+            IDC_CURSOR_VSIZE,         // Vertical Size
+            IDC_CURSOR_HVSIZE,        // Horizontal & Vertical Size
         };
 
         cursors_.clear();

@@ -140,10 +140,8 @@ namespace metin2::inline client::inline app {
       protected:
         resolution resolution_list_[RESOLUTION_MAX_NUM];
         int resolution_count_;
-
         config config_value_;
         config old_config_;
-
         bool is_interface_config_;
         PyObject *interface_handler_;
         window_status window_status_value_[WINDOW_MAX_NUM];

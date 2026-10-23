@@ -10,8 +10,9 @@ namespace metin2::inline client::inline characters {
 
     auto nonplayer_get_level_by_vid(PyObject *self, PyObject *args) -> PyObject * {
         int virtual_id;
-        if (!py_tuple_get_integer(args, 0, &virtual_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &virtual_id)) {
+            return nullptr;
+        }
 
         instance_base *instance = get_python_character_manager().instance_ptr(virtual_id);
 
@@ -30,8 +31,9 @@ namespace metin2::inline client::inline characters {
 
     auto nonplayer_get_grade_by_vid(PyObject *self, PyObject *args) -> PyObject * {
         int virtual_id;
-        if (!py_tuple_get_integer(args, 0, &virtual_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &virtual_id)) {
+            return nullptr;
+        }
 
         instance_base *instance = get_python_character_manager().instance_ptr(virtual_id);
 
@@ -48,8 +50,9 @@ namespace metin2::inline client::inline characters {
 
     auto nonplayer_get_monster_name(PyObject *self, PyObject *args) -> PyObject * {
         int v_num;
-        if (!py_tuple_get_integer(args, 0, &v_num))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &v_num)) {
+            return nullptr;
+        }
 
         python_non_player &non_player = get_python_non_player();
         return Py_BuildValue("s", non_player.monster_name(v_num));
@@ -65,19 +68,19 @@ namespace metin2::inline client::inline characters {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = init_python_module("metin2.characters.nonplayer", s_methods);
+        PyObject *module = init_python_module("metin2.characters.nonplayer", s_methods);
 
-        PyModule_AddIntConstant(module_value, "ON_CLICK_EVENT_NONE", python_non_player::ON_CLICK_EVENT_NONE);
-        PyModule_AddIntConstant(module_value, "ON_CLICK_EVENT_BATTLE", python_non_player::ON_CLICK_EVENT_BATTLE);
-        PyModule_AddIntConstant(module_value, "ON_CLICK_EVENT_SHOP", python_non_player::ON_CLICK_EVENT_SHOP);
-        PyModule_AddIntConstant(module_value, "ON_CLICK_EVENT_TALK", python_non_player::ON_CLICK_EVENT_TALK);
-        PyModule_AddIntConstant(module_value, "ON_CLICK_EVENT_VEHICLE", python_non_player::ON_CLICK_EVENT_VEHICLE);
+        PyModule_AddIntConstant(module, "ON_CLICK_EVENT_NONE", python_non_player::ON_CLICK_EVENT_NONE);
+        PyModule_AddIntConstant(module, "ON_CLICK_EVENT_BATTLE", python_non_player::ON_CLICK_EVENT_BATTLE);
+        PyModule_AddIntConstant(module, "ON_CLICK_EVENT_SHOP", python_non_player::ON_CLICK_EVENT_SHOP);
+        PyModule_AddIntConstant(module, "ON_CLICK_EVENT_TALK", python_non_player::ON_CLICK_EVENT_TALK);
+        PyModule_AddIntConstant(module, "ON_CLICK_EVENT_VEHICLE", python_non_player::ON_CLICK_EVENT_VEHICLE);
 
-        PyModule_AddIntConstant(module_value, "PAWN", 0);
-        PyModule_AddIntConstant(module_value, "S_PAWN", 1);
-        PyModule_AddIntConstant(module_value, "KNIGHT", 2);
-        PyModule_AddIntConstant(module_value, "S_KNIGHT", 3);
-        PyModule_AddIntConstant(module_value, "BOSS", 4);
-        PyModule_AddIntConstant(module_value, "KING", 5);
+        PyModule_AddIntConstant(module, "PAWN", 0);
+        PyModule_AddIntConstant(module, "S_PAWN", 1);
+        PyModule_AddIntConstant(module, "KNIGHT", 2);
+        PyModule_AddIntConstant(module, "S_KNIGHT", 3);
+        PyModule_AddIntConstant(module, "BOSS", 4);
+        PyModule_AddIntConstant(module, "KING", 5);
     }
 }

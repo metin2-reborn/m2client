@@ -14,17 +14,17 @@ namespace metin2::inline client::inline app {
 
     auto system_set_interface_handler(PyObject *self, PyObject *args) -> PyObject * {
         PyObject *handler;
-        if (!py_tuple_get_object(args, 0, &handler)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "O", &handler)) {
+            return nullptr;
         }
 
         get_python_system().set_interface_handler(handler);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto system_destroy_interface_handler(PyObject *self, PyObject *args) -> PyObject * {
         get_python_system().destroy_interface_handler();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto system_get_music_volume(PyObject *self, PyObject *args) -> PyObject * {
@@ -37,22 +37,22 @@ namespace metin2::inline client::inline app {
 
     auto system_set_music_volume(PyObject *self, PyObject *args) -> PyObject * {
         float volume;
-        if (!py_tuple_get_float(args, 0, &volume)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "f", &volume)) {
+            return nullptr;
         }
 
         get_python_system().set_music_volume(volume);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto system_set_sound_volumef(PyObject *self, PyObject *args) -> PyObject * {
         float volume;
-        if (!py_tuple_get_float(args, 0, &volume)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "f", &volume)) {
+            return nullptr;
         }
 
         get_python_system().set_sound_volumef(volume);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto system_is_software_cursor(PyObject *self, PyObject *args) -> PyObject * {
@@ -61,12 +61,12 @@ namespace metin2::inline client::inline app {
 
     auto system_set_view_chat_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &flag)) {
+            return nullptr;
         }
 
         get_python_system().set_view_chat_flag(flag);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto system_is_view_chat(PyObject *self, PyObject *args) -> PyObject * {
@@ -75,32 +75,32 @@ namespace metin2::inline client::inline app {
 
     auto system_set_always_show_name_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &flag)) {
+            return nullptr;
         }
 
         get_python_system().set_always_show_name_flag(flag);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto system_set_show_damage_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &flag)) {
+            return nullptr;
         }
 
         get_python_system().set_show_damage_flag(flag);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto system_set_show_sales_text_flag(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &flag)) {
+            return nullptr;
         }
 
         get_python_system().set_show_sales_text_flag(flag);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto system_is_always_show_name(PyObject *self, PyObject *args) -> PyObject * {
@@ -121,16 +121,15 @@ namespace metin2::inline client::inline app {
 
     auto system_set_shadow_level(PyObject *self, PyObject *args) -> PyObject * {
         int level;
-
-        if (!py_tuple_get_integer(args, 0, &level)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &level)) {
+            return nullptr;
         }
 
         if (level > 0) {
             get_python_system().set_shadow_level(level);
         }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     void init_settings_module() {
@@ -166,18 +165,17 @@ namespace metin2::inline client::inline app {
             {nullptr, nullptr, 0, nullptr}
         };
 
-        PyObject *module_value = init_python_module("metin2.settings", methods);
+        auto *module = init_python_module("metin2.settings", methods);
 
-        PyModule_AddIntConstant(module_value, "WINDOW_STATUS", python_system::WINDOW_STATUS);
-        PyModule_AddIntConstant(module_value, "WINDOW_INVENTORY", python_system::WINDOW_INVENTORY);
-        PyModule_AddIntConstant(module_value, "WINDOW_ABILITY", python_system::WINDOW_ABILITY);
-        PyModule_AddIntConstant(module_value, "WINDOW_SOCIETY", python_system::WINDOW_SOCIETY);
-        PyModule_AddIntConstant(module_value, "WINDOW_JOURNAL", python_system::WINDOW_JOURNAL);
-        PyModule_AddIntConstant(module_value, "WINDOW_COMMAND", python_system::WINDOW_COMMAND);
-
-        PyModule_AddIntConstant(module_value, "WINDOW_QUICK", python_system::WINDOW_QUICK);
-        PyModule_AddIntConstant(module_value, "WINDOW_GAUGE", python_system::WINDOW_GAUGE);
-        PyModule_AddIntConstant(module_value, "WINDOW_MINIMAP", python_system::WINDOW_MINIMAP);
-        PyModule_AddIntConstant(module_value, "WINDOW_CHAT", python_system::WINDOW_CHAT);
+        PyModule_AddIntConstant(module, "WINDOW_STATUS", python_system::WINDOW_STATUS);
+        PyModule_AddIntConstant(module, "WINDOW_INVENTORY", python_system::WINDOW_INVENTORY);
+        PyModule_AddIntConstant(module, "WINDOW_ABILITY", python_system::WINDOW_ABILITY);
+        PyModule_AddIntConstant(module, "WINDOW_SOCIETY", python_system::WINDOW_SOCIETY);
+        PyModule_AddIntConstant(module, "WINDOW_JOURNAL", python_system::WINDOW_JOURNAL);
+        PyModule_AddIntConstant(module, "WINDOW_COMMAND", python_system::WINDOW_COMMAND);
+        PyModule_AddIntConstant(module, "WINDOW_QUICK", python_system::WINDOW_QUICK);
+        PyModule_AddIntConstant(module, "WINDOW_GAUGE", python_system::WINDOW_GAUGE);
+        PyModule_AddIntConstant(module, "WINDOW_MINIMAP", python_system::WINDOW_MINIMAP);
+        PyModule_AddIntConstant(module, "WINDOW_CHAT", python_system::WINDOW_CHAT);
     }
 }

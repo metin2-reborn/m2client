@@ -1,17 +1,16 @@
 #include "lzo.h"
 
-#include <metin2/log/log.h>
 #include "tea.h"
 #include "utils.h"
 
-#include <algorithm>
+#include <metin2/log/log.h>
+
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <vector>
 
 namespace metin2::inline core {
-
     namespace {
         // Buffers below REUSING_CAPACITY are recycled instead of freed (pack reads are frequent).
         class lzo_free_memory_mgr {

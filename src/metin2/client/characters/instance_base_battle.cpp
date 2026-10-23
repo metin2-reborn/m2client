@@ -1,19 +1,21 @@
+#include "instance_base.h"
+
+#include "python_character_manager.h"
+
 #include <metin2/client/background/python_background.h>
 #include <metin2/core/random.h>
 #include <metin2/world/terrain/terrain.h>
-#include "instance_base.h"
-#include "python_character_manager.h"
 
 namespace metin2::inline client::inline characters {
-
     auto new_unsigned_degree_to_signed_degree(float ud) -> float {
         float sd;
-        if (ud > 180.0f)
+        if (ud > 180.0f) {
             sd = -(360.0f - ud);
-        else if (ud < -180.0f)
+        } else if (ud < -180.0f) {
             sd = +(360.0f + ud);
-        else
+        } else {
             sd = ud;
+        }
 
         return sd;
     }
@@ -26,8 +28,9 @@ namespace metin2::inline client::inline characters {
         math::vector3 vt_dir_normal_stan(0, -1, 0);
         float dir_rot = math::to_degree(acosf(math::dot(vt_dir_normal, vt_dir_normal_stan)));
 
-        if (vt_dir_normal.x < 0.0f)
+        if (vt_dir_normal.x < 0.0f) {
             dir_rot = -dir_rot;
+        }
 
         return dir_rot;
     }
@@ -136,14 +139,17 @@ namespace metin2::inline client::inline characters {
             python_character_manager::character_iterator i;
             for (i = chr_mgr.character_instance_begin(); i != chr_mgr.character_instance_end(); ++i) {
                 instance_base *inst_each = *i;
-                if (inst_each == this)
+                if (inst_each == this) {
                     continue;
+                }
 
-                if (!is_attackable_instance(*inst_each))
+                if (!is_attackable_instance(*inst_each)) {
                     continue;
+                }
 
-                if (new_get_distance_from_dest_instance(*inst_each) > distance)
+                if (new_get_distance_from_dest_instance(*inst_each) > distance) {
                     continue;
+                }
 
                 float each_inst_distance = std::min(new_get_distance_from_dest_instance(*inst_each), half_fan_rot_min_distance);
                 float each_inst_dir_rot = new_get_rotation_from_dest_instance(*inst_each);
@@ -158,8 +164,9 @@ namespace metin2::inline client::inline characters {
             }
         }
 
-        if (map_inst_near.empty())
+        if (map_inst_near.empty()) {
             return false;
+        }
 
         *ppout_target_instance = map_inst_near.begin()->second;
 
@@ -180,11 +187,13 @@ namespace metin2::inline client::inline characters {
             python_character_manager::character_iterator i;
             for (i = chr_mgr.character_instance_begin(); i != chr_mgr.character_instance_end(); ++i) {
                 instance_base *inst_each = *i;
-                if (inst_each == this)
+                if (inst_each == this) {
                     continue;
+                }
 
-                if (!is_attackable_instance(*inst_each))
+                if (!is_attackable_instance(*inst_each)) {
                     continue;
+                }
 
                 if (graphic_thing_instance_value_.is_clickable_distance_dest_instance(inst_each->graphic_thing_instance_value_, skill_distance)) {
                     float each_inst_distance = std::min(new_get_distance_from_dest_instance(*inst_each), half_fan_rot_min_distance);

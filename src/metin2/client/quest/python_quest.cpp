@@ -139,12 +139,15 @@ namespace metin2::inline client::inline quest {
 
     auto quest_get_quest_data(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         python_quest::quest_instance *quest_instance;
-        if (!get_python_quest().get_quest_instance_ptr(index, &quest_instance))
-            return py_build_exception("Failed to find quest by index %d", index);
+        if (!get_python_quest().get_quest_instance_ptr(index, &quest_instance)) {
+            PyErr_Format(PyExc_ValueError, "Unknown quest index %d", index);
+            return nullptr;
+        }
 
         graphic_image *image = nullptr;
         if (!quest_instance->icon_file_name.empty()) {
@@ -167,24 +170,30 @@ namespace metin2::inline client::inline quest {
 
     auto quest_get_quest_index(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         python_quest::quest_instance *quest_instance;
-        if (!get_python_quest().get_quest_instance_ptr(index, &quest_instance))
-            return py_build_exception("Failed to find quest by index %d", index);
+        if (!get_python_quest().get_quest_instance_ptr(index, &quest_instance)) {
+            PyErr_Format(PyExc_ValueError, "Unknown quest index %d", index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", quest_instance->index_value);
     }
 
     auto quest_get_quest_last_time(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         python_quest::quest_instance *quest_instance;
-        if (!get_python_quest().get_quest_instance_ptr(index, &quest_instance))
-            return py_build_exception("Failed to find quest by index %d", index);
+        if (!get_python_quest().get_quest_instance_ptr(index, &quest_instance)) {
+            PyErr_Format(PyExc_ValueError, "Unknown quest index %d", index);
+            return nullptr;
+        }
 
         int last_time = 0;
 
@@ -197,7 +206,7 @@ namespace metin2::inline client::inline quest {
 
     auto quest_clear(PyObject *self, PyObject *args) -> PyObject * {
         get_python_quest().clear();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     void init_quest_module() {
@@ -211,7 +220,7 @@ namespace metin2::inline client::inline quest {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = init_python_module("metin2.quest", s_methods);
-        PyModule_AddIntConstant(module_value, "QUEST_MAX_NUM", 5);
+        PyObject *module = init_python_module("metin2.quest", s_methods);
+        PyModule_AddIntConstant(module, "QUEST_MAX_NUM", 5);
     }
 }

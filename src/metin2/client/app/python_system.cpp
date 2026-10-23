@@ -1,5 +1,6 @@
 #include "python_system.h"
 
+#include <metin2/client/background/python_background.h>
 #include <metin2/config/config_reader.h>
 #include <metin2/config/state_dir.h>
 #include <metin2/core/utf8.h>
@@ -16,7 +17,6 @@
 #include <string>
 #include <toml++/toml.hpp>
 #include <type_traits>
-#include "metin2/client/background/python_background.h"
 
 namespace metin2::inline client::inline app {
     void python_system::set_interface_handler(PyObject *handler) {
@@ -323,7 +323,7 @@ namespace metin2::inline client::inline app {
         reader.read("graphics", "renderer", renderer);
         utf8::copy_truncated(config_value_.renderer, sizeof(config_value_.renderer), renderer);
 
-        const auto tiling_it = std::find(std::begin(TILING_NAMES), std::end(TILING_NAMES), tiling);
+        const auto tiling_it = std::ranges::find(TILING_NAMES, tiling);
         if (tiling_it != std::end(TILING_NAMES)) {
             config_value_.software_tiling = static_cast<uint8_t>(tiling_it - std::begin(TILING_NAMES));
         } else {
@@ -490,6 +490,7 @@ namespace metin2::inline client::inline app {
 
     void python_system::change_system() {
         auto &sound_manager = get_sound_manager();
+
         sound_manager.set_music_volume(config_value_.music_volume);
         sound_manager.set_sound_volume_grade(config_value_.voice_volume);
     }

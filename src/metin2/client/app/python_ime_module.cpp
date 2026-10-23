@@ -6,42 +6,42 @@
 namespace metin2::inline client::inline app {
     auto ime_enable_capture_input(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().enable_capture_input();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_disable_capture_input(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().disable_capture_input();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_set_max(PyObject *self, PyObject *args) -> PyObject * {
         int max_value;
-        if (!py_tuple_get_integer(args, 0, &max_value)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &max_value)) {
+            return nullptr;
         }
 
         get_python_ime().set_max(max_value);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_set_user_max(PyObject *self, PyObject *args) -> PyObject * {
         int max_value;
-        if (!py_tuple_get_integer(args, 0, &max_value)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &max_value)) {
+            return nullptr;
         }
 
         get_python_ime().set_user_max(max_value);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_set_text(PyObject *self, PyObject *args) -> PyObject * {
         char *text;
-        if (!py_tuple_get_string(args, 0, &text)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "s", &text)) {
+            return nullptr;
         }
 
         get_python_ime().set_text(text, strlen(text));
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_get_text(PyObject *self, PyObject *args) -> PyObject * {
@@ -52,107 +52,107 @@ namespace metin2::inline client::inline app {
 
     auto ime_enable_ime(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().enable_ime();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_disable_ime(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().disable_ime();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_set_number_mode(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().set_number_mode();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_add_except_key(PyObject *self, PyObject *args) -> PyObject * {
         int key;
-        if (!py_tuple_get_integer(args, 0, &key)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &key)) {
+            return nullptr;
         }
 
         get_python_ime().add_except_key(key);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_clear_except_key(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().clear_except_key();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_set_string_mode(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().set_string_mode();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_move_left(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().move_left();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_move_right(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().move_right();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_move_home(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().move_home();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
     auto ime_move_end(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().move_end();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_set_cursor_position(PyObject *self, PyObject *args) -> PyObject * {
         int position;
-        if (!py_tuple_get_integer(args, 0, &position)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &position)) {
+            return nullptr;
         }
 
         get_python_ime().set_cursor_position(position);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_delete(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().delete_value();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_paste_text_from_clip_board(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().paste_text_from_clip_board();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_enable_paste(PyObject *self, PyObject *args) -> PyObject * {
         int flag;
-        if (!py_tuple_get_integer(args, 0, &flag)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &flag)) {
+            return nullptr;
         }
 
         get_python_ime().enable_paste(flag ? true : false);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_paste_string(PyObject *self, PyObject *args) -> PyObject * {
         char *text;
-        if (!py_tuple_get_string(args, 0, &text)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "s", &text)) {
+            return nullptr;
         }
 
         get_python_ime().paste_string(text);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_paste_backspace(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().on_char_input(U'\b');
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto ime_paste_return(PyObject *self, PyObject *args) -> PyObject * {
         get_python_ime().on_char_input(U'\r');
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     void init_ime_module() {

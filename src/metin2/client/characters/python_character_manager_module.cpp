@@ -13,62 +13,46 @@ namespace metin2::inline client::inline characters {
 
     auto chrmgr_set_empire_name_mode(PyObject *self, PyObject *args) -> PyObject * {
         int enable;
-        if (!py_tuple_get_integer(args, 0, &enable))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &enable)) {
+            return nullptr;
+        }
 
         instance_base::set_empire_name_mode(enable ? true : false);
         get_python_character_manager().refresh_all_pc_text_tail();
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_title_name(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_bad_argument();
         char *title_name;
-        if (!py_tuple_get_string(args, 1, &title_name))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "is", &index, &title_name)) {
+            return nullptr;
+        }
 
         instance_base::register_title_name(index, title_name);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_name_color(PyObject *self, PyObject *args) -> PyObject * {
-        int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_bad_argument();
-
-        int ir;
-        if (!py_tuple_get_integer(args, 1, &ir))
-            return py_bad_argument();
-        int ig;
-        if (!py_tuple_get_integer(args, 2, &ig))
-            return py_bad_argument();
-        int ib;
-        if (!py_tuple_get_integer(args, 3, &ib))
-            return py_bad_argument();
+        int index, ir, ig, ib;
+        if (!PyArg_ParseTuple(args, "iiii", &index, &ir, &ig, &ib)) {
+            return nullptr;
+        }
 
         instance_base::register_name_color(index, ir, ig, ib);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_title_color(PyObject *self, PyObject *args) -> PyObject * {
-        int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_bad_argument();
-        int ir;
-        if (!py_tuple_get_integer(args, 1, &ir))
-            return py_bad_argument();
-        int ig;
-        if (!py_tuple_get_integer(args, 2, &ig))
-            return py_bad_argument();
-        int ib;
-        if (!py_tuple_get_integer(args, 3, &ib))
-            return py_bad_argument();
+        int index, ir, ig, ib;
+        if (!PyArg_ParseTuple(args, "iiii", &index, &ir, &ig, &ib)) {
+            return nullptr;
+        }
 
         instance_base::register_title_color(index, ir, ig, ib);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_get_picked_vid(PyObject *self, PyObject *args) -> PyObject * {
@@ -83,8 +67,9 @@ namespace metin2::inline client::inline characters {
 
     auto chrmgr_get_vid_info(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         python_character_manager &chr_mgr = get_python_character_manager();
 
@@ -115,203 +100,190 @@ namespace metin2::inline client::inline characters {
 
     auto chrmgr_set_path_name(PyObject *self, PyObject *args) -> PyObject * {
         char *path_name;
-        if (!py_tuple_get_string(args, 0, &path_name))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "s", &path_name)) {
+            return nullptr;
+        }
 
         get_race_manager().set_path_name(path_name);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_create_race(PyObject *self, PyObject *args) -> PyObject * {
         int race;
-        if (!py_tuple_get_integer(args, 0, &race))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &race)) {
+            return nullptr;
+        }
 
         get_race_manager().create_race(race);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_select_race(PyObject *self, PyObject *args) -> PyObject * {
         int race;
-        if (!py_tuple_get_integer(args, 0, &race))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &race)) {
+            return nullptr;
+        }
 
         get_race_manager().select_race(race);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_attaching_bone_name(PyObject *self, PyObject *args) -> PyObject * {
         int part_index;
-        if (!py_tuple_get_integer(args, 0, &part_index))
-            return py_bad_argument();
         char *bone_name;
-        if (!py_tuple_get_string(args, 1, &bone_name))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "is", &part_index, &bone_name)) {
+            return nullptr;
+        }
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
         race_data->register_attaching_bone_name(part_index, bone_name);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_motion_mode(PyObject *self, PyObject *args) -> PyObject * {
         int motion_index;
-        if (!py_tuple_get_integer(args, 0, &motion_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &motion_index)) {
+            return nullptr;
+        }
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
         race_data->register_motion_mode(motion_index);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_set_motion_random_weight(PyObject *self, PyObject *args) -> PyObject * {
-        int mode;
-        if (!py_tuple_get_integer(args, 0, &mode))
-            return py_bad_argument();
-
-        int motion;
-        if (!py_tuple_get_integer(args, 1, &motion))
-            return py_bad_argument();
-
-        int sub_motion;
-        if (!py_tuple_get_integer(args, 2, &sub_motion))
-            return py_bad_argument();
-
-        int percentage;
-        if (!py_tuple_get_integer(args, 3, &percentage))
-            return py_bad_argument();
+        int mode, motion, sub_motion, percentage;
+        if (!PyArg_ParseTuple(args, "iiii", &mode, &motion, &sub_motion, &percentage)) {
+            return nullptr;
+        }
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
-        if (!race_data->set_motion_random_weight(mode, motion, sub_motion, percentage))
-            py_build_exception("Failed to SetMotionRandomWeight");
+        if (!race_data->set_motion_random_weight(mode, motion, sub_motion, percentage)) {
+            PyErr_SetString(PyExc_ValueError, "Cannot set the motion random weight");
+            return nullptr;
+        }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_normal_attack(PyObject *self, PyObject *args) -> PyObject * {
-        int mode;
-        if (!py_tuple_get_integer(args, 0, &mode))
-            return py_bad_argument();
-
-        int motion;
-        if (!py_tuple_get_integer(args, 1, &motion))
-            return py_bad_argument();
+        int mode, motion;
+        if (!PyArg_ParseTuple(args, "ii", &mode, &motion)) {
+            return nullptr;
+        }
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
         race_data->register_normal_attack(mode, motion);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_reserve_combo_attack_new(PyObject *self, PyObject *args) -> PyObject * {
-        int motion_mode;
-        if (!py_tuple_get_integer(args, 0, &motion_mode))
-            return py_bad_argument();
-
-        int combo_type;
-        if (!py_tuple_get_integer(args, 1, &combo_type))
-            return py_bad_argument();
-
-        int count;
-        if (!py_tuple_get_integer(args, 2, &count))
-            return py_bad_argument();
+        int motion_mode, combo_type, count;
+        if (!PyArg_ParseTuple(args, "iii", &motion_mode, &combo_type, &count)) {
+            return nullptr;
+        }
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
         race_data->reserve_combo_attack(motion_mode, combo_type, count);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_combo_attack_new(PyObject *self, PyObject *args) -> PyObject * {
-        int motion_mode;
-        if (!py_tuple_get_integer(args, 0, &motion_mode))
-            return py_bad_argument();
-
-        int combo_type;
-        if (!py_tuple_get_integer(args, 1, &combo_type))
-            return py_bad_argument();
-
-        int combo_index;
-        if (!py_tuple_get_integer(args, 2, &combo_index))
-            return py_bad_argument();
-
-        int motion_index;
-        if (!py_tuple_get_integer(args, 3, &motion_index))
-            return py_bad_argument();
+        int motion_mode, combo_type, combo_index, motion_index;
+        if (!PyArg_ParseTuple(args, "iiii", &motion_mode, &combo_type, &combo_index, &motion_index)) {
+            return nullptr;
+        }
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
         race_data->register_combo_attack(motion_mode, combo_type, combo_index, motion_index);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_load_race_data(PyObject *self, PyObject *args) -> PyObject * {
         char *file_name;
-        if (!py_tuple_get_string(args, 0, &file_name))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "s", &file_name)) {
+            return nullptr;
+        }
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
         const char *full_file_name = get_race_manager().full_path_file_name(file_name);
         if (!race_data->load_race_data(full_file_name)) {
             metin2::log::error("Cannot load race data {}", full_file_name);
         }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_load_local_race_data(PyObject *self, PyObject *args) -> PyObject * {
         char *file_name;
-        if (!py_tuple_get_string(args, 0, &file_name))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "s", &file_name)) {
+            return nullptr;
+        }
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
         if (!race_data->load_race_data(file_name)) {
             metin2::log::error("Cannot load race data {}", file_name);
         }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_cache_motion_data(PyObject *self, PyObject *args) -> PyObject * {
-        int mode;
-        if (!py_tuple_get_integer(args, 0, &mode))
-            return py_bad_argument();
-
-        int motion;
-        if (!py_tuple_get_integer(args, 1, &motion))
-            return py_bad_argument();
-
+        int mode, motion, weight = 0;
         char *file_name;
-        if (!py_tuple_get_string(args, 2, &file_name))
-            return py_bad_argument();
 
-        int weight = 0;
-        py_tuple_get_integer(args, 3, &weight);
+        if (!PyArg_ParseTuple(args, "iis|i", &mode, &motion, &file_name, &weight)) {
+            return nullptr;
+        }
+
         weight = std::min(100, weight);
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
         const char *full_file_name = get_race_manager().full_path_file_name(file_name);
         graphic_thing *motion_thing = race_data->register_motion_data(mode, motion, full_file_name, weight);
@@ -319,132 +291,120 @@ namespace metin2::inline client::inline characters {
         if (motion_thing)
             get_resource_manager().load_static_cache(motion_thing->file_name());
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_motion_data(PyObject *self, PyObject *args) -> PyObject * {
-        int mode;
-        if (!py_tuple_get_integer(args, 0, &mode))
-            return py_bad_argument();
-
-        int motion;
-        if (!py_tuple_get_integer(args, 1, &motion))
-            return py_bad_argument();
-
+        int mode, motion, weight = 0;
         char *file_name;
-        if (!py_tuple_get_string(args, 2, &file_name))
-            return py_bad_argument();
 
-        int weight = 0;
-        py_tuple_get_integer(args, 3, &weight);
+        if (!PyArg_ParseTuple(args, "iis|i", &mode, &motion, &file_name, &weight)) {
+            return nullptr;
+        }
+
         weight = std::min(100, weight);
 
         race_data *race_data = get_race_manager().selected_race_data_pointer();
-        if (!race_data)
-            return py_build_exception("RaceData has not selected!");
+        if (!race_data) {
+            PyErr_SetString(PyExc_RuntimeError, "No race selected");
+            return nullptr;
+        }
 
         const char *full_file_name = get_race_manager().full_path_file_name(file_name);
         race_data->register_motion_data(mode, motion, full_file_name, weight);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_race_src_name(PyObject *self, PyObject *args) -> PyObject * {
-        char *name;
-        if (!py_tuple_get_string(args, 0, &name))
-            return py_bad_argument();
-
-        char *src_name;
-        if (!py_tuple_get_string(args, 1, &src_name))
-            return py_bad_argument();
+        char *name, *src_name;
+        if (!PyArg_ParseTuple(args, "ss", &name, &src_name)) {
+            return nullptr;
+        }
 
         get_race_manager().register_race_src_name(name, src_name);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_race_name(PyObject *self, PyObject *args) -> PyObject * {
         int race_index;
-        if (!py_tuple_get_integer(args, 0, &race_index))
-            return py_bad_argument();
-
         char *name;
-        if (!py_tuple_get_string(args, 1, &name))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "is", &race_index, &name)) {
+            return nullptr;
+        }
 
         get_race_manager().register_race_name(race_index, name);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_set_moving_speed(PyObject *self, PyObject *args) -> PyObject * {
         int mov_spd;
-        if (!py_tuple_get_integer(args, 0, &mov_spd))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &mov_spd)) {
+            return nullptr;
+        }
 
-        if (mov_spd < 0)
-            return py_build_exception("MovingSpeed < 0");
+        if (mov_spd < 0) {
+            PyErr_SetString(PyExc_ValueError, "Moving speed must not be negative");
+            return nullptr;
+        }
 
         instance_base *inst = get_python_character_manager().selected_instance_ptr();
 
-        if (!inst)
-            return py_build_exception("MainCharacter has not selected!");
+        if (!inst) {
+            PyErr_SetString(PyExc_RuntimeError, "No character selected");
+            return nullptr;
+        }
 
         inst->set_move_speed(mov_spd);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_effect(PyObject *self, PyObject *args) -> PyObject * {
         int eft_type;
-        if (!py_tuple_get_integer(args, 0, &eft_type))
-            return py_bad_argument();
+        char *bone_name, *path_name;
 
-        char *bone_name;
-        if (!py_tuple_get_string(args, 1, &bone_name))
-            return py_bad_argument();
-
-        char *path_name;
-        if (!py_tuple_get_string(args, 2, &path_name))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "iss", &eft_type, &bone_name, &path_name)) {
+            return nullptr;
+        }
 
         instance_base::register_effect(eft_type, bone_name, path_name, false);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_register_cache_effect(PyObject *self, PyObject *args) -> PyObject * {
         int eft_type;
-        if (!py_tuple_get_integer(args, 0, &eft_type))
-            return py_bad_argument();
+        char *bone_name, *path_name;
 
-        char *bone_name;
-        if (!py_tuple_get_string(args, 1, &bone_name))
-            return py_bad_argument();
-
-        char *path_name;
-        if (!py_tuple_get_string(args, 2, &path_name))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "iss", &eft_type, &bone_name, &path_name)) {
+            return nullptr;
+        }
 
         instance_base::register_effect(eft_type, bone_name, path_name, true);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_set_dust_gap(PyObject *self, PyObject *args) -> PyObject * {
         int gap;
-        if (!py_tuple_get_integer(args, 0, &gap))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &gap)) {
+            return nullptr;
+        }
 
         instance_base::set_dust_gap(gap);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_set_horse_dust_gap(PyObject *self, PyObject *args) -> PyObject * {
         int gap;
-        if (!py_tuple_get_integer(args, 0, &gap))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &gap)) {
+            return nullptr;
+        }
 
         instance_base::set_horse_dust_gap(gap);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_toggle_direction_line(PyObject *self, PyObject *args) -> PyObject * {
@@ -452,7 +412,7 @@ namespace metin2::inline client::inline characters {
         actor_instance::show_direction_line(is_visible);
 
         is_visible = !is_visible;
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     void python_character_manager::script_set_affect(uint32_t vid, uint32_t state, bool is_visible) {
@@ -464,21 +424,14 @@ namespace metin2::inline client::inline characters {
     }
 
     auto chrmgr_set_affect(PyObject *self, PyObject *args) -> PyObject * {
-        int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_bad_argument();
-
-        int eft;
-        if (!py_tuple_get_integer(args, 1, &eft))
-            return py_bad_argument();
-
-        int visible_value;
-        if (!py_tuple_get_integer(args, 2, &visible_value))
-            return py_bad_argument();
+        int vid, eft, visible_value;
+        if (!PyArg_ParseTuple(args, "iii", &vid, &eft, &visible_value)) {
+            return nullptr;
+        }
 
         python_character_manager &chr_mgr = get_python_character_manager();
         chr_mgr.script_set_affect(vid >= 0 ? vid : 0xffffffff, eft, visible_value);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     void python_character_manager::set_emoticon(uint32_t vid, uint32_t state) {
@@ -498,23 +451,21 @@ namespace metin2::inline client::inline characters {
     }
 
     auto chrmgr_set_emoticon(PyObject *self, PyObject *args) -> PyObject * {
-        int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_bad_argument();
-
-        int eft;
-        if (!py_tuple_get_integer(args, 1, &eft))
-            return py_bad_argument();
+        int vid, eft;
+        if (!PyArg_ParseTuple(args, "ii", &vid, &eft)) {
+            return nullptr;
+        }
 
         python_character_manager &chr_mgr = get_python_character_manager();
         chr_mgr.set_emoticon(vid >= 0 ? vid : 0xffffffff, eft);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto chrmgr_is_possible_emoticon(PyObject *self, PyObject *args) -> PyObject * {
         int vid;
-        if (!py_tuple_get_integer(args, 0, &vid))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &vid)) {
+            return nullptr;
+        }
 
         python_character_manager &chr_mgr = get_python_character_manager();
         int result = chr_mgr.is_possible_emoticon(vid >= 0 ? vid : 0xffffffff);
@@ -561,82 +512,82 @@ namespace metin2::inline client::inline characters {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = init_python_module("metin2.characters.manager", s_methods);
+        PyObject *module = init_python_module("metin2.characters.manager", s_methods);
 
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_MOB", instance_base::NAMECOLOR_NORMAL_MOB);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_NPC", instance_base::NAMECOLOR_NORMAL_NPC);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_PC", instance_base::NAMECOLOR_NORMAL_PC);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_EMPIRE_MOB", instance_base::NAMECOLOR_EMPIRE_MOB);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_EMPIRE_NPC", instance_base::NAMECOLOR_EMPIRE_NPC);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_EMPIRE_PC", instance_base::NAMECOLOR_EMPIRE_PC);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_FUNC", instance_base::NAMECOLOR_FUNC);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_PK", instance_base::NAMECOLOR_PK);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_PVP", instance_base::NAMECOLOR_PVP);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_PARTY", instance_base::NAMECOLOR_PARTY);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_WARP", instance_base::NAMECOLOR_WARP);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_WAYPOINT", instance_base::NAMECOLOR_WAYPOINT);
-        PyModule_AddIntConstant(module_value, "NAMECOLOR_EXTRA", instance_base::NAMECOLOR_EXTRA);
+        PyModule_AddIntConstant(module, "NAMECOLOR_MOB", instance_base::NAMECOLOR_NORMAL_MOB);
+        PyModule_AddIntConstant(module, "NAMECOLOR_NPC", instance_base::NAMECOLOR_NORMAL_NPC);
+        PyModule_AddIntConstant(module, "NAMECOLOR_PC", instance_base::NAMECOLOR_NORMAL_PC);
+        PyModule_AddIntConstant(module, "NAMECOLOR_EMPIRE_MOB", instance_base::NAMECOLOR_EMPIRE_MOB);
+        PyModule_AddIntConstant(module, "NAMECOLOR_EMPIRE_NPC", instance_base::NAMECOLOR_EMPIRE_NPC);
+        PyModule_AddIntConstant(module, "NAMECOLOR_EMPIRE_PC", instance_base::NAMECOLOR_EMPIRE_PC);
+        PyModule_AddIntConstant(module, "NAMECOLOR_FUNC", instance_base::NAMECOLOR_FUNC);
+        PyModule_AddIntConstant(module, "NAMECOLOR_PK", instance_base::NAMECOLOR_PK);
+        PyModule_AddIntConstant(module, "NAMECOLOR_PVP", instance_base::NAMECOLOR_PVP);
+        PyModule_AddIntConstant(module, "NAMECOLOR_PARTY", instance_base::NAMECOLOR_PARTY);
+        PyModule_AddIntConstant(module, "NAMECOLOR_WARP", instance_base::NAMECOLOR_WARP);
+        PyModule_AddIntConstant(module, "NAMECOLOR_WAYPOINT", instance_base::NAMECOLOR_WAYPOINT);
+        PyModule_AddIntConstant(module, "NAMECOLOR_EXTRA", instance_base::NAMECOLOR_EXTRA);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_SPAWN_DISAPPEAR", instance_base::EFFECT_SPAWN_DISAPPEAR);
-        PyModule_AddIntConstant(module_value, "EFFECT_SPAWN_APPEAR", instance_base::EFFECT_SPAWN_APPEAR);
-        PyModule_AddIntConstant(module_value, "EFFECT_DUST", instance_base::EFFECT_DUST);
-        PyModule_AddIntConstant(module_value, "EFFECT_HORSE_DUST", instance_base::EFFECT_HORSE_DUST);
-        PyModule_AddIntConstant(module_value, "EFFECT_STUN", instance_base::EFFECT_STUN);
-        PyModule_AddIntConstant(module_value, "EFFECT_HIT", instance_base::EFFECT_HIT);
-        PyModule_AddIntConstant(module_value, "EFFECT_FLAME_ATTACK", instance_base::EFFECT_FLAME_ATTACK);
-        PyModule_AddIntConstant(module_value, "EFFECT_FLAME_HIT", instance_base::EFFECT_FLAME_HIT);
-        PyModule_AddIntConstant(module_value, "EFFECT_FLAME_ATTACH", instance_base::EFFECT_FLAME_ATTACH);
-        PyModule_AddIntConstant(module_value, "EFFECT_ELECTRIC_ATTACK", instance_base::EFFECT_ELECTRIC_ATTACK);
-        PyModule_AddIntConstant(module_value, "EFFECT_ELECTRIC_HIT", instance_base::EFFECT_ELECTRIC_HIT);
-        PyModule_AddIntConstant(module_value, "EFFECT_ELECTRIC_ATTACH", instance_base::EFFECT_ELECTRIC_ATTACH);
-        PyModule_AddIntConstant(module_value, "EFFECT_SELECT", instance_base::EFFECT_SELECT);
-        PyModule_AddIntConstant(module_value, "EFFECT_TARGET", instance_base::EFFECT_TARGET);
-        PyModule_AddIntConstant(module_value, "EFFECT_CRITICAL", instance_base::EFFECT_CRITICAL);
+        PyModule_AddIntConstant(module, "EFFECT_SPAWN_DISAPPEAR", instance_base::EFFECT_SPAWN_DISAPPEAR);
+        PyModule_AddIntConstant(module, "EFFECT_SPAWN_APPEAR", instance_base::EFFECT_SPAWN_APPEAR);
+        PyModule_AddIntConstant(module, "EFFECT_DUST", instance_base::EFFECT_DUST);
+        PyModule_AddIntConstant(module, "EFFECT_HORSE_DUST", instance_base::EFFECT_HORSE_DUST);
+        PyModule_AddIntConstant(module, "EFFECT_STUN", instance_base::EFFECT_STUN);
+        PyModule_AddIntConstant(module, "EFFECT_HIT", instance_base::EFFECT_HIT);
+        PyModule_AddIntConstant(module, "EFFECT_FLAME_ATTACK", instance_base::EFFECT_FLAME_ATTACK);
+        PyModule_AddIntConstant(module, "EFFECT_FLAME_HIT", instance_base::EFFECT_FLAME_HIT);
+        PyModule_AddIntConstant(module, "EFFECT_FLAME_ATTACH", instance_base::EFFECT_FLAME_ATTACH);
+        PyModule_AddIntConstant(module, "EFFECT_ELECTRIC_ATTACK", instance_base::EFFECT_ELECTRIC_ATTACK);
+        PyModule_AddIntConstant(module, "EFFECT_ELECTRIC_HIT", instance_base::EFFECT_ELECTRIC_HIT);
+        PyModule_AddIntConstant(module, "EFFECT_ELECTRIC_ATTACH", instance_base::EFFECT_ELECTRIC_ATTACH);
+        PyModule_AddIntConstant(module, "EFFECT_SELECT", instance_base::EFFECT_SELECT);
+        PyModule_AddIntConstant(module, "EFFECT_TARGET", instance_base::EFFECT_TARGET);
+        PyModule_AddIntConstant(module, "EFFECT_CRITICAL", instance_base::EFFECT_CRITICAL);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_DAMAGE_TARGET", instance_base::EFFECT_DAMAGE_TARGET);
-        PyModule_AddIntConstant(module_value, "EFFECT_DAMAGE_NOT_TARGET", instance_base::EFFECT_DAMAGE_NOT_TARGET);
-        PyModule_AddIntConstant(module_value, "EFFECT_DAMAGE_SELFDAMAGE", instance_base::EFFECT_DAMAGE_SELFDAMAGE);
-        PyModule_AddIntConstant(module_value, "EFFECT_DAMAGE_SELFDAMAGE2", instance_base::EFFECT_DAMAGE_SELFDAMAGE2);
-        PyModule_AddIntConstant(module_value, "EFFECT_DAMAGE_POISON", instance_base::EFFECT_DAMAGE_POISON);
-        PyModule_AddIntConstant(module_value, "EFFECT_DAMAGE_MISS", instance_base::EFFECT_DAMAGE_MISS);
-        PyModule_AddIntConstant(module_value, "EFFECT_DAMAGE_TARGETMISS", instance_base::EFFECT_DAMAGE_TARGETMISS);
-        PyModule_AddIntConstant(module_value, "EFFECT_DAMAGE_CRITICAL", instance_base::EFFECT_DAMAGE_CRITICAL);
+        PyModule_AddIntConstant(module, "EFFECT_DAMAGE_TARGET", instance_base::EFFECT_DAMAGE_TARGET);
+        PyModule_AddIntConstant(module, "EFFECT_DAMAGE_NOT_TARGET", instance_base::EFFECT_DAMAGE_NOT_TARGET);
+        PyModule_AddIntConstant(module, "EFFECT_DAMAGE_SELFDAMAGE", instance_base::EFFECT_DAMAGE_SELFDAMAGE);
+        PyModule_AddIntConstant(module, "EFFECT_DAMAGE_SELFDAMAGE2", instance_base::EFFECT_DAMAGE_SELFDAMAGE2);
+        PyModule_AddIntConstant(module, "EFFECT_DAMAGE_POISON", instance_base::EFFECT_DAMAGE_POISON);
+        PyModule_AddIntConstant(module, "EFFECT_DAMAGE_MISS", instance_base::EFFECT_DAMAGE_MISS);
+        PyModule_AddIntConstant(module, "EFFECT_DAMAGE_TARGETMISS", instance_base::EFFECT_DAMAGE_TARGETMISS);
+        PyModule_AddIntConstant(module, "EFFECT_DAMAGE_CRITICAL", instance_base::EFFECT_DAMAGE_CRITICAL);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_LEVELUP", instance_base::EFFECT_LEVELUP);
-        PyModule_AddIntConstant(module_value, "EFFECT_SKILLUP", instance_base::EFFECT_SKILLUP);
-        PyModule_AddIntConstant(module_value, "EFFECT_HPUP_RED", instance_base::EFFECT_HPUP_RED);
-        PyModule_AddIntConstant(module_value, "EFFECT_SPUP_BLUE", instance_base::EFFECT_SPUP_BLUE);
-        PyModule_AddIntConstant(module_value, "EFFECT_SPEEDUP_GREEN", instance_base::EFFECT_SPEEDUP_GREEN);
-        PyModule_AddIntConstant(module_value, "EFFECT_DXUP_PURPLE", instance_base::EFFECT_DXUP_PURPLE);
-        PyModule_AddIntConstant(module_value, "EFFECT_PENETRATE", instance_base::EFFECT_PENETRATE);
-        PyModule_AddIntConstant(module_value, "EFFECT_BLOCK", instance_base::EFFECT_BLOCK);
-        PyModule_AddIntConstant(module_value, "EFFECT_DODGE", instance_base::EFFECT_DODGE);
-        PyModule_AddIntConstant(module_value, "EFFECT_FIRECRACKER", instance_base::EFFECT_FIRECRACKER);
-        PyModule_AddIntConstant(module_value, "EFFECT_SPIN_TOP", instance_base::EFFECT_SPIN_TOP);
+        PyModule_AddIntConstant(module, "EFFECT_LEVELUP", instance_base::EFFECT_LEVELUP);
+        PyModule_AddIntConstant(module, "EFFECT_SKILLUP", instance_base::EFFECT_SKILLUP);
+        PyModule_AddIntConstant(module, "EFFECT_HPUP_RED", instance_base::EFFECT_HPUP_RED);
+        PyModule_AddIntConstant(module, "EFFECT_SPUP_BLUE", instance_base::EFFECT_SPUP_BLUE);
+        PyModule_AddIntConstant(module, "EFFECT_SPEEDUP_GREEN", instance_base::EFFECT_SPEEDUP_GREEN);
+        PyModule_AddIntConstant(module, "EFFECT_DXUP_PURPLE", instance_base::EFFECT_DXUP_PURPLE);
+        PyModule_AddIntConstant(module, "EFFECT_PENETRATE", instance_base::EFFECT_PENETRATE);
+        PyModule_AddIntConstant(module, "EFFECT_BLOCK", instance_base::EFFECT_BLOCK);
+        PyModule_AddIntConstant(module, "EFFECT_DODGE", instance_base::EFFECT_DODGE);
+        PyModule_AddIntConstant(module, "EFFECT_FIRECRACKER", instance_base::EFFECT_FIRECRACKER);
+        PyModule_AddIntConstant(module, "EFFECT_SPIN_TOP", instance_base::EFFECT_SPIN_TOP);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_WEAPON", instance_base::EFFECT_WEAPON);
+        PyModule_AddIntConstant(module, "EFFECT_WEAPON", instance_base::EFFECT_WEAPON);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_AFFECT", instance_base::EFFECT_AFFECT);
-        PyModule_AddIntConstant(module_value, "EFFECT_EMOTICON", instance_base::EFFECT_EMOTICON);
-        PyModule_AddIntConstant(module_value, "EFFECT_EMPIRE", instance_base::EFFECT_EMPIRE);
+        PyModule_AddIntConstant(module, "EFFECT_AFFECT", instance_base::EFFECT_AFFECT);
+        PyModule_AddIntConstant(module, "EFFECT_EMOTICON", instance_base::EFFECT_EMOTICON);
+        PyModule_AddIntConstant(module, "EFFECT_EMPIRE", instance_base::EFFECT_EMPIRE);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_REFINED", instance_base::EFFECT_REFINED);
+        PyModule_AddIntConstant(module, "EFFECT_REFINED", instance_base::EFFECT_REFINED);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_SUCCESS", instance_base::EFFECT_SUCCESS);
-        PyModule_AddIntConstant(module_value, "EFFECT_FAIL", instance_base::EFFECT_FAIL);
-        PyModule_AddIntConstant(module_value, "EFFECT_FR_SUCCESS", instance_base::EFFECT_FR_SUCCESS);
-        PyModule_AddIntConstant(module_value, "EFFECT_LEVELUP_ON_14_FOR_GERMANY", instance_base::EFFECT_LEVELUP_ON_14_FOR_GERMANY);
-        PyModule_AddIntConstant(module_value, "EFFECT_LEVELUP_UNDER_15_FOR_GERMANY", instance_base::EFFECT_LEVELUP_UNDER_15_FOR_GERMANY);
-        PyModule_AddIntConstant(module_value, "EFFECT_PERCENT_DAMAGE1", instance_base::EFFECT_PERCENT_DAMAGE1);
-        PyModule_AddIntConstant(module_value, "EFFECT_PERCENT_DAMAGE2", instance_base::EFFECT_PERCENT_DAMAGE2);
-        PyModule_AddIntConstant(module_value, "EFFECT_PERCENT_DAMAGE3", instance_base::EFFECT_PERCENT_DAMAGE3);
+        PyModule_AddIntConstant(module, "EFFECT_SUCCESS", instance_base::EFFECT_SUCCESS);
+        PyModule_AddIntConstant(module, "EFFECT_FAIL", instance_base::EFFECT_FAIL);
+        PyModule_AddIntConstant(module, "EFFECT_FR_SUCCESS", instance_base::EFFECT_FR_SUCCESS);
+        PyModule_AddIntConstant(module, "EFFECT_LEVELUP_ON_14_FOR_GERMANY", instance_base::EFFECT_LEVELUP_ON_14_FOR_GERMANY);
+        PyModule_AddIntConstant(module, "EFFECT_LEVELUP_UNDER_15_FOR_GERMANY", instance_base::EFFECT_LEVELUP_UNDER_15_FOR_GERMANY);
+        PyModule_AddIntConstant(module, "EFFECT_PERCENT_DAMAGE1", instance_base::EFFECT_PERCENT_DAMAGE1);
+        PyModule_AddIntConstant(module, "EFFECT_PERCENT_DAMAGE2", instance_base::EFFECT_PERCENT_DAMAGE2);
+        PyModule_AddIntConstant(module, "EFFECT_PERCENT_DAMAGE3", instance_base::EFFECT_PERCENT_DAMAGE3);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_AUTO_HPUP", instance_base::EFFECT_AUTO_HPUP);
-        PyModule_AddIntConstant(module_value, "EFFECT_AUTO_SPUP", instance_base::EFFECT_AUTO_SPUP);
+        PyModule_AddIntConstant(module, "EFFECT_AUTO_HPUP", instance_base::EFFECT_AUTO_HPUP);
+        PyModule_AddIntConstant(module, "EFFECT_AUTO_SPUP", instance_base::EFFECT_AUTO_SPUP);
 
-        PyModule_AddIntConstant(module_value, "EFFECT_RAMADAN_RING_EQUIP", instance_base::EFFECT_RAMADAN_RING_EQUIP);
-        PyModule_AddIntConstant(module_value, "EFFECT_HALLOWEEN_CANDY_EQUIP", instance_base::EFFECT_HALLOWEEN_CANDY_EQUIP);
-        PyModule_AddIntConstant(module_value, "EFFECT_HAPPINESS_RING_EQUIP", instance_base::EFFECT_HAPPINESS_RING_EQUIP);
-        PyModule_AddIntConstant(module_value, "EFFECT_LOVE_PENDANT_EQUIP", instance_base::EFFECT_LOVE_PENDANT_EQUIP);
+        PyModule_AddIntConstant(module, "EFFECT_RAMADAN_RING_EQUIP", instance_base::EFFECT_RAMADAN_RING_EQUIP);
+        PyModule_AddIntConstant(module, "EFFECT_HALLOWEEN_CANDY_EQUIP", instance_base::EFFECT_HALLOWEEN_CANDY_EQUIP);
+        PyModule_AddIntConstant(module, "EFFECT_HAPPINESS_RING_EQUIP", instance_base::EFFECT_HAPPINESS_RING_EQUIP);
+        PyModule_AddIntConstant(module, "EFFECT_LOVE_PENDANT_EQUIP", instance_base::EFFECT_LOVE_PENDANT_EQUIP);
     }
 }

@@ -1092,36 +1092,39 @@ namespace metin2::inline client::inline player {
 
     auto skill_load_skill_data(PyObject *self, PyObject *args) -> PyObject * {
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto skill_register_skill_desc(PyObject *self, PyObject *args) -> PyObject * {
         char *file_name;
-        if (!py_tuple_get_string(args, 0, &file_name))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "s", &file_name)) {
+            return nullptr;
+        }
 
-        if (!get_python_skill().register_skill_desc(file_name))
-            return py_build_exception("Failed to load Skill Desc");
+        if (!get_python_skill().register_skill_desc(file_name)) {
+            PyErr_SetString(PyExc_IOError, "Cannot load the skill descriptions");
+            return nullptr;
+        }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto skill_clear_skill_data(PyObject *self, PyObject *args) -> PyObject * {
         python_skill::skill_data::time_increase_skill_number = 0;
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto skill_get_skill_name(PyObject *self, PyObject *args) -> PyObject * {
-        int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-
-        int skill_grade = -1;
-        py_tuple_get_integer(args, 1, &skill_grade);
+        int skill_index, skill_grade = -1;
+        if (!PyArg_ParseTuple(args, "i|i", &skill_index, &skill_grade)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillName - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         if (-1 != skill_grade)
             if (skill_grade >= 0 && skill_grade < python_skill::SKILL_GRADE_COUNT) {
@@ -1133,52 +1136,60 @@ namespace metin2::inline client::inline player {
 
     auto skill_get_skill_description(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillDescription - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("s", skill_data->description.c_str());
     }
 
     auto skill_get_skill_type(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillType - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->type_value);
     }
 
     auto skill_get_skill_condition_description_count(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillConditionDescriptionCount - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->condition_data_vector.size());
     }
 
     auto skill_get_skill_condition_description(PyObject *self, PyObject *args) -> PyObject * {
-        int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-
-        int condition_index;
-        if (!py_tuple_get_integer(args, 1, &condition_index))
-            return py_bad_argument();
+        int skill_index, condition_index;
+        if (!PyArg_ParseTuple(args, "ii", &skill_index, &condition_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillConditionDescription() - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         if (size_t(condition_index) >= skill_data->condition_data_vector.size())
             return Py_BuildValue("None");
@@ -1188,128 +1199,143 @@ namespace metin2::inline client::inline player {
 
     auto skill_get_skill_affect_description_count(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillAffectDescriptionCount - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->affect_data_vector.size());
     }
 
     auto skill_get_skill_affect_description(PyObject *self, PyObject *args) -> PyObject * {
-        int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-
-        int affect_index;
-        if (!py_tuple_get_integer(args, 1, &affect_index))
-            return py_bad_argument();
-
+        int skill_index, affect_index;
         float skill_point;
-        if (!py_tuple_get_float(args, 2, &skill_point))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "iif", &skill_index, &affect_index, &skill_point)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillAffectDescription - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("s", skill_data->affect_description(affect_index, skill_point));
     }
 
     auto skill_get_skill_cool_time(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-
         float skill_point;
-        if (!py_tuple_get_float(args, 1, &skill_point))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "if", &skill_index, &skill_point)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillCoolTime - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->skill_cool_time(skill_point));
     }
 
     auto skill_get_skill_need_sp(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-
         float skill_point;
-        if (!py_tuple_get_float(args, 1, &skill_point))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "if", &skill_index, &skill_point)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillNeedSP Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->need_sp(skill_point));
     }
 
     auto skill_get_skill_continuation_sp(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-
         float skill_point;
-        if (!py_tuple_get_float(args, 1, &skill_point))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "if", &skill_index, &skill_point)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillContinuationSP - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->continuation_sp(skill_point));
     }
 
     auto skill_get_skill_max_level(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillMaxLevel - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->get_max_level());
     }
 
     auto skill_get_skill_level_up_point(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillLevelUpPoint - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->get_level_up_point());
     }
 
     auto skill_get_skill_level_limit(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillLevelLimit - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->level_limit);
     }
 
     auto skill_is_skill_requirement(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.IsSkillRequirement - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         if (skill_data->is_requirement) {
             python_skill::skill_data *require_skill_data;
@@ -1328,12 +1354,15 @@ namespace metin2::inline client::inline player {
 
     auto skill_get_skill_requirement_data(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillRequirementData - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         python_skill::skill_data *require_skill_data;
         if (!get_python_skill().skill_data_by_name(skill_data->require_skill_name.c_str(), &require_skill_data))
@@ -1345,27 +1374,30 @@ namespace metin2::inline client::inline player {
 
     auto skill_get_skill_require_stat_count(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillRequireStatCount - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->require_stat_data_vector.size());
     }
 
     auto skill_get_skill_require_stat_data(PyObject *self, PyObject *args) -> PyObject * {
-        int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-        int stat_index;
-        if (!py_tuple_get_integer(args, 1, &stat_index))
-            return py_bad_argument();
+        int skill_index, stat_index;
+        if (!PyArg_ParseTuple(args, "ii", &skill_index, &stat_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetSkillRequireStatData - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         if (size_t(stat_index) >= skill_data->require_stat_data_vector.size())
             return Py_BuildValue("ii", 0, 0);
@@ -1376,16 +1408,16 @@ namespace metin2::inline client::inline player {
     }
 
     auto skill_can_level_up_skill(PyObject *self, PyObject *args) -> PyObject * {
-        int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-        int skill_level;
-        if (!py_tuple_get_integer(args, 1, &skill_level))
-            return py_bad_argument();
+        int skill_index, skill_level;
+        if (!PyArg_ParseTuple(args, "ii", &skill_index, &skill_level)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.CanLevelUpSkill - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         if (skill_level >= skill_data->get_max_level())
             return Py_BuildValue("i", false);
@@ -1418,12 +1450,15 @@ namespace metin2::inline client::inline player {
 
     auto skill_check_requirement_sueccess(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.CheckRequirementSueccess - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         if (skill_data->is_requirement) {
             python_skill::skill_data *require_skill_data;
@@ -1444,56 +1479,69 @@ namespace metin2::inline client::inline player {
 
     auto skill_is_toggle_skill(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.IsToggleSkill - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->is_toggle_skill());
     }
 
     auto skill_is_use_hp_skill(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.IsUseHPSkill - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->is_use_hp_skill());
     }
 
     auto skill_is_standing_skill(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.IsStandingSkill - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->is_standing_skill());
     }
 
     auto skill_can_use_skill(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.CanUseSkill - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->is_can_use_skill());
     }
 
     auto skill_get_icon_image(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
         if (!get_python_skill().get_skill_data(skill_index, &skill_data))
@@ -1503,13 +1551,10 @@ namespace metin2::inline client::inline player {
     }
 
     auto skill_get_icon_image_new(PyObject *self, PyObject *args) -> PyObject * {
-        int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-
-        int grade_index;
-        if (!py_tuple_get_integer(args, 1, &grade_index))
-            return py_bad_argument();
+        int skill_index, grade_index;
+        if (!PyArg_ParseTuple(args, "ii", &skill_index, &grade_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
         if (!get_python_skill().get_skill_data(skill_index, &skill_data))
@@ -1525,17 +1570,16 @@ namespace metin2::inline client::inline player {
     }
 
     auto skill_get_icon_instance_new(PyObject *self, PyObject *args) -> PyObject * {
-        int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-
-        int grade_index;
-        if (!py_tuple_get_integer(args, 1, &grade_index))
-            return py_bad_argument();
+        int skill_index, grade_index;
+        if (!PyArg_ParseTuple(args, "ii", &skill_index, &grade_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetIconInstanceNew - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         if (grade_index < 0)
             grade_index = 0;
@@ -1550,43 +1594,48 @@ namespace metin2::inline client::inline player {
     }
 
     auto skill_delete_icon_instance(PyObject *self, PyObject *args) -> PyObject * {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, 0, &handle))
-            return py_bad_argument();
+        Py_ssize_t handle;
+        if (!PyArg_ParseTuple(args, "n", &handle)) {
+            return nullptr;
+        }
 
         graphic_image_instance::delete_value((graphic_image_instance *)handle);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto skill_get_new_affect_data_count(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "i", &skill_index)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetNewAffectDataCount - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->affect_data_new_vector.size());
     }
 
     auto skill_get_new_affect_data(PyObject *self, PyObject *args) -> PyObject * {
-        int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
-        int affect_index;
-        if (!py_tuple_get_integer(args, 1, &affect_index))
-            return py_bad_argument();
+        int skill_index, affect_index;
         float skill_level;
-        if (!py_tuple_get_float(args, 2, &skill_level))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "iif", &skill_index, &affect_index, &skill_level)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetNewAffectData - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
-        if (affect_index < 0 || size_t(affect_index) >= skill_data->affect_data_new_vector.size())
-            return py_build_exception(" skill.GetNewAffectData - Strange AffectIndex %d", affect_index);
+        if (affect_index < 0 || size_t(affect_index) >= skill_data->affect_data_new_vector.size()) {
+            PyErr_Format(PyExc_ValueError, "Affect index %d out of range", affect_index);
+            return nullptr;
+        }
 
         python_skill::affect_data_new &affect_data = skill_data->affect_data_new_vector[affect_index];
 
@@ -1604,15 +1653,17 @@ namespace metin2::inline client::inline player {
 
     auto skill_get_duration(PyObject *self, PyObject *args) -> PyObject * {
         int skill_index;
-        if (!py_tuple_get_integer(args, 0, &skill_index))
-            return py_bad_argument();
         float skill_level;
-        if (!py_tuple_get_float(args, 1, &skill_level))
-            return py_bad_argument();
+
+        if (!PyArg_ParseTuple(args, "if", &skill_index, &skill_level)) {
+            return nullptr;
+        }
 
         python_skill::skill_data *skill_data;
-        if (!get_python_skill().get_skill_data(skill_index, &skill_data))
-            return py_build_exception("skill.GetDuration - Failed to find skill by %d", skill_index);
+        if (!get_python_skill().get_skill_data(skill_index, &skill_data)) {
+            PyErr_Format(PyExc_ValueError, "Unknown skill %d", skill_index);
+            return nullptr;
+        }
 
         return Py_BuildValue("i", skill_data->get_duration(skill_level));
     }
@@ -1658,17 +1709,17 @@ namespace metin2::inline client::inline player {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = init_python_module("metin2.player.skills", s_methods);
-        PyModule_AddIntConstant(module_value, "SKILL_TYPE_NONE", python_skill::SKILL_TYPE_NONE);
-        PyModule_AddIntConstant(module_value, "SKILL_TYPE_ACTIVE", python_skill::SKILL_TYPE_ACTIVE);
-        PyModule_AddIntConstant(module_value, "SKILL_TYPE_SUPPORT", python_skill::SKILL_TYPE_SUPPORT);
-        PyModule_AddIntConstant(module_value, "SKILL_TYPE_GUILD", python_skill::SKILL_TYPE_GUILD);
-        PyModule_AddIntConstant(module_value, "SKILL_TYPE_HORSE", python_skill::SKILL_TYPE_HORSE);
-        PyModule_AddIntConstant(module_value, "SKILL_TYPE_MAX_NUM", python_skill::SKILL_TYPE_MAX_NUM);
+        PyObject *module = init_python_module("metin2.player.skills", s_methods);
+        PyModule_AddIntConstant(module, "SKILL_TYPE_NONE", python_skill::SKILL_TYPE_NONE);
+        PyModule_AddIntConstant(module, "SKILL_TYPE_ACTIVE", python_skill::SKILL_TYPE_ACTIVE);
+        PyModule_AddIntConstant(module, "SKILL_TYPE_SUPPORT", python_skill::SKILL_TYPE_SUPPORT);
+        PyModule_AddIntConstant(module, "SKILL_TYPE_GUILD", python_skill::SKILL_TYPE_GUILD);
+        PyModule_AddIntConstant(module, "SKILL_TYPE_HORSE", python_skill::SKILL_TYPE_HORSE);
+        PyModule_AddIntConstant(module, "SKILL_TYPE_MAX_NUM", python_skill::SKILL_TYPE_MAX_NUM);
 
-        PyModule_AddIntConstant(module_value, "SKILL_GRADE_COUNT", python_skill::SKILL_GRADE_COUNT);
-        PyModule_AddIntConstant(module_value, "SKILL_GRADE_STEP_COUNT", python_skill::SKILL_GRADE_STEP_COUNT);
-        PyModule_AddIntConstant(module_value, "SKILL_GRADEGAP", python_skill::SKILL_GRADEGAP);
-        PyModule_AddIntConstant(module_value, "SKILL_EFFECT_COUNT", python_skill::SKILL_EFFECT_COUNT);
+        PyModule_AddIntConstant(module, "SKILL_GRADE_COUNT", python_skill::SKILL_GRADE_COUNT);
+        PyModule_AddIntConstant(module, "SKILL_GRADE_STEP_COUNT", python_skill::SKILL_GRADE_STEP_COUNT);
+        PyModule_AddIntConstant(module, "SKILL_GRADEGAP", python_skill::SKILL_GRADEGAP);
+        PyModule_AddIntConstant(module, "SKILL_EFFECT_COUNT", python_skill::SKILL_EFFECT_COUNT);
     }
 }

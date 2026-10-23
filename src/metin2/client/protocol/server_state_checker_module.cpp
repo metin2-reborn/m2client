@@ -6,43 +6,46 @@ namespace metin2::inline client::inline protocol {
 
     auto server_state_checker_create(PyObject *self, PyObject *args) -> PyObject * {
         PyObject *wnd;
-        if (!py_tuple_get_object(args, 0, &wnd))
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "O", &wnd)) {
+            return nullptr;
+        }
 
         get_server_state_checker().create(wnd);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto server_state_checker_update(PyObject *self, PyObject *args) -> PyObject * {
         get_server_state_checker().update();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto server_state_checker_request(PyObject *self, PyObject *args) -> PyObject * {
         get_server_state_checker().request();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto server_state_checker_add_channel(PyObject *self, PyObject *args) -> PyObject * {
         int server_index;
-        if (!py_tuple_get_integer(args, 0, &server_index))
-            return py_build_exception();
-
         char *addr;
-        if (!py_tuple_get_string(args, 1, &addr))
-            return py_build_exception();
-
         int port;
-        if (!py_tuple_get_integer(args, 2, &port))
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "isi", &server_index, &addr, &port)) {
+            return nullptr;
+        }
 
         get_server_state_checker().add_channel(server_index, addr, port);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
+    // The scripts pass their handler object; the checker reports through the network stream instead.
     auto server_state_checker_initialize(PyObject *self, PyObject *args) -> PyObject * {
+        PyObject *handler = nullptr;
+        if (!PyArg_ParseTuple(args, "|O", &handler)) {
+            return nullptr;
+        }
+
         get_server_state_checker().initialize();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     void init_net_server_state_module() {

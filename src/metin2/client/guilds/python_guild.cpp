@@ -366,8 +366,12 @@ namespace metin2::inline client::inline guilds {
     }
 
     auto guild_get_guild_name(PyObject *self, PyObject *args) -> PyObject * {
-        int guild_id;
-        if (!py_tuple_get_integer(args, 0, &guild_id)) {
+        int guild_id = 0;
+        if (!PyArg_ParseTuple(args, "|i", &guild_id)) {
+            return nullptr;
+        }
+
+        if (PyTuple_Size(args) == 0) {
             python_guild::guild_info &guild_info = get_python_guild().guild_info_ref();
             return Py_BuildValue("s", guild_info.guild_name);
         }
@@ -391,8 +395,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_get_enemy_guild_name(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return Py_BuildValue("s", "");
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         uint32_t enemy_guild_id = get_python_guild().enemy_guild_id(index);
 
@@ -415,8 +420,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_get_guild_board_comment_data(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         const python_guild::guild_board_comment_data_vector &comment_vector = get_python_guild().guild_board_comment_vector();
         if (uint32_t(index) >= comment_vector.size())
@@ -468,8 +474,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_get_skill_level(PyObject *self, PyObject *args) -> PyObject * {
         int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &slot_index)) {
+            return nullptr;
+        }
 
         auto itor = guild_skill_slot_to_index_map.find(slot_index);
 
@@ -484,22 +491,21 @@ namespace metin2::inline client::inline guilds {
     }
 
     auto guild_set_skill_index(PyObject *self, PyObject *args) -> PyObject * {
-        int slot_index;
-        if (!py_tuple_get_integer(args, 0, &slot_index))
-            return py_build_exception();
-        int skill_index;
-        if (!py_tuple_get_integer(args, 1, &skill_index))
-            return py_build_exception();
+        int slot_index, skill_index;
+        if (!PyArg_ParseTuple(args, "ii", &slot_index, &skill_index)) {
+            return nullptr;
+        }
 
         guild_skill_slot_to_index_map.insert(std::make_pair(slot_index, skill_index));
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto guild_get_grade_data(PyObject *self, PyObject *args) -> PyObject * {
         int grade_number;
-        if (!py_tuple_get_integer(args, 0, &grade_number))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &grade_number)) {
+            return nullptr;
+        }
 
         python_guild::guild_grade_data *data;
         if (!get_python_guild().grade_data_ptr(grade_number, &data))
@@ -510,8 +516,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_get_grade_name(PyObject *self, PyObject *args) -> PyObject * {
         int grade_number;
-        if (!py_tuple_get_integer(args, 0, &grade_number))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &grade_number)) {
+            return nullptr;
+        }
 
         python_guild::guild_grade_data *data;
         if (!get_python_guild().grade_data_ptr(grade_number, &data))
@@ -526,8 +533,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_get_member_data(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         python_guild::guild_member_data *data;
         if (!get_python_guild().member_data_ptr(index, &data))
@@ -538,8 +546,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_member_index_to_pid(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         python_guild::guild_member_data *data;
         if (!get_python_guild().member_data_ptr(index, &data))
@@ -550,8 +559,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_is_member(PyObject *self, PyObject *args) -> PyObject * {
         int index;
-        if (!py_tuple_get_integer(args, 0, &index))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
 
         python_guild::guild_member_data *data;
         if (get_python_guild().member_data_ptr(index, &data))
@@ -562,8 +572,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_is_member_by_name(PyObject *self, PyObject *args) -> PyObject * {
         char *name;
-        if (!py_tuple_get_string(args, 0, &name))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "s", &name)) {
+            return nullptr;
+        }
 
         python_guild::guild_member_data *data;
         if (get_python_guild().member_data_ptr_by_name(name, &data))
@@ -574,8 +585,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_main_player_has_authority(PyObject *self, PyObject *args) -> PyObject * {
         int authority;
-        if (!py_tuple_get_integer(args, 0, &authority))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &authority)) {
+            return nullptr;
+        }
 
         abstract_player &player = get_abstract_player();
         const char *main_player_name = player.get_name();
@@ -594,22 +606,23 @@ namespace metin2::inline client::inline guilds {
     auto guild_destroy(PyObject *self, PyObject *args) -> PyObject * {
         get_python_guild().destroy();
         guild_skill_slot_to_index_map.clear();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto guild_guild_id_to_mark_id(PyObject *self, PyObject *args) -> PyObject * {
         int guild_id;
-        if (!py_tuple_get_integer(args, 0, &guild_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &guild_id)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_guild_mark_manager().mark_id(guild_id));
     }
 
     auto guild_get_mark_image_filename_by_mark_id(PyObject *self, PyObject *args) -> PyObject * {
         int mark_id;
-
-        if (!py_tuple_get_integer(args, 0, &mark_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &mark_id)) {
+            return nullptr;
+        }
 
         std::string image_path_value;
         get_guild_mark_manager().mark_image_filename(mark_id / guild_mark_image::MARK_TOTAL_COUNT, image_path_value);
@@ -618,9 +631,9 @@ namespace metin2::inline client::inline guilds {
 
     auto guild_get_mark_index_by_mark_id(PyObject *self, PyObject *args) -> PyObject * {
         int mark_id;
-
-        if (!py_tuple_get_integer(args, 0, &mark_id))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "i", &mark_id)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", mark_id % guild_mark_image::MARK_TOTAL_COUNT);
     }
@@ -670,11 +683,11 @@ namespace metin2::inline client::inline guilds {
                 {nullptr, nullptr, 0, nullptr},
         };
 
-        PyObject *module_value = init_python_module("metin2.guild", s_methods);
-        PyModule_AddIntConstant(module_value, "AUTH_ADD_MEMBER", GUILD_AUTH_ADD_MEMBER);
-        PyModule_AddIntConstant(module_value, "AUTH_REMOVE_MEMBER", GUILD_AUTH_REMOVE_MEMBER);
-        PyModule_AddIntConstant(module_value, "AUTH_NOTICE", GUILD_AUTH_NOTICE);
-        PyModule_AddIntConstant(module_value, "AUTH_SKILL", GUILD_AUTH_SKILL);
-        PyModule_AddIntConstant(module_value, "ENEMY_GUILD_SLOT_MAX_COUNT", python_guild::ENEMY_GUILD_SLOT_MAX_COUNT);
+        PyObject *module = init_python_module("metin2.guild", s_methods);
+        PyModule_AddIntConstant(module, "AUTH_ADD_MEMBER", GUILD_AUTH_ADD_MEMBER);
+        PyModule_AddIntConstant(module, "AUTH_REMOVE_MEMBER", GUILD_AUTH_REMOVE_MEMBER);
+        PyModule_AddIntConstant(module, "AUTH_NOTICE", GUILD_AUTH_NOTICE);
+        PyModule_AddIntConstant(module, "AUTH_SKILL", GUILD_AUTH_SKILL);
+        PyModule_AddIntConstant(module, "ENEMY_GUILD_SLOT_MAX_COUNT", python_guild::ENEMY_GUILD_SLOT_MAX_COUNT);
     }
 }

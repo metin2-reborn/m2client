@@ -1,17 +1,18 @@
 #include "instance_base.h"
+
+#include "python_character_manager.h"
+#include "python_non_player.h"
+
 #include <metin2/client/app/abstract_application.h>
 #include <metin2/client/app/abstract_player.h>
 #include <metin2/client/background/python_background.h>
 #include <metin2/client/player/python_player.h>
 #include <metin2/client/protocol/packet.h>
-#include <metin2/log/log.h>
-#include "python_character_manager.h"
-#include "python_non_player.h"
-
 #include <metin2/core/timer.h>
 #include <metin2/files/eter_mark_manager.h>
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/state_manager.h>
+#include <metin2/log/log.h>
 #include <metin2/world/actors/game_util.h>
 #include <metin2/world/items/item_manager.h>
 

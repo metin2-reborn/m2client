@@ -16,9 +16,8 @@
 namespace metin2::inline ui {
     auto grp_create_text_bar(PyObject *self, PyObject *args) -> PyObject * {
         int width_value, height_value;
-        if (!py_tuple_get_integer(args, 0, &width_value) ||
-            !py_tuple_get_integer(args, 1, &height_value)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "ii", &width_value, &height_value)) {
+            return nullptr;
         }
 
         auto *new_text_bar = new text_bar(12, false);
@@ -33,10 +32,8 @@ namespace metin2::inline ui {
 
     auto grp_create_big_text_bar(PyObject *self, PyObject *args) -> PyObject * {
         int width_value, height_value, font_size;
-        if (!py_tuple_get_integer(args, 0, &width_value) ||
-            !py_tuple_get_integer(args, 1, &height_value) ||
-            !py_tuple_get_integer(args, 2, &font_size)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "iii", &width_value, &height_value, &font_size)) {
+            return nullptr;
         }
 
         auto *text_bar_value = new text_bar(font_size, true);
@@ -50,27 +47,24 @@ namespace metin2::inline ui {
     }
 
     auto grp_destroy_text_bar(PyObject *self, PyObject *args) -> PyObject * {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, 0, &handle)) {
-            return py_build_exception();
+        Py_ssize_t handle;
+        if (!PyArg_ParseTuple(args, "n", &handle)) {
+            return nullptr;
         }
 
         auto *text_bar_value = (text_bar *)handle;
 
         delete text_bar_value;
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_render_text_bar(PyObject *self, PyObject *args) -> PyObject * {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, 0, &handle)) {
-            return py_build_exception();
-        }
-
+        Py_ssize_t handle;
         int x, y;
-        if (!py_tuple_get_integer(args, 1, &x) || !py_tuple_get_integer(args, 2, &y)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "nii", &handle, &x, &y)) {
+            return nullptr;
         }
 
         auto *text_bar_value = (text_bar *)handle;
@@ -78,18 +72,15 @@ namespace metin2::inline ui {
             text_bar_value->render(x, y);
         }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_text_bar_set_text_color(PyObject *self, PyObject *args) -> PyObject * {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, 0, &handle)) {
-            return py_build_exception();
-        }
-
+        Py_ssize_t handle;
         int r, g, b;
-        if (!py_tuple_get_integer(args, 1, &r) || !py_tuple_get_integer(args, 2, &g) || !py_tuple_get_integer(args, 3, &b)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "niii", &handle, &r, &g, &b)) {
+            return nullptr;
         }
 
         auto *text_bar_value = (text_bar *)handle;
@@ -97,18 +88,15 @@ namespace metin2::inline ui {
             text_bar_value->set_text_color(r, g, b);
         }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_text_bar_get_text_extent(PyObject *self, PyObject *args) -> PyObject * {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, 0, &handle)) {
-            return py_build_exception();
-        }
-
+        Py_ssize_t handle;
         char *text;
-        if (!py_tuple_get_string(args, 1, &text)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "ns", &handle, &text)) {
+            return nullptr;
         }
 
         int width_value = 0;
@@ -123,19 +111,12 @@ namespace metin2::inline ui {
     }
 
     auto grp_text_bar_text_out(PyObject *self, PyObject *args) -> PyObject * {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, 0, &handle)) {
-            return py_build_exception();
-        }
-
+        Py_ssize_t handle;
         int x, y;
-        if (!py_tuple_get_integer(args, 1, &x) || !py_tuple_get_integer(args, 2, &y)) {
-            return py_build_exception();
-        }
-
         char *text;
-        if (!py_tuple_get_string(args, 3, &text)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "niis", &handle, &x, &y, &text)) {
+            return nullptr;
         }
 
         auto *text_bar_value = (text_bar *)handle;
@@ -143,13 +124,13 @@ namespace metin2::inline ui {
             text_bar_value->text_out(x, y, text);
         }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_clear_text_bar(PyObject *self, PyObject *args) -> PyObject * {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, 0, &handle)) {
-            return py_build_exception();
+        Py_ssize_t handle;
+        if (!PyArg_ParseTuple(args, "n", &handle)) {
+            return nullptr;
         }
 
         auto *text_bar_value = (text_bar *)handle;
@@ -157,23 +138,16 @@ namespace metin2::inline ui {
             text_bar_value->clear_bar();
         }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_set_text_bar_clip_rect(PyObject *self, PyObject *args) -> PyObject * {
-        intptr_t handle;
-        if (!py_tuple_get_integer(args, 0, &handle)) {
-            return py_build_exception();
-        }
-
+        Py_ssize_t handle;
         int isx, isy;
-        if (!py_tuple_get_integer(args, 1, &isx) || !py_tuple_get_integer(args, 2, &isy)) {
-            return py_build_exception();
-        }
-
         int iex, iey;
-        if (!py_tuple_get_integer(args, 3, &iex) || !py_tuple_get_integer(args, 4, &iey)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "niiii", &handle, &isx, &isy, &iex, &iey)) {
+            return nullptr;
         }
 
         auto *text_bar_value = (text_bar *)handle;
@@ -187,105 +161,88 @@ namespace metin2::inline ui {
             text_bar_value->set_clip_rect(rect_value);
         }
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_init_screen_effect(PyObject *self, PyObject *args) -> PyObject * {
         get_python_graphic().init_screen_effect();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_clear_depth_buffer(PyObject *self, PyObject *args) -> PyObject * {
         get_python_graphic().clear_depth_buffer();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_push_state(PyObject *self, PyObject *args) -> PyObject * {
         get_python_graphic().push_state();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_pop_state(PyObject *self, PyObject *args) -> PyObject * {
         get_python_graphic().pop_state();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_set_perspective(PyObject *self, PyObject *args) -> PyObject * {
-        float fov;
-        if (!py_tuple_get_float(args, 0, &fov)) {
-            return py_build_exception();
-        }
-
-        float aspect;
-        if (!py_tuple_get_float(args, 1, &aspect)) {
-            return py_build_exception();
-        }
-
+        float fov, aspect;
         float z_near, z_far;
-        if (!py_tuple_get_float(args, 2, &z_near) || !py_tuple_get_float(args, 3, &z_far)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "ffff", &fov, &aspect, &z_near, &z_far)) {
+            return nullptr;
         }
 
         get_python_graphic().set_perspective(fov, aspect, z_near, z_far);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_generate_color(PyObject *self, PyObject *args) -> PyObject * {
         float r, g, b, a;
-        if (!py_tuple_get_float(args, 0, &r) ||
-            !py_tuple_get_float(args, 1, &g) ||
-            !py_tuple_get_float(args, 2, &b) ||
-            !py_tuple_get_float(args, 3, &a)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "ffff", &r, &g, &b, &a)) {
+            return nullptr;
         }
 
         return Py_BuildValue("i", get_python_graphic().generate_color(r, g, b, a));
     }
 
     auto grp_set_color(PyObject *self, PyObject *args) -> PyObject * {
-        int color;
-        if (!py_tuple_get_integer(args, 0, &color)) {
-            return py_build_exception();
+        uint32_t color;
+        if (!PyArg_ParseTuple(args, "I", &color)) {
+            return nullptr;
         }
 
-        get_python_graphic().set_diffuse_color(uint32_t(color));
-        return py_build_none();
+        get_python_graphic().set_diffuse_color(color);
+        Py_RETURN_NONE;
     }
 
     auto grp_set_cursor_position(PyObject *self, PyObject *args) -> PyObject * {
         int x, y;
-        if (!py_tuple_get_integer(args, 0, &x) || !py_tuple_get_integer(args, 1, &y)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "ii", &x, &y)) {
+            return nullptr;
         }
 
         get_python_graphic().set_cursor_position(x, y);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_render_line(PyObject *self, PyObject *args) -> PyObject * {
         int x, y;
-        if (!py_tuple_get_integer(args, 0, &x) || !py_tuple_get_integer(args, 1, &y)) {
-            return py_build_exception();
-        }
-
         int width, height;
-        if (!py_tuple_get_integer(args, 2, &width) || !py_tuple_get_integer(args, 3, &height)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "iiii", &x, &y, &width, &height)) {
+            return nullptr;
         }
 
         get_python_graphic().render_line2d((float)x, (float)y, (float)x + width, (float)y + height);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_render_round_box(PyObject *self, PyObject *args) -> PyObject * {
         int x, y;
-        if (!py_tuple_get_integer(args, 0, &x) || !py_tuple_get_integer(args, 1, &y)) {
-            return py_build_exception();
-        }
-
         int width, height;
-        if (!py_tuple_get_integer(args, 2, &width) || !py_tuple_get_integer(args, 3, &height)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "iiii", &x, &y, &width, &height)) {
+            return nullptr;
         }
 
         auto f_x = float(x);
@@ -302,57 +259,44 @@ namespace metin2::inline ui {
         get_python_graphic().render_line2d(f_x + f_width - 2.0f, f_y, f_x + f_width, f_y + 2.0f);
         get_python_graphic().render_line2d(f_x + f_width - 2.0f, f_y + f_height, f_x + f_width, f_y + f_height - 2.0f);
 
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_render_box(PyObject *self, PyObject *args) -> PyObject * {
         int x, y;
-        if (!py_tuple_get_integer(args, 0, &x) || !py_tuple_get_integer(args, 1, &y)) {
-            return py_build_exception();
-        }
-
         int width, height;
-        if (!py_tuple_get_integer(args, 2, &width) || !py_tuple_get_integer(args, 3, &height)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "iiii", &x, &y, &width, &height)) {
+            return nullptr;
         }
 
         get_python_graphic().render_box2d((float)x, (float)y, (float)x + width, (float)y + height);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_render_bar(PyObject *self, PyObject *args) -> PyObject * {
         int x, y;
-        if (!py_tuple_get_integer(args, 0, &x) || !py_tuple_get_integer(args, 1, &y)) {
-            return py_build_exception();
-        }
-
         int width, height;
-        if (!py_tuple_get_integer(args, 2, &width) || !py_tuple_get_integer(args, 3, &height)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "iiii", &x, &y, &width, &height)) {
+            return nullptr;
         }
 
         get_python_graphic().render_bar2d((float)x, (float)y, (float)x + width, (float)y + height);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_render_gradation_bar(PyObject *self, PyObject *args) -> PyObject * {
         int x, y;
-        if (!py_tuple_get_integer(args, 0, &x) || !py_tuple_get_integer(args, 1, &y)) {
-            return py_bad_argument();
-        }
-
         int width, height;
-        if (!py_tuple_get_integer(args, 2, &width) || !py_tuple_get_integer(args, 3, &height)) {
-            return py_bad_argument();
-        }
+        uint32_t start_color, end_color;
 
-        int start_color, end_color;
-        if (!py_tuple_get_integer(args, 4, &start_color) || !py_tuple_get_integer(args, 5, &end_color)) {
-            return py_bad_argument();
+        if (!PyArg_ParseTuple(args, "iiiiII", &x, &y, &width, &height, &start_color, &end_color)) {
+            return nullptr;
         }
 
         get_python_graphic().render_gradation_bar2d((float)x, (float)y, (float)x + width, (float)y + height, start_color, end_color);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     namespace {
@@ -375,8 +319,8 @@ namespace metin2::inline ui {
 
     auto grp_save_screen_shot_to_path(PyObject *self, PyObject *args) -> PyObject * {
         char *base_path;
-        if (!py_tuple_get_string(args, 0, &base_path)) {
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "s", &base_path)) {
+            return nullptr;
         }
 
         const auto path = make_screen_shot_path(base_path);
@@ -395,40 +339,37 @@ namespace metin2::inline ui {
 
     auto grp_set_interface_render_state(PyObject *self, PyObject *args) -> PyObject * {
         get_python_graphic().set_interface_render_state();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_set_game_render_state(PyObject *self, PyObject *args) -> PyObject * {
         get_python_graphic().set_game_render_state();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_set_viewport(PyObject *self, PyObject *args) -> PyObject * {
         float fx, fy;
-        if (!py_tuple_get_float(args, 0, &fx) || !py_tuple_get_float(args, 1, &fy)) {
-            return py_build_exception();
-        }
-
         float f_width, f_height;
-        if (!py_tuple_get_float(args, 2, &f_width) || !py_tuple_get_float(args, 3, &f_height)) {
-            return py_build_exception();
+
+        if (!PyArg_ParseTuple(args, "ffff", &fx, &fy, &f_width, &f_height)) {
+            return nullptr;
         }
 
         uint32_t u_width, u_height;
 
         get_python_graphic().back_buffer_size(&u_width, &u_height);
         get_python_graphic().set_viewport(fx * u_width, fy * u_height, f_width * u_width, f_height * u_height);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_restore_viewport(PyObject *self, PyObject *args) -> PyObject * {
         get_python_graphic().restore_viewport();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto grp_set_omni_light(PyObject *self, PyObject *args) -> PyObject * {
         get_python_graphic().set_omni_light();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     void init_graphics_module() {

@@ -576,7 +576,7 @@ namespace metin2::inline client::inline app {
 
     auto python_application::create_device(int width_value, int height) -> bool {
         if (!grp_device_.create(width_value, height, get_python_system().renderer())) {
-            SET_EXCEPTION(CREATE_DEVICE);
+            PyErr_SetString(PyExc_RuntimeError, "Cannot create the graphics device");
             metin2::log::error("Cannot create the graphics device");
             return false;
         }
@@ -647,7 +647,7 @@ namespace metin2::inline client::inline app {
 
         if (!main_window::create(name, get_python_system().width(), get_python_system().height(), get_python_system().is_vsync())) {
             metin2::log::error("Cannot create the main window");
-            SET_EXCEPTION(CREATE_WINDOW);
+            PyErr_SetString(PyExc_RuntimeError, "Cannot create the main window");
             return false;
         }
 
@@ -663,7 +663,7 @@ namespace metin2::inline client::inline app {
 
         if (!create_cursors()) {
             metin2::log::error("Cannot create the cursors");
-            SET_EXCEPTION("CREATE_CURSOR");
+            PyErr_SetString(PyExc_RuntimeError, "Cannot create the cursors");
             return false;
         }
 

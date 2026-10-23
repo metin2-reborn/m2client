@@ -96,38 +96,41 @@ namespace metin2::inline client::inline social {
 
     auto messenger_remove_friend(PyObject *self, PyObject *args) -> PyObject * {
         char *key;
-        if (!py_tuple_get_string(args, 0, &key))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "s", &key)) {
+            return nullptr;
+        }
 
         get_python_messenger().remove_friend(key);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto messenger_is_friend_by_name(PyObject *self, PyObject *args) -> PyObject * {
         char *name;
-        if (!py_tuple_get_string(args, 0, &name))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "s", &name)) {
+            return nullptr;
+        }
 
         return Py_BuildValue("i", get_python_messenger().is_friend_by_name(name));
     }
 
     auto messenger_destroy(PyObject *self, PyObject *args) -> PyObject * {
         get_python_messenger().destroy();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto messenger_refresh_guild_member(PyObject *self, PyObject *args) -> PyObject * {
         get_python_messenger().refresh_guild_member();
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     auto messenger_set_messenger_handler(PyObject *self, PyObject *args) -> PyObject * {
         PyObject *event_handler;
-        if (!py_tuple_get_object(args, 0, &event_handler))
-            return py_build_exception();
+        if (!PyArg_ParseTuple(args, "O", &event_handler)) {
+            return nullptr;
+        }
 
         get_python_messenger().set_messenger_handler(event_handler);
-        return py_build_none();
+        Py_RETURN_NONE;
     }
 
     void init_social_messenger_module() {

@@ -1,22 +1,21 @@
-#include <metin2/config/state_dir.h>
-#include <metin2/core/lzo.h>
-#include <metin2/core/utils.h>
-#include <metin2/dev/automation.h>
-#include <metin2/graphics/camera.h>
-#include <metin2/log/log.h>
+#include "client_modules.h"
 #include "python_application.h"
 #include "python_exception_sender.h"
 #include "resource_ids.h"
 
+#include <metin2/config/state_dir.h>
+#include <metin2/core/lzo.h>
 #include <metin2/core/util.h>
+#include <metin2/core/utils.h>
+#include <metin2/dev/automation.h>
 #include <metin2/files/eter_file_manager.h>
-
-#include <unistd.h>
-
+#include <metin2/graphics/camera.h>
+#include <metin2/log/log.h>
 #include <metin2/script/python_debug_module.h>
 #include <metin2/script/python_launcher.h>
 #include <metin2/ui/python_modules.h>
-#include "client_modules.h"
+
+#include <unistd.h>
 
 namespace metin2::inline client::inline app {
     bool is_test_server_mode = false;
@@ -152,6 +151,7 @@ namespace metin2::inline client::inline app {
 
         get_camera_manager();
         get_clzo();
+
         file_system_initialize();
 
         python_application &app = get_python_application();

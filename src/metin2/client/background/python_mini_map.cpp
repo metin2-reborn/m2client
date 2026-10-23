@@ -1,5 +1,7 @@
 #include "python_mini_map.h"
 
+#include "python_background.h"
+
 #include <metin2/client/app/abstract_player.h>
 #include <metin2/client/app/python_system.h>
 #include <metin2/client/characters/python_character_manager.h>
@@ -15,8 +17,6 @@
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/ui/python_window_manager.h>
-
-#include "python_background.h"
 
 #include <format>
 
@@ -44,8 +44,7 @@ namespace metin2::inline client::inline background {
     }
 
     void python_mini_map::update(float center_x, float center_y) {
-        auto &bg = get_python_background();
-        if (!bg.is_map_outdoor()) {
+        if (!get_python_background().is_map_outdoor()) {
             return;
         }
 
@@ -145,6 +144,7 @@ namespace metin2::inline client::inline background {
                 if (distance_from_center >= mini_map_window_radius) {
                     float radian_x = acosf(distance_from_center_x / distance_from_center);
                     float radian_y = asinf(distance_from_center_y / distance_from_center);
+
                     distance_from_center_x = 55.0f * cosf(radian_x);
                     distance_from_center_y = 55.0f * sinf(radian_y);
                     atlas_mark_info_value.mini_map_x = (width_ - (float)white_mark_.width()) / 2.0f + distance_from_center_x + screen_x_ + 2.0f;
@@ -158,8 +158,8 @@ namespace metin2::inline client::inline background {
     }
 
     void python_mini_map::render(float screen_x, float screen_y) {
-        auto &bg = get_python_background();
-        if (!bg.is_map_outdoor()) {
+        auto &background = get_python_background();
+        if (!background.is_map_outdoor()) {
             return;
         }
 
@@ -167,7 +167,7 @@ namespace metin2::inline client::inline background {
             return;
         }
 
-        if (!bg.is_map_ready()) {
+        if (!background.is_map_ready()) {
             return;
         }
 
@@ -535,19 +535,18 @@ namespace metin2::inline client::inline background {
             return false;
         }
 
-        uint16_t pw_indices[54] =
-            {
-                0, 1, 2, 2, 1, 3,
-                4, 5, 6, 6, 5, 7,
-                8, 9, 10, 10, 9, 11,
+        uint16_t pw_indices[54] = {
+            0, 1, 2, 2, 1, 3,
+            4, 5, 6, 6, 5, 7,
+            8, 9, 10, 10, 9, 11,
 
-                12, 13, 14, 14, 13, 15,
-                16, 17, 18, 18, 17, 19,
-                20, 21, 22, 22, 21, 23,
+            12, 13, 14, 14, 13, 15,
+            16, 17, 18, 18, 17, 19,
+            20, 21, 22, 22, 21, 23,
 
-                24, 25, 26, 26, 25, 27,
-                28, 29, 30, 30, 29, 31,
-                32, 33, 34, 34, 33, 35};
+            24, 25, 26, 26, 25, 27,
+            28, 29, 30, 30, 29, 31,
+            32, 33, 34, 34, 33, 35};
 
         void *p_indices;
 
@@ -572,13 +571,17 @@ namespace metin2::inline client::inline background {
             mini_map_cover_._42 = -(screen_y_) / ((float)mini_map_filter_graphic_image_instance_.height());
         }
 
-        if (!player_mark_.is_empty())
-            player_mark_.set_position((width_ - (float)player_mark_.width()) / 2.0f + screen_x_,
+        if (!player_mark_.is_empty()) {
+            player_mark_.set_position(
+                (width_ - (float)player_mark_.width()) / 2.0f + screen_x_,
                 (height_ - (float)player_mark_.height()) / 2.0f + screen_y_);
+        }
 
-        if (!mini_map_cameraraphic_image_instance_.is_empty())
-            mini_map_cameraraphic_image_instance_.set_position((width_ - (float)mini_map_cameraraphic_image_instance_.width()) / 2.0f + screen_x_,
+        if (!mini_map_cameraraphic_image_instance_.is_empty()) {
+            mini_map_cameraraphic_image_instance_.set_position(
+                (width_ - (float)mini_map_cameraraphic_image_instance_.width()) / 2.0f + screen_x_,
                 (height_ - (float)mini_map_cameraraphic_image_instance_.height()) / 2.0f + screen_y_);
+        }
     }
 
     void python_mini_map::clear_atlas_mark_info() {
@@ -601,6 +604,7 @@ namespace metin2::inline client::inline background {
             atlas_mark_info_value.type_value = TYPE_NPC;
             atlas_npc_info_vector_.push_back(atlas_mark_info_value);
             break;
+
         case actor_instance::TYPE_WARP:
             atlas_mark_info_value.type_value = TYPE_WARP;
             {
@@ -618,13 +622,15 @@ namespace metin2::inline client::inline background {
     }
 
     void python_mini_map::register_guild_area(uint32_t id, uint32_t guild_id, int32_t x, int32_t y, int32_t width_value, int32_t height) {
-        guild_area_info guild_area_info_value;
-        guild_area_info_value.guild_id = guild_id;
-        guild_area_info_value.lx = x;
-        guild_area_info_value.ly = y;
-        guild_area_info_value.lwidth = width_value;
-        guild_area_info_value.lheight = height;
-        guild_area_info_vector_value_.push_back(guild_area_info_value);
+        guild_area_info info;
+
+        info.guild_id = guild_id;
+        info.lx = x;
+        info.ly = y;
+        info.lwidth = width_value;
+        info.lheight = height;
+
+        guild_area_info_vector_value_.push_back(info);
     }
 
     auto python_mini_map::guild_area_id(uint32_t x, uint32_t y) -> uint32_t {
@@ -632,12 +638,15 @@ namespace metin2::inline client::inline background {
         for (; itor != guild_area_info_vector_value_.end(); ++itor) {
             guild_area_info &area_info = *itor;
 
-            if (x >= uint32_t(area_info.lx))
-                if (y >= uint32_t(area_info.ly))
-                    if (x <= uint32_t(area_info.lx + area_info.lwidth))
+            if (x >= uint32_t(area_info.lx)) {
+                if (y >= uint32_t(area_info.ly)) {
+                    if (x <= uint32_t(area_info.lx + area_info.lwidth)) {
                         if (y <= uint32_t(area_info.ly + area_info.lheight)) {
                             return area_info.guild_id;
                         }
+                    }
+                }
+            }
         }
 
         return 0xffffffff;
@@ -649,22 +658,31 @@ namespace metin2::inline client::inline background {
 
     void python_mini_map::update_target(int id, int ix, int iy) {
         atlas_mark_info *info;
-        if (!way_point(id, &info))
+        if (!way_point(id, &info)) {
             return;
-
-        if (0 != info->chr_vid) {
-            if (get_python_character_manager().instance_ptr(info->chr_vid))
-                return;
         }
 
-        if (uint32_t(ix) < atlas_base_x_)
+        if (0 != info->chr_vid) {
+            if (get_python_character_manager().instance_ptr(info->chr_vid)) {
+                return;
+            }
+        }
+
+        if (uint32_t(ix) < atlas_base_x_) {
             return;
-        if (uint32_t(iy) < atlas_base_y_)
+        }
+
+        if (uint32_t(iy) < atlas_base_y_) {
             return;
-        if (uint32_t(ix) > atlas_base_x_ + uint32_t(atlas_max_x_))
+        }
+
+        if (uint32_t(ix) > atlas_base_x_ + uint32_t(atlas_max_x_)) {
             return;
-        if (uint32_t(iy) > atlas_base_y_ + uint32_t(atlas_max_y_))
+        }
+
+        if (uint32_t(iy) > atlas_base_y_ + uint32_t(atlas_max_y_)) {
             return;
+        }
 
         update_way_point(info, ix - int(atlas_base_x_), iy - int(atlas_base_y_));
     }
@@ -681,11 +699,12 @@ namespace metin2::inline client::inline background {
         clear_atlas_mark_info();
         clear_guild_area();
 
-        python_background &bg = get_python_background();
-        if (!bg.is_map_outdoor())
+        auto &background = get_python_background();
+        if (!background.is_map_outdoor()) {
             return;
+        }
 
-        map_outdoor &map = bg.map_outdoor_ref();
+        auto &map = background.map_outdoor_ref();
 
         const std::string atlas_mark_info_file_name = std::format("{}/map/{}_point.txt", LOCALE_DIR, map.get_name());
 
@@ -702,8 +721,9 @@ namespace metin2::inline client::inline background {
             char mark_info_name[32 + 1];
             snprintf(mark_info_name, sizeof(mark_info_name), "%d", i);
 
-            if (token_vector_map.end() == token_vector_map.find(mark_info_name))
+            if (token_vector_map.end() == token_vector_map.find(mark_info_name)) {
                 continue;
+            }
 
             const token_vector &vector = token_vector_map[mark_info_name];
 
@@ -715,9 +735,11 @@ namespace metin2::inline client::inline background {
             atlas_mark_info atlas_mark_info_value;
 
             for (int i = 0; i < TYPE_COUNT; ++i) {
-                if (0 == c_rstr_type.compare(str_type[i]))
+                if (0 == c_rstr_type.compare(str_type[i])) {
                     atlas_mark_info_value.type_value = (uint8_t)i;
+                }
             }
+
             atlas_mark_info_value.x = metin2::to_number<double>(position_x.c_str());
             atlas_mark_info_value.y = metin2::to_number<double>(position_y.c_str());
             atlas_mark_info_value.text = text;
@@ -729,6 +751,7 @@ namespace metin2::inline client::inline background {
             case TYPE_NPC:
                 atlas_npc_info_vector_.push_back(atlas_mark_info_value);
                 break;
+
             case TYPE_WARP:
                 atlas_warp_info_vector_.push_back(atlas_mark_info_value);
                 break;
@@ -737,11 +760,12 @@ namespace metin2::inline client::inline background {
     }
 
     auto python_mini_map::load_atlas() -> bool {
-        python_background &bg = get_python_background();
-        if (!bg.is_map_outdoor())
+        auto &background = get_python_background();
+        if (!background.is_map_outdoor()) {
             return false;
+        }
 
-        map_outdoor &map = bg.map_outdoor_ref();
+        auto &map = background.map_outdoor_ref();
 
         const char *player_mark_file_name = "d:/ymir work/ui/minimap/playermark.sub";
 
@@ -753,31 +777,29 @@ namespace metin2::inline client::inline background {
 
         atlas_image_instance_.destroy();
         atlas_player_mark_.destroy();
+
         auto *grp_img_atlas = (graphic_image *)get_resource_manager().resource_pointer(atlas_file_name);
         if (grp_img_atlas) {
             atlas_image_instance_.set_image_pointer(grp_img_atlas);
-
-            if (grp_img_atlas->is_empty())
-                atlas_ = false;
-            else
-                atlas_ = true;
-        } else {
+            atlas_ = !grp_img_atlas->is_empty();
         }
+
         atlas_player_mark_.set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(player_mark_file_name));
 
         short terrain_count_x, terrain_count_y;
         map.base_xy(&atlas_base_x_, &atlas_base_y_);
         map.terrain_count(&terrain_count_x, &terrain_count_y);
+
         atlas_max_x_ = (float)terrain_count_x * static_cast<float>(terrain_impl::TERRAIN_XSIZE);
         atlas_max_y_ = (float)terrain_count_y * static_cast<float>(terrain_impl::TERRAIN_YSIZE);
-
         atlas_image_size_x_ = (float)atlas_image_instance_.width();
         atlas_image_size_y_ = (float)atlas_image_instance_.height();
 
         load_atlas_mark_info();
 
-        if (show_atlas_)
+        if (show_atlas_) {
             open_atlas_window();
+        }
 
         return true;
     }
@@ -794,14 +816,17 @@ namespace metin2::inline client::inline background {
             pixel_position inst_pos;
             inst->new_get_pixel_position(&inst_pos);
 
-            float rotation;
-            rotation = (540.0f - inst->rotation());
-            while (rotation > 360.0f)
+            auto rotation = (540.0f - inst->rotation());
+            while (rotation > 360.0f) {
                 rotation -= 360.0f;
-            while (rotation < 0.0f)
-                rotation += 360.0f;
+            }
 
-            atlas_player_mark_.set_position(inst_pos.x / atlas_max_x_ * atlas_image_size_x_ - (float)atlas_player_mark_.width() / 2.0f,
+            while (rotation < 0.0f) {
+                rotation += 360.0f;
+            }
+
+            atlas_player_mark_.set_position(
+                inst_pos.x / atlas_max_x_ * atlas_image_size_x_ - (float)atlas_player_mark_.width() / 2.0f,
                 inst_pos.y / atlas_max_y_ * atlas_image_size_y_ - (float)atlas_player_mark_.height() / 2.0f);
             atlas_player_mark_.set_rotation(rotation);
         }
@@ -810,6 +835,7 @@ namespace metin2::inline client::inline background {
             auto itor = guild_area_info_vector_value_.begin();
             for (; itor != guild_area_info_vector_value_.end(); ++itor) {
                 guild_area_info &info = *itor;
+
                 global_position_to_atlas_position(info.lx, info.ly, &info.fsx_render, &info.fsy_render);
                 global_position_to_atlas_position(info.lx + info.lwidth, info.ly + info.lheight, &info.fex_render, &info.fey_render);
             }
@@ -817,8 +843,9 @@ namespace metin2::inline client::inline background {
     }
 
     void python_mini_map::render_atlas(float screen_x, float screen_y) {
-        if (!show_atlas_)
+        if (!show_atlas_) {
             return;
+        }
 
         if (atlas_screen_x_ != screen_x || atlas_screen_y_ != screen_y) {
             world_atlas_._41 = screen_x;
@@ -862,10 +889,13 @@ namespace metin2::inline client::inline background {
         for (; atlas_mark_info_vector_iterator_value_ != atlas_way_point_info_vector_.end(); ++atlas_mark_info_vector_iterator_value_) {
             atlas_mark_info &atlas_mark_info_value = *atlas_mark_info_vector_iterator_value_;
 
-            if (atlas_mark_info_value.screen_x <= 0.0f)
+            if (atlas_mark_info_value.screen_x <= 0.0f) {
                 continue;
-            if (atlas_mark_info_value.screen_y <= 0.0f)
+            }
+
+            if (atlas_mark_info_value.screen_y <= 0.0f) {
                 continue;
+            }
 
             if (TYPE_TARGET == atlas_mark_info_value.type_value) {
                 render_mini_way_point_mark(atlas_mark_info_value.screen_x, atlas_mark_info_value.screen_y);
@@ -880,8 +910,9 @@ namespace metin2::inline client::inline background {
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::COLOR_ARG2);
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::COLOR_OP);
 
-        if ((el_timer_get_m_sec() / 500) % 2)
+        if ((el_timer_get_m_sec() / 500) % 2) {
             atlas_player_mark_.render();
+        }
 
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::MIN_FILTER);
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::MAG_FILTER);
@@ -892,7 +923,8 @@ namespace metin2::inline client::inline background {
             for (; itor != guild_area_info_vector_value_.end(); ++itor) {
                 guild_area_info &info = *itor;
 
-                guild_area_flag_image_instance_.set_position(screen_x + (info.fsx_render + info.fex_render) / 2.0f - guild_area_flag_image_instance_.width() / 2,
+                guild_area_flag_image_instance_.set_position(
+                    screen_x + (info.fsx_render + info.fex_render) / 2.0f - guild_area_flag_image_instance_.width() / 2,
                     screen_y + (info.fsy_render + info.fey_render) / 2.0f - guild_area_flag_image_instance_.height() / 2);
                 guild_area_flag_image_instance_.render();
             }
@@ -903,8 +935,9 @@ namespace metin2::inline client::inline background {
         float distance_from_mini_map_center_x = screen_x - screen_x_ - width_ * 0.5f;
         float distance_from_mini_map_center_y = screen_y - screen_y_ - height_ * 0.5f;
 
-        if (sqrtf(distance_from_mini_map_center_x * distance_from_mini_map_center_x + distance_from_mini_map_center_y * distance_from_mini_map_center_y) > mini_map_radius_)
+        if (sqrtf(distance_from_mini_map_center_x * distance_from_mini_map_center_x + distance_from_mini_map_center_y * distance_from_mini_map_center_y) > mini_map_radius_) {
             return false;
+        }
 
         float real_x = center_x_ + distance_from_mini_map_center_x / scale_ * ((float)terrain_impl::CELLSCALE);
         float real_y = center_y_ + distance_from_mini_map_center_y / scale_ * ((float)terrain_impl::CELLSCALE);
@@ -932,10 +965,14 @@ namespace metin2::inline client::inline background {
         python_character_manager::character_iterator i;
         for (i = chr_mgr.character_instance_begin(); i != chr_mgr.character_instance_end(); ++i) {
             instance_base *inst_each = *i;
-            if (inst_each->is_invisibility())
+            if (inst_each->is_invisibility()) {
                 continue;
-            if (scale_ < 2.0f && (inst_each->is_enemy() || inst_each->is_pc()))
+            }
+
+            if (scale_ < 2.0f && (inst_each->is_enemy() || inst_each->is_pc())) {
                 continue;
+            }
+
             pixel_position instance_position;
             inst_each->new_get_pixel_position(&instance_position);
 
@@ -986,6 +1023,7 @@ namespace metin2::inline client::inline background {
                 *text_color = instance_base::indexed_name_color(instance_base::NAMECOLOR_NPC);
                 return true;
             }
+
             ++atlas_mark_info_vector_iterator_value_;
         }
 
@@ -1000,14 +1038,15 @@ namespace metin2::inline client::inline background {
                 *text_color = instance_base::indexed_name_color(instance_base::NAMECOLOR_WARP);
                 return true;
             }
+
             ++atlas_mark_info_vector_iterator_value_;
         }
 
         atlas_mark_info_vector_iterator_value_ = atlas_way_point_info_vector_.begin();
         while (atlas_mark_info_vector_iterator_value_ != atlas_way_point_info_vector_.end()) {
             atlas_mark_info &atlas_mark_info_value = *atlas_mark_info_vector_iterator_value_;
-            if (atlas_mark_info_value.screen_x > 0.0f)
-                if (atlas_mark_info_value.screen_y > 0.0f)
+            if (atlas_mark_info_value.screen_x > 0.0f) {
+                if (atlas_mark_info_value.screen_y > 0.0f) {
                     if (atlas_mark_info_value.x - check_width / 2 < real_x && atlas_mark_info_value.x + check_width > real_x &&
                         atlas_mark_info_value.y - check_width / 2 < real_y && atlas_mark_info_value.y + check_height > real_y) {
                         return_string = atlas_mark_info_value.text;
@@ -1016,15 +1055,18 @@ namespace metin2::inline client::inline background {
                         *text_color = instance_base::indexed_name_color(instance_base::NAMECOLOR_WAYPOINT);
                         return true;
                     }
+                }
+            }
             ++atlas_mark_info_vector_iterator_value_;
         }
 
         auto itor = guild_area_info_vector_value_.begin();
         for (; itor != guild_area_info_vector_value_.end(); ++itor) {
             guild_area_info &info = *itor;
-            if (screen_x - atlas_screen_x_ >= info.fsx_render)
-                if (screen_y - atlas_screen_y_ >= info.fsy_render)
-                    if (screen_x - atlas_screen_x_ <= info.fex_render)
+
+            if (screen_x - atlas_screen_x_ >= info.fsx_render) {
+                if (screen_y - atlas_screen_y_ >= info.fsy_render) {
+                    if (screen_x - atlas_screen_x_ <= info.fex_render) {
                         if (screen_y - atlas_screen_y_ <= info.fey_render) {
                             if (get_python_guild().guild_name(info.guild_id, &return_string)) {
                                 *guild_id = info.guild_id;
@@ -1037,15 +1079,18 @@ namespace metin2::inline client::inline background {
                             *text_color = instance_base::indexed_name_color(instance_base::NAMECOLOR_PARTY);
                             return true;
                         }
+                    }
+                }
+            }
         }
 
         return false;
     }
 
     auto python_mini_map::atlas_size(float *size_x, float *size_y) -> bool {
-        python_background &bg = get_python_background();
-        if (!bg.is_map_outdoor())
+        if (!get_python_background().is_map_outdoor()) {
             return false;
+        }
 
         *size_x = atlas_image_size_x_;
         *size_y = atlas_image_size_y_;
@@ -1057,12 +1102,15 @@ namespace metin2::inline client::inline background {
         atlas_mark_info_vector_iterator_value_ = atlas_way_point_info_vector_.begin();
         while (atlas_mark_info_vector_iterator_value_ != atlas_way_point_info_vector_.end()) {
             atlas_mark_info &r_atlas_mark_info = *atlas_mark_info_vector_iterator_value_;
-            if (r_atlas_mark_info.id == id)
+            if (r_atlas_mark_info.id == id) {
                 return;
+            }
+
             ++atlas_mark_info_vector_iterator_value_;
         }
 
         atlas_mark_info a_atlas_mark_info;
+
         a_atlas_mark_info.type_value = type;
         a_atlas_mark_info.id = id;
         a_atlas_mark_info.x = x;
@@ -1073,7 +1121,9 @@ namespace metin2::inline client::inline background {
         a_atlas_mark_info.mini_map_y = 0.0f;
         a_atlas_mark_info.text = text;
         a_atlas_mark_info.chr_vid = chr_vid;
+
         update_way_point(&a_atlas_mark_info, x, y);
+
         atlas_way_point_info_vector_.push_back(a_atlas_mark_info);
     }
 
@@ -1085,6 +1135,7 @@ namespace metin2::inline client::inline background {
                 atlas_mark_info_vector_iterator_value_ = atlas_way_point_info_vector_.erase(atlas_mark_info_vector_iterator_value_);
                 return;
             }
+
             ++atlas_mark_info_vector_iterator_value_;
         }
     }
@@ -1112,7 +1163,7 @@ namespace metin2::inline client::inline background {
     void python_mini_map::render_way_point_mark(int ix_center, int iy_center) {
         int num = (el_timer_get_m_sec() / 67) % WAYPOINT_IMAGE_COUNT;
 
-        graphic_image_instance &instance = way_point_graphic_image_instances_[num];
+        auto &instance = way_point_graphic_image_instances_[num];
         instance.set_position(ix_center - instance.width() / 2, iy_center - instance.height() / 2);
         instance.render();
     }
@@ -1120,7 +1171,7 @@ namespace metin2::inline client::inline background {
     void python_mini_map::render_mini_way_point_mark(int ix_center, int iy_center) {
         int num = (el_timer_get_m_sec() / 67) % MINI_WAYPOINT_IMAGE_COUNT;
 
-        graphic_image_instance &instance = mini_way_point_graphic_image_instances_[num];
+        auto &instance = mini_way_point_graphic_image_instances_[num];
         instance.set_position(ix_center - instance.width() / 2, iy_center - instance.height() / 2);
         instance.render();
     }
@@ -1128,7 +1179,7 @@ namespace metin2::inline client::inline background {
     void python_mini_map::render_target_mark(int ix_center, int iy_center) {
         int num = (el_timer_get_m_sec() / 80) % TARGET_MARK_IMAGE_COUNT;
 
-        graphic_image_instance &instance = target_mark_graphic_image_instances_[num];
+        auto &instance = target_mark_graphic_image_instances_[num];
         instance.set_position(ix_center - instance.width() / 2, iy_center - instance.height() / 2);
         instance.render();
     }
@@ -1238,6 +1289,7 @@ namespace metin2::inline client::inline background {
 
     void python_mini_map::destroy() {
         clear_all_signal_point();
+
         handler_ = nullptr;
 
         vertex_buffer_.destroy();
@@ -1253,12 +1305,17 @@ namespace metin2::inline client::inline background {
         atlas_player_mark_.destroy();
         white_mark_.destroy();
 
-        for (int i = 0; i < MINI_WAYPOINT_IMAGE_COUNT; ++i)
+        for (int i = 0; i < MINI_WAYPOINT_IMAGE_COUNT; ++i) {
             mini_way_point_graphic_image_instances_[i].destroy();
-        for (int j = 0; j < WAYPOINT_IMAGE_COUNT; ++j)
+        }
+
+        for (int j = 0; j < WAYPOINT_IMAGE_COUNT; ++j) {
             way_point_graphic_image_instances_[j].destroy();
-        for (int k = 0; k < TARGET_MARK_IMAGE_COUNT; ++k)
+        }
+
+        for (int k = 0; k < TARGET_MARK_IMAGE_COUNT; ++k) {
             target_mark_graphic_image_instances_[k].destroy();
+        }
 
         guild_area_flag_image_instance_.destroy();
 
