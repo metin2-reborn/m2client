@@ -12,8 +12,6 @@
 
 namespace metin2::inline ui {
 
-    bool outline_box_enable = false;
-
     namespace widgets {
 
         ui_window::ui_window(PyObject *ppy_object) : x_(0), y_(0), width_(0), height_(0), show_(false), flag_(0), handler_(ppy_object), parent_(nullptr), is_updating_children_(false) {
@@ -40,16 +38,10 @@ namespace metin2::inline ui {
             return false;
         }
 
-        struct clear_fn {
-            void operator()(ui_window *win) {
-                win->clear();
-            }
-        };
-
         void ui_window::clear() {
-            // FIXME: the children are not deleted here; Python calls Destroy on each of them
-            // anyway, but the links are cut just in case.
-            std::for_each(child_list_.begin(), child_list_.end(), clear_fn());
+            // The children are not deleted here: each Python widget destroys its own native window.
+            for (ui_window *child : child_list_)
+                child->clear();
             child_list_.clear();
 
             parent_ = nullptr;
@@ -116,11 +108,6 @@ namespace metin2::inline ui {
                 return;
 
             on_render();
-
-            if (outline_box_enable) {
-                get_python_graphic().set_diffuse_color(1.0f, 1.0f, 1.0f);
-                get_python_graphic().render_box2d(rect_.left, rect_.top, rect_.right, rect_.bottom);
-            }
 
             std::for_each(child_list_.begin(), child_list_.end(), std::mem_fn(&ui_window::render));
         }
@@ -867,6 +854,8 @@ namespace metin2::inline ui {
         }
 
         void number_line::clear_number() {
+            for (graphic_image_instance *instance : image_instance_vector_value_)
+                graphic_image_instance::delete_value(instance);
             image_instance_vector_value_.clear();
             width_summary_ = 0;
             number_ = "";
@@ -1058,10 +1047,7 @@ namespace metin2::inline ui {
         }
 
         auto expanded_image_box::on_is_type(uint32_t type) -> bool {
-            if (expanded_image_box::type() == type)
-                return true;
-
-            return false;
+            return expanded_image_box::type() == type || image_box::on_is_type(type);
         }
 
         expanded_image_box::expanded_image_box(PyObject *ppy_object) : image_box(ppy_object) {
@@ -1117,7 +1103,8 @@ namespace metin2::inline ui {
         }
 
         void expanded_image_box::set_rendering_mode(int mode) {
-            ((graphic_expanded_image_instance *)image_instance_)->set_rendering_mode(mode);
+            if (image_instance_)
+                static_cast<graphic_expanded_image_instance *>(image_instance_)->set_rendering_mode(mode);
         }
 
         void expanded_image_box::on_update() {
@@ -1136,10 +1123,7 @@ namespace metin2::inline ui {
         }
 
         auto ani_image_box::on_is_type(uint32_t type) -> bool {
-            if (ani_image_box::type() == type)
-                return true;
-
-            return false;
+            return ani_image_box::type() == type || ui_window::on_is_type(type);
         }
 
         ani_image_box::ani_image_box(PyObject *ppy_object)
@@ -1158,7 +1142,7 @@ namespace metin2::inline ui {
         }
         void ani_image_box::append_image(const char *file_name) {
             resource *resource = get_resource_manager().resource_pointer(file_name);
-            if (!resource->is_type(graphic_image::type()))
+            if (!resource || !resource->is_type(graphic_image::type()))
                 return;
 
             graphic_expanded_image_instance *image_instance = graphic_expanded_image_instance::new_value();
@@ -1174,31 +1158,14 @@ namespace metin2::inline ui {
             bycur_index_ = static_cast<uint8_t>(metin2::random::number(0, static_cast<int>(image_vector_.size()) - 1));
         }
 
-        struct set_rendering_rect_fn {
-            float left, top, right, bottom;
-            void operator()(graphic_expanded_image_instance *instance) {
-                instance->set_rendering_rect(left, top, right, bottom);
-            }
-        };
         void ani_image_box::set_rendering_rect(float left, float top, float right, float bottom) {
-            set_rendering_rect_fn rendering_rect;
-            rendering_rect.left = left;
-            rendering_rect.top = top;
-            rendering_rect.right = right;
-            rendering_rect.bottom = bottom;
-            for_each(image_vector_.begin(), image_vector_.end(), rendering_rect);
+            for (graphic_expanded_image_instance *image : image_vector_)
+                image->set_rendering_rect(left, top, right, bottom);
         }
 
-        struct set_rendering_mode_fn {
-            int mode_value;
-            void operator()(graphic_expanded_image_instance *instance) {
-                instance->set_rendering_mode(mode_value);
-            }
-        };
         void ani_image_box::set_rendering_mode(int mode) {
-            set_rendering_mode_fn rendering_mode;
-            rendering_mode.mode_value = mode;
-            for_each(image_vector_.begin(), image_vector_.end(), rendering_mode);
+            for (graphic_expanded_image_instance *image : image_vector_)
+                image->set_rendering_mode(mode);
         }
 
         void ani_image_box::reset_frame() {
@@ -1226,18 +1193,9 @@ namespace metin2::inline ui {
             }
         }
 
-        struct change_position_fn {
-            float fx, fy;
-            void operator()(graphic_expanded_image_instance *instance) {
-                instance->set_position(fx, fy);
-            }
-        };
-
         void ani_image_box::on_change_position() {
-            change_position_fn change_position;
-            change_position.fx = rect_.left;
-            change_position.fy = rect_.top;
-            for_each(image_vector_.begin(), image_vector_.end(), change_position);
+            for (graphic_expanded_image_instance *image : image_vector_)
+                image->set_position(rect_.left, rect_.top);
         }
 
         void ani_image_box::on_end_frame() {
@@ -1252,7 +1210,7 @@ namespace metin2::inline ui {
 
         auto button::set_up_visual(const char *file_name) -> bool {
             resource *resource = get_resource_manager().resource_pointer(file_name);
-            if (!resource->is_type(graphic_image::type()))
+            if (!resource || !resource->is_type(graphic_image::type()))
                 return false;
 
             up_visual_.set_image_pointer(static_cast<graphic_image *>(resource));
@@ -1266,7 +1224,7 @@ namespace metin2::inline ui {
         }
         auto button::set_over_visual(const char *file_name) -> bool {
             resource *resource = get_resource_manager().resource_pointer(file_name);
-            if (!resource->is_type(graphic_image::type()))
+            if (!resource || !resource->is_type(graphic_image::type()))
                 return false;
 
             over_visual_.set_image_pointer(static_cast<graphic_image *>(resource));
@@ -1279,7 +1237,7 @@ namespace metin2::inline ui {
         }
         auto button::set_down_visual(const char *file_name) -> bool {
             resource *resource = get_resource_manager().resource_pointer(file_name);
-            if (!resource->is_type(graphic_image::type()))
+            if (!resource || !resource->is_type(graphic_image::type()))
                 return false;
 
             down_visual_.set_image_pointer(static_cast<graphic_image *>(resource));
@@ -1292,11 +1250,11 @@ namespace metin2::inline ui {
         }
         auto button::set_disable_visual(const char *file_name) -> bool {
             resource *resource = get_resource_manager().resource_pointer(file_name);
-            if (!resource->is_type(graphic_image::type()))
+            if (!resource || !resource->is_type(graphic_image::type()))
                 return false;
 
             disable_visual_.set_image_pointer(static_cast<graphic_image *>(resource));
-            if (down_visual_.is_empty())
+            if (disable_visual_.is_empty())
                 return false;
 
             set_size(disable_visual_.width(), disable_visual_.height());
@@ -1571,7 +1529,7 @@ namespace metin2::inline ui {
             if (!is_enable())
                 return;
 
-            button::on_mouse_over_in();
+            button::on_mouse_over_out();
             py_call_class_member_func(handler_, "on_mouse_over_out", build_empty_tuple());
         }
     };

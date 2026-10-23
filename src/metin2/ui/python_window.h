@@ -35,7 +35,6 @@ namespace metin2::inline ui {
             enum flags {
                 FLAG_MOVABLE = (1 << 0), // movable window
                 FLAG_LIMIT = (1 << 1),   // the window stays on screen
-                FLAG_SNAP = (1 << 2),    // the window snaps
                 FLAG_DRAGABLE = (1 << 3),
                 FLAG_ATTACH = (1 << 4),     // attached to its parent (for drag, e.g. ScriptWindow)
                 FLAG_RESTRICT_X = (1 << 5), // no horizontal movement
@@ -515,6 +514,4 @@ namespace metin2::inline ui {
             rectangle restrict_area_;
         };
     };
-
-    extern bool outline_box_enable;
 }

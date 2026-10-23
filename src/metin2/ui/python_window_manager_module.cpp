@@ -12,6 +12,16 @@ namespace metin2::inline ui {
 
     constexpr auto window_converter = &py_handle_converter<widgets::ui_window>;
 
+    // Scripts pass window handles as integers, so the widget type is only known at run time: a handle
+    // of the wrong kind raises instead of being used as the wrong class.
+    template <class T>
+    auto window_cast(widgets::ui_window *window) -> T * {
+        auto *typed = dynamic_cast<T *>(window);
+        if (!typed)
+            PyErr_Format(PyExc_TypeError, "window '%s' has the wrong type for this call", window->get_name());
+        return typed;
+    }
+
     auto wnd_mgr_once_ignore_mouse_left_button_up_event(PyObject *self, PyObject *args) -> PyObject * {
         widgets::get_window_manager().once_ignore_mouse_left_button_up_event();
         Py_RETURN_NONE;
@@ -431,7 +441,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->append_slot(index, ix_position, iy_position, ix_cell_size, iy_cell_size);
 
         Py_RETURN_NONE;
@@ -450,7 +462,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *grid_slot_win = (widgets::grid_slot_window *)win;
+        auto *grid_slot_win = window_cast<widgets::grid_slot_window>(win);
+        if (!grid_slot_win)
+            return nullptr;
         grid_slot_win->arrange_grid_slot(start_index, ix_cell_count, iy_cell_count, ix_cell_size, iy_cell_size, ix_blank, iy_blank);
 
         Py_RETURN_NONE;
@@ -470,7 +484,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_slot_base_image(file_name, fr, fg, fb, fa);
 
         Py_RETURN_NONE;
@@ -486,7 +502,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_cover_button(slot_index, up_image_name, over_image_name, down_image_name, disable_image_name, left_button_enable, right_button_enable);
 
         Py_RETURN_NONE;
@@ -500,7 +518,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->enable_cover_button(slot_index);
 
         Py_RETURN_NONE;
@@ -514,7 +534,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->disable_cover_button(slot_index);
 
         Py_RETURN_NONE;
@@ -529,7 +551,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_always_render_cover_button(slot_index, always_render);
 
         Py_RETURN_NONE;
@@ -543,7 +567,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->append_slot_button(up_image_name, over_image_name, down_image_name);
 
         Py_RETURN_NONE;
@@ -557,7 +583,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->append_requirement_sign_image(image_name);
 
         Py_RETURN_NONE;
@@ -571,7 +599,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->show_slot_button(slot_number);
 
         Py_RETURN_NONE;
@@ -583,7 +613,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->hide_all_slot_button();
 
         Py_RETURN_NONE;
@@ -597,7 +629,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->show_requirement_sign(slot_number);
 
         Py_RETURN_NONE;
@@ -611,7 +645,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)window;
+        auto *slot_win = window_cast<widgets::slot_window>(window);
+        if (!slot_win)
+            return nullptr;
         slot_win->hide_requirement_sign(slot_number);
 
         Py_RETURN_NONE;
@@ -628,7 +664,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->refresh_slot();
 
         Py_RETURN_NONE;
@@ -647,7 +685,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_use_mode(flag);
 
         Py_RETURN_NONE;
@@ -666,7 +706,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_usable_item(flag);
 
         Py_RETURN_NONE;
@@ -685,7 +727,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->clear_slot(slot_index);
 
         Py_RETURN_NONE;
@@ -702,7 +746,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->clear_all_slot();
 
         Py_RETURN_NONE;
@@ -721,7 +767,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
 
         return Py_BuildValue("i", slot_win->has_slot(slot_index));
     }
@@ -741,7 +789,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_slot(slot_index, item_index, width_value, height, (graphic_image *)image_handle, diffuse_color);
 
         Py_RETURN_NONE;
@@ -760,7 +810,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_slot_count(slot_index, count);
 
         Py_RETURN_NONE;
@@ -779,7 +831,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_slot_count_new(slot_index, grade, count);
 
         Py_RETURN_NONE;
@@ -799,7 +853,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_slot_cool_time(slot_index, cool_time, elapsed_time);
 
         Py_RETURN_NONE;
@@ -818,7 +874,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->activate_slot(slot_index);
         Py_RETURN_NONE;
     }
@@ -836,7 +894,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->deactivate_slot(slot_index);
         Py_RETURN_NONE;
     }
@@ -854,7 +914,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->enable_slot(slot_index);
         Py_RETURN_NONE;
     }
@@ -872,7 +934,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->disable_slot(slot_index);
         Py_RETURN_NONE;
     }
@@ -890,7 +954,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->show_slot_base_image(slot_index);
         Py_RETURN_NONE;
     }
@@ -908,7 +974,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->hide_slot_base_image(slot_index);
         Py_RETURN_NONE;
     }
@@ -926,7 +994,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->set_slot_style(style);
 
         Py_RETURN_NONE;
@@ -943,7 +1013,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         return Py_BuildValue("i", slot_win->slot_count());
     }
 
@@ -960,7 +1032,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->lock_slot(slot_index);
         Py_RETURN_NONE;
     }
@@ -978,7 +1052,9 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *slot_win = (widgets::slot_window *)win;
+        auto *slot_win = window_cast<widgets::slot_window>(win);
+        if (!slot_win)
+            return nullptr;
         slot_win->unlock_slot(slot_index);
         Py_RETURN_NONE;
     }
@@ -997,7 +1073,10 @@ namespace metin2::inline ui {
                 return nullptr;
             }
 
-            ((widgets::bar3d *)window)->set_color(color, right_color, center_color);
+            auto *typed = window_cast<widgets::bar3d>(window);
+            if (!typed)
+                return nullptr;
+            typed->set_color(color, right_color, center_color);
         } else {
             window->set_color(color);
         }
@@ -1139,7 +1218,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::text_line *)window)->set_horizontal_align(type);
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_horizontal_align(type);
         Py_RETURN_NONE;
     }
     auto wnd_text_set_vertical_align(PyObject *self, PyObject *args) -> PyObject * {
@@ -1150,7 +1232,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::text_line *)window)->set_vertical_align(type);
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_vertical_align(type);
         Py_RETURN_NONE;
     }
     auto wnd_text_set_secret(PyObject *self, PyObject *args) -> PyObject * {
@@ -1161,7 +1246,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::text_line *)window)->set_secret(flag);
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_secret(flag);
         Py_RETURN_NONE;
     }
     auto wnd_text_set_outline(PyObject *self, PyObject *args) -> PyObject * {
@@ -1172,7 +1260,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::text_line *)window)->set_outline(flag);
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_outline(flag);
         Py_RETURN_NONE;
     }
     auto wnd_text_set_feather(PyObject *self, PyObject *args) -> PyObject * {
@@ -1183,7 +1274,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::text_line *)window)->set_feather(flag);
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_feather(flag);
         Py_RETURN_NONE;
     }
     auto wnd_text_set_multi_line(PyObject *self, PyObject *args) -> PyObject * {
@@ -1194,7 +1288,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::text_line *)window)->set_multi_line(flag);
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_multi_line(flag);
         Py_RETURN_NONE;
     }
     auto wnd_text_set_font_name(PyObject *self, PyObject *args) -> PyObject * {
@@ -1205,7 +1302,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::text_line *)window)->set_font_name(font_name);
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_font_name(font_name);
         Py_RETURN_NONE;
     }
     auto wnd_text_set_font_color(PyObject *self, PyObject *args) -> PyObject * {
@@ -1218,7 +1318,10 @@ namespace metin2::inline ui {
                 return nullptr;
             }
 
-            ((widgets::text_line *)window)->set_font_color(color);
+            auto *typed = window_cast<widgets::text_line>(window);
+            if (!typed)
+                return nullptr;
+            typed->set_font_color(color);
         } else if (4 == PyTuple_Size(args)) {
             if (!PyArg_ParseTuple(args, "O&fff", window_converter, &window, &fr, &fg, &fb)) {
                 return nullptr;
@@ -1232,7 +1335,10 @@ namespace metin2::inline ui {
                     (uint8_t)(255.0f * fg),
                     (uint8_t)(255.0f * fr),
                     (uint8_t)(255.0f * fa)};
-            ((widgets::text_line *)window)->set_font_color(*((uint32_t *)argb));
+            auto *typed = window_cast<widgets::text_line>(window);
+            if (!typed)
+                return nullptr;
+            typed->set_font_color(*((uint32_t *)argb));
         } else {
             PyErr_Format(PyExc_TypeError, "wrong number of arguments (%zd given)", PyTuple_Size(args));
             return nullptr;
@@ -1248,7 +1354,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::text_line *)window)->set_limit_width(width_value);
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_limit_width(width_value);
         Py_RETURN_NONE;
     }
     auto wnd_text_set_text(PyObject *self, PyObject *args) -> PyObject * {
@@ -1259,7 +1368,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::text_line *)window)->set_text(text);
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_text(text);
         Py_RETURN_NONE;
     }
     auto wnd_text_get_text(PyObject *self, PyObject *args) -> PyObject * {
@@ -1268,7 +1380,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        return Py_BuildValue("s", ((widgets::text_line *)window)->get_text());
+        auto *typed = window_cast<widgets::text_line>(window);
+        if (!typed)
+            return nullptr;
+        return Py_BuildValue("s", typed->get_text());
     }
 
     auto wnd_text_get_text_size(PyObject *self, PyObject *args) -> PyObject * {
@@ -1280,7 +1395,9 @@ namespace metin2::inline ui {
         int width_value;
         int height;
 
-        auto *text_line = (widgets::text_line *)window;
+        auto *text_line = window_cast<widgets::text_line>(window);
+        if (!text_line)
+            return nullptr;
         text_line->text_size(&width_value, &height);
 
         return Py_BuildValue("(ii)", width_value, height);
@@ -1294,7 +1411,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::number_line *)window)->set_number(number);
+        auto *typed = window_cast<widgets::number_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_number(number);
 
         Py_RETURN_NONE;
     }
@@ -1305,7 +1425,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::number_line *)window)->set_horizontal_align(widgets::ui_window::HORIZONTAL_ALIGN_CENTER);
+        auto *typed = window_cast<widgets::number_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_horizontal_align(widgets::ui_window::HORIZONTAL_ALIGN_CENTER);
 
         Py_RETURN_NONE;
     }
@@ -1316,7 +1439,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::number_line *)window)->set_horizontal_align(widgets::ui_window::HORIZONTAL_ALIGN_RIGHT);
+        auto *typed = window_cast<widgets::number_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_horizontal_align(widgets::ui_window::HORIZONTAL_ALIGN_RIGHT);
 
         Py_RETURN_NONE;
     }
@@ -1329,7 +1455,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::number_line *)window)->set_path(path);
+        auto *typed = window_cast<widgets::number_line>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_path(path);
 
         Py_RETURN_NONE;
     }
@@ -1342,17 +1471,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::mark_box *)window)->load_image(file_name);
-        Py_RETURN_NONE;
-    }
-
-    auto wnd_mark_box_load(PyObject *self, PyObject *args) -> PyObject * {
-        Py_ssize_t handle;
-        if (!PyArg_ParseTuple(args, "n", &handle)) {
+        auto *typed = window_cast<widgets::mark_box>(window);
+        if (!typed)
             return nullptr;
-        }
-
-        // Does nothing; kept because the scripts call it.
+        typed->load_image(file_name);
         Py_RETURN_NONE;
     }
 
@@ -1364,7 +1486,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::mark_box *)window)->set_index(index);
+        auto *typed = window_cast<widgets::mark_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_index(index);
         Py_RETURN_NONE;
     }
 
@@ -1376,7 +1501,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::mark_box *)window)->set_scale(scale);
+        auto *typed = window_cast<widgets::mark_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_scale(scale);
         Py_RETURN_NONE;
     }
 
@@ -1388,7 +1516,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::mark_box *)window)->set_diffuse_color(fr, fg, fb, fa);
+        auto *typed = window_cast<widgets::mark_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_diffuse_color(fr, fg, fb, fa);
 
         Py_RETURN_NONE;
     }
@@ -1401,7 +1532,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        if (!((widgets::image_box *)window)->load_image(file_name)) {
+        auto *image = window_cast<widgets::image_box>(window);
+        if (!image)
+            return nullptr;
+        if (!image->load_image(file_name)) {
             PyErr_Format(PyExc_IOError, "Cannot load image %s", file_name);
             return nullptr;
         }
@@ -1417,7 +1551,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::image_box *)window)->set_diffuse_color(fr, fg, fb, fa);
+        auto *typed = window_cast<widgets::image_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_diffuse_color(fr, fg, fb, fa);
 
         Py_RETURN_NONE;
     }
@@ -1428,7 +1565,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        return Py_BuildValue("i", ((widgets::image_box *)window)->width());
+        auto *typed = window_cast<widgets::image_box>(window);
+        if (!typed)
+            return nullptr;
+        return Py_BuildValue("i", typed->width());
     }
 
     auto wnd_image_get_height(PyObject *self, PyObject *args) -> PyObject * {
@@ -1437,7 +1577,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        return Py_BuildValue("i", ((widgets::image_box *)window)->height());
+        auto *typed = window_cast<widgets::image_box>(window);
+        if (!typed)
+            return nullptr;
+        return Py_BuildValue("i", typed->height());
     }
 
     auto wnd_image_set_scale(PyObject *self, PyObject *args) -> PyObject * {
@@ -1448,7 +1591,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::expanded_image_box *)window)->set_scale(fx, fy);
+        auto *typed = window_cast<widgets::expanded_image_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_scale(fx, fy);
 
         Py_RETURN_NONE;
     }
@@ -1460,7 +1606,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::expanded_image_box *)window)->set_origin(fx, fy);
+        auto *typed = window_cast<widgets::expanded_image_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_origin(fx, fy);
 
         Py_RETURN_NONE;
     }
@@ -1472,7 +1621,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::expanded_image_box *)window)->set_rotation(rotation);
+        auto *typed = window_cast<widgets::expanded_image_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_rotation(rotation);
 
         Py_RETURN_NONE;
     }
@@ -1484,10 +1636,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        if (window->is_type(widgets::expanded_image_box::type()))
-            ((widgets::expanded_image_box *)window)->set_rendering_rect(left, top, right, bottom);
-        else if (window->is_type(widgets::ani_image_box::type()))
-            ((widgets::ani_image_box *)window)->set_rendering_rect(left, top, right, bottom);
+        if (auto *expanded = dynamic_cast<widgets::expanded_image_box *>(window))
+            expanded->set_rendering_rect(left, top, right, bottom);
+        else if (auto *animated = dynamic_cast<widgets::ani_image_box *>(window))
+            animated->set_rendering_rect(left, top, right, bottom);
 
         Py_RETURN_NONE;
     }
@@ -1499,8 +1651,8 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        if (window->is_type(widgets::expanded_image_box::type()))
-            ((widgets::expanded_image_box *)window)->set_rendering_mode(mode);
+        if (auto *expanded = dynamic_cast<widgets::expanded_image_box *>(window))
+            expanded->set_rendering_mode(mode);
 
         Py_RETURN_NONE;
     }
@@ -1512,7 +1664,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::ani_image_box *)window)->set_delay(delay);
+        auto *typed = window_cast<widgets::ani_image_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_delay(delay);
 
         Py_RETURN_NONE;
     }
@@ -1524,7 +1679,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::ani_image_box *)window)->append_image(file_name);
+        auto *typed = window_cast<widgets::ani_image_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->append_image(file_name);
 
         Py_RETURN_NONE;
     }
@@ -1537,7 +1695,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::button *)window)->set_up_visual(file_name);
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_up_visual(file_name);
 
         Py_RETURN_NONE;
     }
@@ -1549,7 +1710,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::button *)window)->set_over_visual(file_name);
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_over_visual(file_name);
 
         Py_RETURN_NONE;
     }
@@ -1561,7 +1725,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::button *)window)->set_down_visual(file_name);
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_down_visual(file_name);
 
         Py_RETURN_NONE;
     }
@@ -1573,7 +1740,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::button *)window)->set_disable_visual(file_name);
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_disable_visual(file_name);
 
         Py_RETURN_NONE;
     }
@@ -1583,7 +1753,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        return Py_BuildValue("s", ((widgets::button *)window)->up_visual_file_name());
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        return Py_BuildValue("s", typed->up_visual_file_name());
     }
     auto wnd_button_get_over_visual_file_name(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *window;
@@ -1591,7 +1764,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        return Py_BuildValue("s", ((widgets::button *)window)->over_visual_file_name());
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        return Py_BuildValue("s", typed->over_visual_file_name());
     }
     auto wnd_button_get_down_visual_file_name(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *window;
@@ -1599,7 +1775,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        return Py_BuildValue("s", ((widgets::button *)window)->down_visual_file_name());
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        return Py_BuildValue("s", typed->down_visual_file_name());
     }
     auto wnd_button_flash(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *window;
@@ -1607,7 +1786,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::button *)window)->flash();
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        typed->flash();
 
         Py_RETURN_NONE;
     }
@@ -1617,7 +1799,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::button *)window)->enable();
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        typed->enable();
 
         Py_RETURN_NONE;
     }
@@ -1627,7 +1812,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::button *)window)->disable();
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        typed->disable();
 
         Py_RETURN_NONE;
     }
@@ -1637,7 +1825,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::button *)window)->down();
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        typed->down();
 
         Py_RETURN_NONE;
     }
@@ -1647,7 +1838,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::button *)window)->set_up();
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_up();
 
         Py_RETURN_NONE;
     }
@@ -1659,7 +1853,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        ((widgets::drag_button *)window)->set_restrict_movement_area(ix, iy, iwidth, iheight);
+        auto *typed = window_cast<widgets::drag_button>(window);
+        if (!typed)
+            return nullptr;
+        typed->set_restrict_movement_area(ix, iy, iwidth, iheight);
 
         Py_RETURN_NONE;
     }
@@ -1670,20 +1867,10 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        return Py_BuildValue("i", ((widgets::button *)window)->is_pressed());
-    }
-
-    extern bool outline_box_enable;
-
-    auto wnd_mgr_set_outline_flag(PyObject *self, PyObject *args) -> PyObject * {
-        int flag;
-        if (!PyArg_ParseTuple(args, "i", &flag)) {
+        auto *typed = window_cast<widgets::button>(window);
+        if (!typed)
             return nullptr;
-        }
-
-        outline_box_enable = flag;
-
-        Py_RETURN_NONE;
+        return Py_BuildValue("i", typed->is_pressed());
     }
 
     void init_widgets_module() {
@@ -1830,7 +2017,6 @@ namespace metin2::inline ui {
 
                 // ImageBox
                 {"mark_box_set_image_filename", wnd_mark_box_set_image_filename, METH_VARARGS},
-                {"mark_box_load", wnd_mark_box_load, METH_VARARGS},
                 {"mark_box_set_index", wnd_mark_box_set_index, METH_VARARGS},
                 {"mark_box_set_scale", wnd_mark_box_set_scale, METH_VARARGS},
                 {"mark_box_set_diffuse_color", wnd_mark_box_set_diffuse_color, METH_VARARGS},
@@ -1867,9 +2053,6 @@ namespace metin2::inline ui {
 
                 // DragButton
                 {"set_restrict_movement_area", wnd_button_set_restrict_movement_area, METH_VARARGS},
-
-                // For Debug
-                {"set_outline_flag", wnd_mgr_set_outline_flag, METH_VARARGS},
 
                 {nullptr, nullptr, 0, nullptr},
         };

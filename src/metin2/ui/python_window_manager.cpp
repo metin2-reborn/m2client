@@ -4,7 +4,6 @@
 #include <metin2/input/keys.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
-#include <set>
 #include <vector>
 #include "python_grid_slot_window.h"
 #include "python_slot_window.h"
@@ -19,8 +18,6 @@ namespace metin2::inline ui {
             Py_INCREF(empty_tuple);
             return empty_tuple;
         }
-
-        std::set<ui_window *> set_wnd;
 
         window_manager::window_manager()
             : vres_(0), hres_(0), once_ignore_mouse_left_button_up_event_flag_(false), mouse_handler_(nullptr), attaching_flag_(false), attaching_type_(0), attaching_index_(0), attaching_slot_number_(0), active_window_(nullptr), lock_window_(nullptr), point_window_(nullptr), left_capture_window_(nullptr), right_capture_window_(nullptr), middle_capture_window_(nullptr) {
@@ -168,7 +165,7 @@ namespace metin2::inline ui {
 
         void window_manager::set_parent(ui_window *window, ui_window *parent_window) {
             if (!window) {
-                assert(!"CWindowManager::SetParent - There is no self window!");
+                assert(!"window_manager::set_parent: no window");
                 return;
             }
             if (!parent_window) {
