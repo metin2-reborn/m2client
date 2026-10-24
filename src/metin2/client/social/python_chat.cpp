@@ -7,6 +7,8 @@
 #include <metin2/core/utils.h>
 #include <metin2/script/python_utils.h>
 
+#include <cmath>
+
 namespace metin2::inline client::inline social {
 
     int python_chat::chat_set::chat_mode_size = CHAT_TYPE_MAX_NUM;
@@ -75,6 +77,13 @@ namespace metin2::inline client::inline social {
         return id;
     }
 
+    namespace {
+        // A tenth of the remaining distance per frame at 60 fps, whatever the frame rate.
+        auto fade_step() -> float {
+            return 1.0f - std::pow(0.9f, get_timer().elapsed_second() * 60.0f);
+        }
+    }
+
     void python_chat::update_view_mode(uint32_t id) {
         abstract_application &app = get_abstract_application();
 
@@ -96,7 +105,7 @@ namespace metin2::inline client::inline social {
 
             float elapsed_time = (fcur_time - chat_line_value->appended_time);
             if (elapsed_time >= c_fStartDisappearingTime || line_index >= c_iMaxLineCount) {
-                color.a -= color.a / 10.0f;
+                color.a -= color.a * fade_step();
 
                 if (color.a <= 0.1f) {
                     itor = line_list->erase(itor);
@@ -139,10 +148,10 @@ namespace metin2::inline client::inline social {
             math::color &color = chat_line_value->color_ref(id);
 
             if (line_index < alpha_line) {
-                color.a += (alpha - color.a) / 10.0f;
+                color.a += (alpha - color.a) * fade_step();
                 alpha = f_min(alpha + alpha_step, 1.0f);
             } else {
-                color.a = f_min(color.a + 0.05f, 1.0f);
+                color.a = f_min(color.a + 0.05f * get_timer().elapsed_second() * 60.0f, 1.0f);
             }
 
             height += chat_set_value->step;

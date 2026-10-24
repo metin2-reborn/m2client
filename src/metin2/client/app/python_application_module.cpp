@@ -177,16 +177,6 @@ namespace metin2::inline client::inline app {
         Py_RETURN_NONE;
     }
 
-    auto app_set_frame_skip(PyObject *self, PyObject *args) -> PyObject * {
-        int frame_skip;
-        if (!PyArg_ParseTuple(args, "i", &frame_skip)) {
-            return nullptr;
-        }
-
-        get_python_application().set_frame_skip(frame_skip ? true : false);
-        Py_RETURN_NONE;
-    }
-
     auto load_locale_data() -> bool;
 
     auto app_load_locale_data(PyObject *self, PyObject *args) -> PyObject * {
@@ -851,7 +841,6 @@ namespace metin2::inline client::inline app {
 
             {"set_camera_max_distance", app_set_camera_max_distance, METH_VARARGS},
             {"set_min_fog", app_set_min_fog, METH_VARARGS},
-            {"set_frame_skip", app_set_frame_skip, METH_VARARGS},
             {"get_image_info", app_get_image_info, METH_VARARGS},
             {"get_info", app_get_info, METH_VARARGS},
             {"update_game", app_update_game, METH_VARARGS},

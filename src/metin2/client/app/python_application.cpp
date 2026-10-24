@@ -17,7 +17,9 @@
 #include <metin2/script/python_utils.h>
 #include <metin2/world/terrain/area_terrain.h>
 
+#include <chrono>
 #include <format>
+#include <thread>
 
 namespace metin2::inline graphics {
     extern bool graphics_caps_software_tiling;
@@ -73,11 +75,10 @@ namespace metin2::inline client::inline app {
         get_python_system();
     }
 
-    python_application::python_application() : mouse_handler_(nullptr), ave_render_time_(0.0f), last_idle_time_(0), global_time_(0.0f), global_elapsed_time_(0.0f), update_fps_(0), render_fps_(0), face_count_(0), l_button_down_time_(0), mouse_capture_count_(0), cursor_visible_(true), liar_cursor_on_(false), cursor_mode_value_(CURSOR_MODE_HARDWARE), is_windowed_(false), is_frame_skip_disable_(false) {
+    python_application::python_application() : mouse_handler_(nullptr), ave_render_time_(0.0f), last_idle_time_(0), global_time_(0.0f), global_elapsed_time_(0.0f), update_fps_(0), render_fps_(0), face_count_(0), l_button_down_time_(0), mouse_capture_count_(0), cursor_visible_(true), liar_cursor_on_(false), cursor_mode_value_(CURSOR_MODE_HARDWARE), is_windowed_(false) {
         create_managers();
         set_eter_exception_handler();
 
-        get_timer().use_custom_time();
         width_ = 800;
         height_ = 600;
 
@@ -87,7 +88,6 @@ namespace metin2::inline client::inline app {
         local_start_time_ = 0;
 
         port_ = 0;
-        fps_ = 60;
 
         is_activate_wnd_ = false;
         is_minimized_wnd_ = true;
@@ -127,13 +127,6 @@ namespace metin2::inline client::inline app {
 
     void python_application::set_min_fog(float min_fog) {
         min_fog_distance = min_fog;
-    }
-
-    void python_application::set_frame_skip(bool is_enable) {
-        if (is_enable)
-            is_frame_skip_disable_ = false;
-        else
-            is_frame_skip_disable_ = true;
     }
 
     void python_application::notify_hack(const char *format, ...) {
@@ -383,17 +376,11 @@ namespace metin2::inline client::inline app {
             load = face_count = update_frame_count = render_frame_count = 0;
         }
 
-        static bool frame_skip = false;
-        static uint32_t next_frame_time = el_timer_get_m_sec();
-
         timer &timer = get_timer();
         timer.advance();
 
         global_time_ = timer.current_second();
         global_elapsed_time_ = timer.elapsed_second();
-
-        uint32_t frame_time_value = timer.elapsed_milliecond();
-        next_frame_time += frame_time_value; // about 17 ms at 60 fps
 
         uint32_t updatestart = el_timer_get_m_sec();
         get_python_network_stream().process();
@@ -415,31 +402,12 @@ namespace metin2::inline client::inline app {
 
         cur_update_time_ = el_timer_get_m_sec() - updatestart;
 
-        uint32_t current_time = el_timer_get_m_sec();
-        bool current_late_update = false;
-
-        frame_skip = false;
-
-        if (current_time > next_frame_time) {
-            int dt = current_time - next_frame_time;
-            int adjust_time = ((float)dt / (float)frame_time_value) * frame_time_value;
-
-            if (dt >= 500) {
-                next_frame_time += adjust_time;
-                printf("FrameSkip adjustment %d\n", adjust_time);
-                get_timer().adjust(adjust_time);
-            }
-
-            frame_skip = true;
-            current_late_update = true;
-        }
-
-        if (is_frame_skip_disable_)
-            frame_skip = false;
-
-        if (!frame_skip) {
-
-            material::translate_specular_matrix(specular_spd, specular_spd, 0.0f);
+        // Every frame is rendered: the simulation above took the real elapsed time, so a slow frame
+        // simply covers more of it instead of being followed by catch-up updates without a render.
+        {
+            // specular_spd is the scroll per frame at 60 fps.
+            const double specular_step = specular_spd * global_elapsed_time_ * 60.0;
+            material::translate_specular_matrix(static_cast<float>(specular_step), static_cast<float>(specular_step), 0.0f);
 
             uint32_t render_start_time = el_timer_get_m_sec();
 
@@ -555,17 +523,37 @@ namespace metin2::inline client::inline app {
             }
         }
 
-        int rest = next_frame_time - el_timer_get_m_sec();
-
-        if (rest > 0 && !current_late_update) {
-            load -= rest;
-            std::this_thread::sleep_for(std::chrono::milliseconds(rest));
-        }
-
         ++update_frame_count;
 
         load += el_timer_get_m_sec() - start;
+        const uint32_t before_limit = el_timer_get_m_sec();
+        limit_frame_rate();
+        load -= el_timer_get_m_sec() - before_limit;
         return true;
+    }
+
+    void python_application::limit_frame_rate() {
+        using clock = std::chrono::steady_clock;
+
+        // A minimized window has nothing to show, so it idles at a low rate whatever the setting.
+        const int limit = is_minimized_wnd_ ? 30 : get_python_system().fps_limit();
+        if (limit <= 0) {
+            next_frame_deadline_ = {};
+            return;
+        }
+
+        const auto period = std::chrono::nanoseconds(1'000'000'000 / limit);
+        const clock::time_point now = clock::now();
+        // After a stall, or when the cap was just enabled, the schedule restarts from now.
+        if (next_frame_deadline_ == clock::time_point{} || next_frame_deadline_ + period < now)
+            next_frame_deadline_ = now;
+        next_frame_deadline_ += period;
+
+        // sleep_until overshoots by a scheduler tick, so the last millisecond is spun.
+        if (next_frame_deadline_ - now > std::chrono::milliseconds(2))
+            std::this_thread::sleep_until(next_frame_deadline_ - std::chrono::milliseconds(1));
+        while (clock::now() < next_frame_deadline_)
+            std::this_thread::yield();
     }
 
     void python_application::set_mouse_handler(PyObject *mouse_handler) {

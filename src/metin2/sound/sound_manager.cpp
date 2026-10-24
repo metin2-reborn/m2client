@@ -227,6 +227,8 @@ namespace metin2::inline sound {
     }
 
     void sound_manager::update() {
+        // The fade speeds are volume steps per frame at 60 fps.
+        const float fade_frames = get_timer().elapsed_second() * 60.0f;
         for (int i = 0; i < MUSIC_COUNT; ++i) {
             music_instance &music_instance_value = music_instances_[i];
             if (MUSIC_STATE_OFF == music_instance_value.music_state_value)
@@ -238,7 +240,7 @@ namespace metin2::inline sound {
                 break;
 
             case MUSIC_STATE_FADE_IN:
-                music_instance_value.volume += music_instance_value.volume_speed;
+                music_instance_value.volume += music_instance_value.volume_speed * fade_frames;
 
                 if (music_instance_value.volume >= music_volume()) {
                     music_instance_value.volume = music_volume();
@@ -253,7 +255,7 @@ namespace metin2::inline sound {
                 break;
 
             case MUSIC_STATE_FADE_LIMIT_OUT:
-                music_instance_value.volume -= music_instance_value.volume_speed;
+                music_instance_value.volume -= music_instance_value.volume_speed * fade_frames;
                 if (music_instance_value.volume <= music_instance_value.limit_volume) {
                     music_instance_value.volume = music_instance_value.limit_volume;
                     music_instance_value.volume_speed = 0.0f;
@@ -265,7 +267,7 @@ namespace metin2::inline sound {
                 }
                 break;
             case MUSIC_STATE_FADE_OUT:
-                music_instance_value.volume -= music_instance_value.volume_speed;
+                music_instance_value.volume -= music_instance_value.volume_speed * fade_frames;
                 if (music_instance_value.volume <= 0.0f) {
                     music_instance_value.volume = 0.0f;
                     music_instance_value.volume_speed = 0.0f;

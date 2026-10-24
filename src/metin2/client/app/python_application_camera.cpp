@@ -4,6 +4,8 @@
 #include <metin2/core/timer.h>
 #include <metin2/graphics/camera.h>
 
+#include <cmath>
+
 namespace metin2::inline client::inline app {
     auto blend_value_by_linear(float elapsed_time, float duration, float begin_value, float end_value) -> float {
         if (elapsed_time >= duration) {
@@ -59,13 +61,15 @@ namespace metin2::inline client::inline app {
             get_python_graphic().set_position_camera(center_position_.x, center_position_.y, center_position_.z + main_camera->target_height(), distance, pitch, rotation);
         }
 
-        if (0.0f != rotation_speed_) main_camera->roll(rotation_speed_);
-        if (0.0f != pitch_speed_) main_camera->pitch(pitch_speed_);
-        if (0.0f != zoom_speed_) main_camera->zoom(zoom_speed_);
+        // The key speeds are per frame at 60 fps.
+        const float frames = get_timer().elapsed_second() * 60.0f;
+        if (0.0f != rotation_speed_) main_camera->roll(rotation_speed_ * frames);
+        if (0.0f != pitch_speed_) main_camera->pitch(pitch_speed_ * frames);
+        if (0.0f != zoom_speed_) main_camera->zoom(std::pow(zoom_speed_, frames));
 
-        if (0.0f != cmr_spd_.view_dir) cmr_pos_.view_dir += cmr_spd_.view_dir;
-        if (0.0f != cmr_spd_.cross_dir) cmr_pos_.cross_dir += cmr_spd_.cross_dir;
-        if (0.0f != cmr_spd_.up_dir) cmr_pos_.up_dir += cmr_spd_.up_dir;
+        if (0.0f != cmr_spd_.view_dir) cmr_pos_.view_dir += cmr_spd_.view_dir * frames;
+        if (0.0f != cmr_spd_.cross_dir) cmr_pos_.cross_dir += cmr_spd_.cross_dir * frames;
+        if (0.0f != cmr_spd_.up_dir) cmr_pos_.up_dir += cmr_spd_.up_dir * frames;
 
         if (0.0f != cmr_pos_.view_dir) main_camera->move_front(cmr_pos_.view_dir);
         if (0.0f != cmr_pos_.cross_dir) main_camera->move_along_cross(cmr_pos_.cross_dir);

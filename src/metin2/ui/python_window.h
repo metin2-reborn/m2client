@@ -413,8 +413,8 @@ namespace metin2::inline ui {
             auto on_is_type(uint32_t type) -> bool override;
 
           protected:
-            uint8_t bycur_delay_;
-            uint8_t delay_;
+            float frame_time_; // seconds the current image has been shown
+            uint8_t delay_;    // frames per image, at 60 fps
             uint8_t bycur_index_;
             std::vector<graphic_expanded_image_instance *> image_vector_;
         };

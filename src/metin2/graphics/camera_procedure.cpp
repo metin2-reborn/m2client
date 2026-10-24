@@ -1,6 +1,9 @@
 #include <metin2/client/background/python_background.h>
+#include <metin2/core/timer.h>
 #include <metin2/core/utils.h>
 #include <metin2/graphics/camera.h>
+
+#include <cmath>
 
 namespace metin2::inline graphics {
 
@@ -196,16 +199,20 @@ namespace metin2::inline graphics {
     }
 
     void camera::update() {
+        // The velocity halves every 1/60 s and the motion applied in a frame is the part of that
+        // decay the frame covers, which is what the old per-frame "apply, then halve" did at 60 fps.
+        const float decay = std::pow(0.5f, get_timer().elapsed_second() * 60.0f);
+        const math::vector3 applied = angular_velocity_ * (2.0f * (1.0f - decay));
 
-        rotate_eye_around_target(angular_velocity_.z, angular_velocity_.x);
+        rotate_eye_around_target(applied.z, applied.x);
 
-        float new_distance = f_max(CAMERA_MIN_DISTANCE, f_min(CAMERA_MAX_DISTANCE, distance() - angular_velocity_.y));
+        float new_distance = f_max(CAMERA_MIN_DISTANCE, f_min(CAMERA_MAX_DISTANCE, distance() - applied.y));
         set_distance(new_distance);
 
         if (process_terrain_collision_)
             process_terrain_collision();
 
-        angular_velocity_ *= 0.5f;
+        angular_velocity_ *= decay;
         if (fabs(angular_velocity_.x) < 1.0f)
             angular_velocity_.x = 0.0f;
         if (fabs(angular_velocity_.y) < 1.0f)

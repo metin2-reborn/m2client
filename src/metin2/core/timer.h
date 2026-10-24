@@ -4,15 +4,17 @@
 
 namespace metin2::inline core {
 
-    // Frame clock. Either follows the real monotonic clock or, after use_custom_time(), advances by
-    // a fixed ~16.5 ms per advance() call.
+    // Frame clock on the monotonic clock. advance() is called once per frame; the elapsed time it
+    // reports is capped at MAX_FRAME_STEP_MS, so a stall (a map load, a paused window) is simulated
+    // as one long frame instead of a jump.
     class timer {
       public:
+        static constexpr uint32_t MAX_FRAME_STEP_MS = 100;
+
         timer();
         ~timer();
 
         void advance();
-        void adjust(int time_gap);
         void set_base_time();
 
         auto current_second() -> float;
@@ -21,15 +23,9 @@ namespace metin2::inline core {
         auto elapsed_second() -> float;
         auto elapsed_milliecond() -> uint32_t;
 
-        void use_custom_time();
-
       protected:
-        bool use_real_time_;
-        uint32_t base_time_;
         uint32_t current_time_;
-        float current_time_seconds_;
         uint32_t elapsed_time_;
-        int index_value_;
     };
 
     inline auto get_timer() -> timer & {

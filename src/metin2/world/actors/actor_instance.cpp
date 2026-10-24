@@ -323,9 +323,10 @@ namespace metin2::inline world::inline actors {
         if (race_motion_data::NAME_WAIT == current_motion_index())
             return;
 
+        // The same step the animation advanced by, so the feet and the ground displacement agree.
         math::matrix rotation_z;
         rotation_z = math::matrix_rotation_z(math::to_radian(rot));
-        update_transform(&rotation_z, average_second_elapsed());
+        update_transform(&rotation_z, second_elapsed_);
 
         add_movement(rotation_z._41, rotation_z._42, rotation_z._43);
     }

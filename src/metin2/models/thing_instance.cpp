@@ -490,10 +490,6 @@ namespace metin2::inline models {
         return second_elapsed_;
     }
 
-    auto graphic_thing_instance::average_second_elapsed() -> float {
-        return average_second_elapsed_;
-    }
-
     auto graphic_thing_instance::intersect(float *pu, float *pv, float *pt) -> bool {
         if (!graphic_object_instance::is_show()) {
             return false;
@@ -658,7 +654,6 @@ namespace metin2::inline models {
         }
 
         local_time_ += second_elapsed_;
-        average_second_elapsed_ = average_second_elapsed_ + (second_elapsed_ - average_second_elapsed_) / 4.0f;
 
         lod_controller::update_time_fn update;
         update.elapsed_time = second_elapsed_;
@@ -769,7 +764,6 @@ namespace metin2::inline models {
         local_time_ = 0.0f;
         delay_ = 0.0;
         second_elapsed_ = 0.0f;
-        average_second_elapsed_ = 0.03f;
         radius_ = -1.0f;
         center_ = math::vector3(0.0f, 0.0f, 0.0f);
 

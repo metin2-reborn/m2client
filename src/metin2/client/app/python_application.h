@@ -2,6 +2,8 @@
 
 #include "abstract_application.h"
 
+#include <chrono>
+
 #include <metin2/client/background/python_mini_map.h>
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/client/characters/python_non_player.h>
@@ -125,7 +127,6 @@ namespace metin2::inline client::inline app {
         void abort();
 
         void set_min_fog(float min_fog);
-        void set_frame_skip(bool is_enable);
         void skip_render_buffering(uint32_t sleep_m_sec) override;
 
         auto create(PyObject *self, const char *name, int width_value, int height, int windowed) -> bool;
@@ -239,7 +240,6 @@ namespace metin2::inline client::inline app {
         PyObject *mouse_handler_;
         math::vector3 center_position_;
 
-        unsigned int fps_;
         float ave_render_time_;
         uint32_t cur_render_time_;
         uint32_t cur_update_time_;
@@ -296,7 +296,10 @@ namespace metin2::inline client::inline app {
         bool liar_cursor_on_;
         int cursor_mode_value_;
         bool is_windowed_;
-        bool is_frame_skip_disable_;
+        std::chrono::steady_clock::time_point next_frame_deadline_{};
+
+        // Sleeps the rest of the frame when [display] fps_limit is set (or the window is minimized).
+        void limit_frame_rate();
 
         std::string ip_;
         int port_;

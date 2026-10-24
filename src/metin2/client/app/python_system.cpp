@@ -185,7 +185,8 @@ namespace metin2::inline client::inline app {
         config_value_.show_damage = true;
         config_value_.show_sales_text = true;
         utf8::copy_truncated(config_value_.renderer, sizeof(config_value_.renderer), "opengl");
-        config_value_.vsync = false;
+        config_value_.vsync = true;
+        config_value_.fps_limit = 0;
         config_value_.font_antialias = false;
         config_value_.font_scale = 1.0f;
     }
@@ -307,6 +308,7 @@ namespace metin2::inline client::inline app {
         reader.read("display", "gamma", config_value_.gamma);
         reader.read("display", "software_cursor", config_value_.is_software_cursor);
         reader.read("display", "vsync", config_value_.vsync);
+        reader.read("display", "fps_limit", config_value_.fps_limit);
 
         std::string tiling = std::string(TILING_NAMES[std::min<uint8_t>(config_value_.software_tiling, 2)]);
         reader.read("graphics", "visibility", config_value_.distance);
@@ -389,6 +391,7 @@ namespace metin2::inline client::inline app {
                     {"gamma", static_cast<int64_t>(config_value_.gamma)},
                     {"software_cursor", config_value_.is_software_cursor},
                     {"vsync", config_value_.vsync},
+                    {"fps_limit", static_cast<int64_t>(config_value_.fps_limit)},
                 }},
             {"graphics",
              toml::table{

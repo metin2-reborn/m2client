@@ -1,5 +1,6 @@
 #include "timer.h"
 
+#include <algorithm>
 #include <chrono>
 
 namespace metin2::inline core {
@@ -50,11 +51,7 @@ namespace metin2::inline core {
         base_time();
 
         current_time_ = 0;
-        base_time_ = 0;
-        use_real_time_ = true;
-        index_value_ = 0;
         elapsed_time_ = 0;
-        current_time_seconds_ = 0.0f;
     }
 
     timer::~timer() = default;
@@ -64,41 +61,21 @@ namespace metin2::inline core {
     }
 
     void timer::advance() {
-        if (!use_real_time_) {
-            ++index_value_;
+        const uint32_t current_time = el_timer_get_m_sec();
 
-            if (index_value_ == 1)
-                index_value_ = -1;
-
-            current_time_ += 16 + (index_value_ & 1);
-            current_time_seconds_ = current_time_ / 1000.0f;
-        } else {
-            uint32_t current_time = el_timer_get_m_sec();
-
-            if (current_time_ == 0)
-                current_time_ = current_time;
-
-            elapsed_time_ = current_time - current_time_;
+        if (current_time_ == 0)
             current_time_ = current_time;
-        }
-    }
 
-    void timer::adjust(int time_gap) {
-        current_time_ += time_gap;
+        elapsed_time_ = std::min(current_time - current_time_, MAX_FRAME_STEP_MS);
+        current_time_ = current_time;
     }
 
     auto timer::current_second() -> float {
-        if (use_real_time_)
-            return el_timer_get_m_sec() / 1000.0f;
-
-        return current_time_seconds_;
+        return el_timer_get_m_sec() / 1000.0f;
     }
 
     auto timer::current_millisecond() -> uint32_t {
-        if (use_real_time_)
-            return el_timer_get_m_sec();
-
-        return current_time_;
+        return el_timer_get_m_sec();
     }
 
     auto timer::elapsed_second() -> float {
@@ -106,13 +83,6 @@ namespace metin2::inline core {
     }
 
     auto timer::elapsed_milliecond() -> uint32_t {
-        if (!use_real_time_)
-            return 16 + (index_value_ & 1);
-
         return elapsed_time_;
-    }
-
-    void timer::use_custom_time() {
-        use_real_time_ = false;
     }
 }

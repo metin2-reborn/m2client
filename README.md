@@ -83,7 +83,8 @@ A minimal `metin2.toml`:
 width = 1024
 height = 768
 windowed = true
-vsync = false
+vsync = true
+fps_limit = 0            # 0: no cap beyond vsync; e.g. 144
 
 [interface]
 font_scale = 1.0         # text size factor

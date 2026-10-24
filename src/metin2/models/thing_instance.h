@@ -81,7 +81,6 @@ namespace metin2::inline models {
         void set_local_time_impl(float local_time); // Only used by tools.
         auto local_time() -> float;
         auto second_elapsed() -> float;
-        auto average_second_elapsed() -> float;
 
         auto lod_level(uint32_t model_instance) -> uint8_t;
         auto height() -> float;
@@ -126,7 +125,6 @@ namespace metin2::inline models {
         float local_time_;
         float delay_;
         float second_elapsed_;
-        float average_second_elapsed_;
         float radius_;
         math::vector3 center_;
         math::vector3 min_, max_;

@@ -1128,7 +1128,7 @@ namespace metin2::inline ui {
 
         ani_image_box::ani_image_box(PyObject *ppy_object)
             : ui_window(ppy_object),
-              bycur_delay_(0),
+              frame_time_(0.0f),
               delay_(4),
               bycur_index_(0) {
             image_vector_.clear();
@@ -1173,11 +1173,11 @@ namespace metin2::inline ui {
         }
 
         void ani_image_box::on_update() {
-            ++bycur_delay_;
-            if (bycur_delay_ < delay_)
+            frame_time_ += get_timer().elapsed_second();
+            if (frame_time_ < static_cast<float>(delay_) / 60.0f)
                 return;
 
-            bycur_delay_ = 0;
+            frame_time_ = 0.0f;
 
             ++bycur_index_;
             if (bycur_index_ >= image_vector_.size()) {
