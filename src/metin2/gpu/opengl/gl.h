@@ -22,4 +22,9 @@ namespace metin2::gpu::opengl {
     };
 
     auto get_extensions() -> const extensions &;
+
+    // Bumped by anything that binds textures or deletes buffers behind the device's back (resource
+    // uploads, buffer destruction, the blit): the device's binding cache is only trusted while it
+    // has not changed.
+    inline uint64_t binding_epoch = 0;
 }

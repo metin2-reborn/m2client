@@ -472,8 +472,10 @@ void main() {
 
     void gl_device::set_transform(transform t, const math::matrix &m) {
         if (math::matrix *slot = state_.transform_slot(t)) {
-            *slot = m;
-            uniforms_dirty_ = true;
+            if (memcmp(slot, &m, sizeof(m)) != 0) {
+                *slot = m;
+                uniforms_dirty_ = true;
+            }
         }
     }
 
@@ -484,20 +486,26 @@ void main() {
     }
 
     void gl_device::set_material(const material &m) {
-        state_.mat = m;
-        uniforms_dirty_ = true;
+        if (memcmp(&state_.mat, &m, sizeof(m)) != 0) {
+            state_.mat = m;
+            uniforms_dirty_ = true;
+        }
     }
 
     void gl_device::set_light(uint32_t index, const light &l) {
-        if (index >= fixed_function_state::LIGHTS)
+        if (index >= fixed_function_state::LIGHTS) {
             return;
-        state_.lights[index] = l;
-        uniforms_dirty_ = true;
+        }
+        if (memcmp(&state_.lights[index], &l, sizeof(l)) != 0) {
+            state_.lights[index] = l;
+            uniforms_dirty_ = true;
+        }
     }
 
     void gl_device::enable_light(uint32_t index, bool enable) {
-        if (index >= fixed_function_state::LIGHTS)
+        if (index >= fixed_function_state::LIGHTS || state_.light_enabled[index] == enable) {
             return;
+        }
         state_.light_enabled[index] = enable;
         uniforms_dirty_ = true;
     }
@@ -730,10 +738,35 @@ void main() {
         sampler_dirty_[stage] = false;
     }
 
+    void gl_device::forget_bindings() {
+        bound_program_ = 0;
+        bound_vertex_array_ = 0;
+        for (int s = 0; s < 2; ++s) {
+            bound_textures_[s] = ~GLuint{0};
+            bound_samplers_[s] = ~GLuint{0};
+        }
+        // Only this device touches its vertex array, so the enable flags stay right; a deleted buffer
+        // may have its name reused, so the pointers are specified again.
+        for (attribute_binding &a : attributes_) {
+            a.buffer = 0;
+            a.kind = -1;
+        }
+        binding_epoch_seen_ = binding_epoch;
+    }
+
     void gl_device::prepare_draw(const vertex_layout &layout, const GLuint *buffers, const uint32_t *strides, const uint32_t *offsets) {
         bind_target();
-        glUseProgram(program_);
-        glBindVertexArray(vertex_array_);
+        if (binding_epoch_seen_ != binding_epoch) {
+            forget_bindings();
+        }
+        if (bound_program_ != program_) {
+            glUseProgram(program_);
+            bound_program_ = program_;
+        }
+        if (bound_vertex_array_ != vertex_array_) {
+            glBindVertexArray(vertex_array_);
+            bound_vertex_array_ = vertex_array_;
+        }
         if (viewport_dirty_)
             apply_viewport();
         if (pipeline_dirty_)
@@ -744,26 +777,47 @@ void main() {
         // The block depends on the vertex layout too (pre-transformed, colours, texture dimensions).
         if (uniforms_dirty_ || uniform_layout_ != &layout) {
             pack_uniforms(state_, layout, {.flip_y = flip_y_, .half_pixel = true}, uniforms_);
-            glBindBuffer(GL_UNIFORM_BUFFER, uniform_buffer_);
-            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(fixed_function_uniforms), &uniforms_);
             uniforms_dirty_ = false;
             uniform_layout_ = &layout;
+            if (!uniforms_uploaded_ || memcmp(&uploaded_uniforms_, &uniforms_, sizeof(uniforms_)) != 0) {
+                glBindBuffer(GL_UNIFORM_BUFFER, uniform_buffer_);
+                glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(fixed_function_uniforms), &uniforms_);
+                uploaded_uniforms_ = uniforms_;
+                uniforms_uploaded_ = true;
+            }
         }
         for (int s = 0; s < fixed_function_state::EVALUATED_STAGES; ++s) {
-            glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(s));
-            glBindTexture(GL_TEXTURE_2D, textures_[s] ? textures_[s]->name : white_texture_);
-            glBindSampler(static_cast<GLuint>(s), samplers_[s]);
+            const GLuint name = textures_[s] ? textures_[s]->name : white_texture_;
+            if (bound_textures_[s] != name) {
+                glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(s));
+                glBindTexture(GL_TEXTURE_2D, name);
+                bound_textures_[s] = name;
+            }
+            if (bound_samplers_[s] != samplers_[s]) {
+                glBindSampler(static_cast<GLuint>(s), samplers_[s]);
+                bound_samplers_[s] = samplers_[s];
+            }
         }
         bool used[7] = {};
         for (const layout_attribute &a : layout.attributes) {
             const GLuint buffer = buffers[a.stream];
             if (!buffer)
                 continue;
-            glBindBuffer(GL_ARRAY_BUFFER, buffer);
             const auto slot = static_cast<GLuint>(a.slot);
-            const auto *pointer = reinterpret_cast<const void *>(static_cast<uintptr_t>(offsets[a.stream] + static_cast<uint32_t>(a.offset)));
+            const uint32_t offset = offsets[a.stream] + static_cast<uint32_t>(a.offset);
             const auto stride = static_cast<GLsizei>(strides[a.stream]);
-            glEnableVertexAttribArray(slot);
+            used[a.slot] = true;
+            attribute_binding &bound = attributes_[a.slot];
+            const int kind = static_cast<int>(a.data);
+            if (bound.enabled && bound.buffer == buffer && bound.offset == offset && bound.stride == stride && bound.kind == kind && bound.components == a.components) {
+                continue;
+            }
+            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+            const auto *pointer = reinterpret_cast<const void *>(static_cast<uintptr_t>(offset));
+            if (!bound.enabled) {
+                glEnableVertexAttribArray(slot);
+            }
+            bound = {.buffer = buffer, .offset = offset, .stride = stride, .kind = kind, .components = a.components, .enabled = true};
             switch (a.data) {
             case layout_attribute::kind::FLOAT:
                 glVertexAttribPointer(slot, a.components, GL_FLOAT, GL_FALSE, stride, pointer);
@@ -778,11 +832,12 @@ void main() {
                 glVertexAttribPointer(slot, a.components, GL_SHORT, GL_FALSE, stride, pointer);
                 break;
             }
-            used[a.slot] = true;
         }
         for (GLuint i = 0; i < 7; ++i) {
-            if (used[i])
+            if (used[i] || !attributes_[i].enabled) {
                 continue;
+            }
+            attributes_[i] = attribute_binding{};
             glDisableVertexAttribArray(i);
             if (i == 2)
                 glVertexAttrib4f(i, 1.0f, 1.0f, 1.0f, 1.0f);
@@ -838,16 +893,18 @@ void main() {
         return true;
     }
 
-    // Appends to a ring buffer, orphaning it when full; returns the offset of the data.
-    auto gl_device::stream_user_data(GLenum target, GLuint buffer, size_t capacity, size_t &offset, const void *data, size_t size) -> size_t {
+    // Appends to a ring buffer at a multiple of `alignment`, orphaning it when full; returns the
+    // offset of the data. Vertices are aligned to their stride so a draw can address them by first
+    // vertex with the attribute pointers left at offset 0 (and so unchanged between draws).
+    auto gl_device::stream_user_data(GLenum target, GLuint buffer, size_t capacity, size_t &offset, const void *data, size_t size, size_t alignment) -> size_t {
         glBindBuffer(target, buffer);
-        if (offset + size > capacity) {
+        size_t at = (offset + alignment - 1) / alignment * alignment;
+        if (at + size > capacity) {
             glBufferData(target, static_cast<GLsizeiptr>(capacity), nullptr, GL_STREAM_DRAW);
-            offset = 0;
+            at = 0;
         }
-        const size_t at = offset;
         glBufferSubData(target, static_cast<GLintptr>(at), static_cast<GLsizeiptr>(size), data);
-        offset += (size + 15) & ~static_cast<size_t>(15);
+        offset = at + size;
         return at;
     }
 
@@ -858,12 +915,12 @@ void main() {
         const size_t bytes = static_cast<size_t>(primitive_vertex_count(type, primitive_count)) * stride;
         if (bytes > USER_VERTEX_CAPACITY)
             return false;
-        const size_t at = stream_user_data(GL_ARRAY_BUFFER, user_vertices_, USER_VERTEX_CAPACITY, user_vertices_offset_, vertices, bytes);
+        const size_t at = stream_user_data(GL_ARRAY_BUFFER, user_vertices_, USER_VERTEX_CAPACITY, user_vertices_offset_, vertices, bytes, stride);
         const GLuint buffers[4] = {user_vertices_, 0, 0, 0};
         const uint32_t strides[4] = {stride, 0, 0, 0};
-        const uint32_t offsets[4] = {static_cast<uint32_t>(at), 0, 0, 0};
+        const uint32_t offsets[4] = {0, 0, 0, 0};
         prepare_draw(*layout, buffers, strides, offsets);
-        submit(type, primitive_count, 0, 0, 0, 0, 0);
+        submit(type, primitive_count, 0, 0, 0, 0, static_cast<uint32_t>(at / stride));
         // as in Direct3D, stream 0 is unset afterwards
         streams_[0].buffer.reset();
         return true;
@@ -917,6 +974,7 @@ void main() {
         bind_target();
         if (viewport_dirty_)
             apply_viewport();
+        ++binding_epoch;
         glUseProgram(blit_program_);
         glBindVertexArray(blit_vertex_array_);
         glDisable(GL_DEPTH_TEST);
@@ -976,13 +1034,13 @@ void main() {
         const size_t index_bytes = static_cast<size_t>(primitive_vertex_count(type, primitive_count)) * (wide ? 4 : 2);
         if (vertex_bytes > USER_VERTEX_CAPACITY || index_bytes > USER_INDEX_CAPACITY)
             return false;
-        const size_t vertex_at = stream_user_data(GL_ARRAY_BUFFER, user_vertices_, USER_VERTEX_CAPACITY, user_vertices_offset_, vertices, vertex_bytes);
-        const size_t index_at = stream_user_data(GL_ELEMENT_ARRAY_BUFFER, user_indices_, USER_INDEX_CAPACITY, user_indices_offset_, indices, index_bytes);
+        const size_t vertex_at = stream_user_data(GL_ARRAY_BUFFER, user_vertices_, USER_VERTEX_CAPACITY, user_vertices_offset_, vertices, vertex_bytes, stride);
+        const size_t index_at = stream_user_data(GL_ELEMENT_ARRAY_BUFFER, user_indices_, USER_INDEX_CAPACITY, user_indices_offset_, indices, index_bytes, 16);
         const GLuint buffers[4] = {user_vertices_, 0, 0, 0};
         const uint32_t strides[4] = {stride, 0, 0, 0};
-        const uint32_t offsets[4] = {static_cast<uint32_t>(vertex_at), 0, 0, 0};
+        const uint32_t offsets[4] = {0, 0, 0, 0};
         prepare_draw(*layout, buffers, strides, offsets);
-        submit(type, primitive_count, wide ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, user_indices_, index_at, 0, 0);
+        submit(type, primitive_count, wide ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, user_indices_, index_at, static_cast<int32_t>(vertex_at / stride), 0);
         streams_[0].buffer.reset();
         indices_.reset();
         return true;

@@ -27,6 +27,7 @@ namespace metin2::gpu::opengl {
     }
 
     gl_vertex_buffer::~gl_vertex_buffer() {
+        ++binding_epoch;
         glDeleteBuffers(1, &name);
     }
 
@@ -61,6 +62,7 @@ namespace metin2::gpu::opengl {
     }
 
     gl_index_buffer::~gl_index_buffer() {
+        ++binding_epoch;
         glDeleteBuffers(1, &name);
     }
 
@@ -99,6 +101,7 @@ namespace metin2::gpu::opengl {
         }
         level_data_.resize(levels_);
         glGenTextures(1, &name);
+        ++binding_epoch;
         glBindTexture(GL_TEXTURE_2D, name);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, static_cast<GLint>(levels_) - 1);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
@@ -171,6 +174,7 @@ namespace metin2::gpu::opengl {
             return;
         const auto w = static_cast<GLsizei>(level_width(level));
         const auto h = static_cast<GLsizei>(level_height(level));
+        ++binding_epoch;
         glBindTexture(GL_TEXTURE_2D, name);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         if (info_->compressed)
@@ -193,6 +197,7 @@ namespace metin2::gpu::opengl {
     void gl_texture::generate_mipmaps() {
         if (levels_ <= 1 || info_->compressed)
             return;
+        ++binding_epoch;
         glBindTexture(GL_TEXTURE_2D, name);
         glGenerateMipmap(GL_TEXTURE_2D);
         for (uint32_t i = 1; i < levels_; ++i)
@@ -212,6 +217,7 @@ namespace metin2::gpu::opengl {
     void gl_texture::read_back(uint32_t level) {
         level_data &l = level_data_[level];
         l.shadow.assign(format_level_size(*info_, level_width(level), level_height(level)), 0);
+        ++binding_epoch;
         glBindTexture(GL_TEXTURE_2D, name);
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         if (info_->compressed)

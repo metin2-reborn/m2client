@@ -165,7 +165,7 @@ namespace metin2::gpu::opengl {
         void apply_sampler(int stage);
         void prepare_draw(const vertex_layout &layout, const GLuint *buffers, const uint32_t *strides, const uint32_t *offsets);
         void submit(primitive type, uint32_t primitive_count, GLenum index_type, GLuint indices, size_t index_offset, int32_t base_vertex, uint32_t first_vertex);
-        auto stream_user_data(GLenum target, GLuint buffer, size_t capacity, size_t &offset, const void *data, size_t size) -> size_t;
+        auto stream_user_data(GLenum target, GLuint buffer, size_t capacity, size_t &offset, const void *data, size_t size, size_t alignment) -> size_t;
 
         device_settings settings_;
         device_caps caps_;
@@ -205,6 +205,28 @@ namespace metin2::gpu::opengl {
         GLint blit_gamma_location_ = -1;
         GLint blit_antialias_location_ = -1;
         GLint blit_texel_location_ = -1;
+
+        // What prepare_draw last bound, so unchanged bindings are not sent again (see binding_epoch).
+        struct attribute_binding {
+            GLuint buffer = 0;
+            uint32_t offset = 0;
+            GLsizei stride = 0;
+            int kind = -1;
+            int components = 0;
+            bool enabled = false;
+        };
+        uint64_t binding_epoch_seen_ = ~uint64_t{0};
+        GLuint bound_program_ = 0;
+        GLuint bound_vertex_array_ = 0;
+        GLuint bound_textures_[2] = {0, 0};
+        GLuint bound_samplers_[2] = {0, 0};
+        attribute_binding attributes_[7];
+        void forget_bindings();
+
+        // An identical fixed-function block is not uploaded again. (A ring of blocks bound by range
+        // measured slower than rewriting one buffer on radeonsi.)
+        fixed_function_uniforms uploaded_uniforms_ = {};
+        bool uniforms_uploaded_ = false;
 
         bool uniforms_dirty_ = true;
         bool pipeline_dirty_ = true;
