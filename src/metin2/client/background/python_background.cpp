@@ -83,6 +83,7 @@ namespace metin2::inline client::inline background {
         switch (shadow_level_) {
         case SHADOW_NONE:
             map.set_draw_shadow(false);
+            map.set_draw_character_shadow(false);
             map.set_shadow_texture_size(512);
             break;
 

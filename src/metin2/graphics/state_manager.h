@@ -197,6 +197,12 @@ namespace metin2::inline graphics {
         auto draw_indexed_primitive(gpu::primitive primitive_type, uint32_t min_index, uint32_t num_vertices, uint32_t start_index, uint32_t prim_count) -> bool;
         auto draw_indexed_primitive_up(gpu::primitive primitive_type, uint32_t min_vertex_index, uint32_t num_vertex_indices, uint32_t primitive_count, const void *index_data, gpu::format index_data_format, const void *vertex_stream_zero_data, uint32_t vertex_stream_zero_stride) -> bool;
 
+        auto create_occlusion_query() -> uint32_t;
+        void destroy_occlusion_query(uint32_t query);
+        void begin_occlusion_query(uint32_t query);
+        void end_occlusion_query();
+        auto occlusion_query_result(uint32_t query, uint32_t &samples) -> bool;
+
         auto render_state(gpu::state type) -> uint32_t;
 
       private:
@@ -208,6 +214,7 @@ namespace metin2::inline graphics {
         bool scene_;
         uint32_t best_min_filter_;
         uint32_t best_mag_filter_;
+        uint32_t max_anisotropy_;
         gpu::device &device_;
     };
 

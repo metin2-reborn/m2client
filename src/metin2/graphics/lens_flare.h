@@ -87,8 +87,6 @@ namespace metin2::inline graphics {
         bool flare_visible_, draw_flare_, draw_bright_screen_;
         float sun_size_;
         flare flare_value_;
-        std::vector<float> control_pixels_;
-        std::vector<float> test_pixels_;
         bool enabled_;
         bool show_main_flare_;
         float max_brightness_;
@@ -96,7 +94,20 @@ namespace metin2::inline graphics {
 
         graphic_image_instance sun_flare_image_instance_;
 
-        void read_depth_pixels(float *pixels);
+        // How much of the sun the scene leaves uncovered: a small probe quad at the sun's screen
+        // position is drawn once without and once with the depth test inside two occlusion queries,
+        // and their ratio is read back the next frame. Two probes alternate so nothing waits on the GPU.
+        struct occlusion_probe {
+            uint32_t total_query = 0;
+            uint32_t visible_query = 0;
+            bool pending = false;
+        };
+        occlusion_probe probes_[2];
+        int probe_index_ = 0;
+        float visibility_ = 1.0f;
+
+        void measure_occlusion();
+        void draw_occlusion_probe();
         void clamp_brightness();
     };
 }

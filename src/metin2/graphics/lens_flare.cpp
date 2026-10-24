@@ -19,7 +19,9 @@
 #include "resource_manager.h"
 #include "state_manager.h"
 
+#include <algorithm>
 #include <math.h>
+#include <metin2/core/timer.h>
 #include <metin2/gpu/types.h>
 
 namespace metin2::inline graphics {
@@ -78,12 +80,17 @@ namespace metin2::inline graphics {
                                enabled_(true),
                                show_main_flare_(true),
                                max_brightness_(1.0f) {
-        control_pixels_.resize(c_nDepthTestDimension * c_nDepthTestDimension);
-        test_pixels_.resize(c_nDepthTestDimension * c_nDepthTestDimension);
         color_value_[0] = color_value_[1] = color_value_[2] = 1.0f;
     }
 
-    lens_flare::~lens_flare() = default;
+    lens_flare::~lens_flare() {
+        if (!device_)
+            return;
+        for (occlusion_probe &probe : probes_) {
+            STATEMANAGER.destroy_occlusion_query(probe.total_query);
+            STATEMANAGER.destroy_occlusion_query(probe.visible_query);
+        }
+    }
 
     auto lens_flare::interpolate(float start, float end, float percent) -> float {
         return start + (end - start) * percent;
@@ -307,22 +314,93 @@ namespace metin2::inline graphics {
     }
 
     void lens_flare::adjust_brightness() {
-        if (enabled_) {
-            read_depth_pixels(test_pixels_.data());
-
-            int different = 0;
-
-            for (int i = 0; i < c_nDepthTestDimension * c_nDepthTestDimension; ++i)
-                if (test_pixels_[i] != control_pixels_[i])
-                    ++different;
-
-            float adjust = (static_cast<float>(different) / (c_nDepthTestDimension * c_nDepthTestDimension));
-            adjust = sqrtf(adjust) * 0.85f;
-            after_bright_ *= 1.0f - adjust;
-        }
+        if (!enabled_)
+            return;
+        if (flare_visible_)
+            measure_occlusion();
+        after_bright_ *= visibility_;
     }
 
-    void lens_flare::read_depth_pixels(float * /*pPixels*/) {
+    void lens_flare::measure_occlusion() {
+        occlusion_probe &done = probes_[probe_index_ ^ 1];
+        if (done.pending) {
+            uint32_t total = 0;
+            uint32_t visible = 0;
+            if (STATEMANAGER.occlusion_query_result(done.total_query, total) && STATEMANAGER.occlusion_query_result(done.visible_query, visible)) {
+                done.pending = false;
+                // A probe clipped away entirely says nothing, so the last value stays.
+                if (total > 0) {
+                    const float target = static_cast<float>(visible) / static_cast<float>(total);
+                    visibility_ += (target - visibility_) * std::min(1.0f, get_timer().elapsed_second() * 10.0f);
+                }
+            }
+        }
+
+        occlusion_probe &next = probes_[probe_index_];
+        if (next.pending)
+            return;
+        if (!next.total_query) {
+            next.total_query = STATEMANAGER.create_occlusion_query();
+            next.visible_query = STATEMANAGER.create_occlusion_query();
+        }
+
+        math::matrix proj;
+        proj = math::matrix_ortho_off_center_rh(0.0f, viewport_.width, viewport_.height, 0.0f, -1.0f, 1.0f);
+        STATEMANAGER.save_transform(gpu::transform::PROJECTION, &proj);
+        STATEMANAGER.save_transform(gpu::transform::VIEW, &identity_);
+        STATEMANAGER.set_transform(gpu::transform::WORLD, &identity_);
+
+        STATEMANAGER.save_render_state(gpu::state::COLOR_WRITE_ENABLE, 0);
+        STATEMANAGER.save_render_state(gpu::state::Z_WRITE_ENABLE, false);
+        STATEMANAGER.save_render_state(gpu::state::Z_FUNC, gpu::compare::LESS_EQUAL);
+        STATEMANAGER.save_render_state(gpu::state::LIGHTING, false);
+        STATEMANAGER.save_render_state(gpu::state::FOG_ENABLE, false);
+        STATEMANAGER.save_render_state(gpu::state::CULL_MODE, gpu::cull::NONE);
+        STATEMANAGER.save_render_state(gpu::state::ALPHA_TEST_ENABLE, false);
+        STATEMANAGER.save_render_state(gpu::state::ALPHA_BLEND_ENABLE, false);
+        STATEMANAGER.set_texture(0, nullptr);
+        STATEMANAGER.set_texture(1, nullptr);
+        STATEMANAGER.set_vertex_shader(gpu::fvf::XYZ | gpu::fvf::DIFFUSE | gpu::fvf::TEX1);
+
+        STATEMANAGER.save_render_state(gpu::state::Z_ENABLE, false);
+        STATEMANAGER.begin_occlusion_query(next.total_query);
+        draw_occlusion_probe();
+        STATEMANAGER.end_occlusion_query();
+        STATEMANAGER.set_render_state(gpu::state::Z_ENABLE, true);
+        STATEMANAGER.begin_occlusion_query(next.visible_query);
+        draw_occlusion_probe();
+        STATEMANAGER.end_occlusion_query();
+        STATEMANAGER.restore_render_state(gpu::state::Z_ENABLE);
+
+        STATEMANAGER.restore_render_state(gpu::state::ALPHA_BLEND_ENABLE);
+        STATEMANAGER.restore_render_state(gpu::state::ALPHA_TEST_ENABLE);
+        STATEMANAGER.restore_render_state(gpu::state::CULL_MODE);
+        STATEMANAGER.restore_render_state(gpu::state::FOG_ENABLE);
+        STATEMANAGER.restore_render_state(gpu::state::LIGHTING);
+        STATEMANAGER.restore_render_state(gpu::state::Z_FUNC);
+        STATEMANAGER.restore_render_state(gpu::state::Z_WRITE_ENABLE);
+        STATEMANAGER.restore_render_state(gpu::state::COLOR_WRITE_ENABLE);
+        STATEMANAGER.restore_transform(gpu::transform::VIEW);
+        STATEMANAGER.restore_transform(gpu::transform::PROJECTION);
+
+        next.pending = true;
+        probe_index_ ^= 1;
+    }
+
+    void lens_flare::draw_occlusion_probe() {
+        const float half = c_nDepthTestDimension * 0.5f;
+        const float x = flare_win_pos_[0];
+        const float y = flare_win_pos_[1];
+        // Just inside the far plane of the orthographic projection (depth 0.9999), so everything the
+        // scene drew in front of its own far plane covers the probe.
+        const float z = -0.9998f;
+        const vertex vertices[4] = {
+            {x - half, y - half, z, 0xffffffff, 0.0f, 0.0f},
+            {x - half, y + half, z, 0xffffffff, 0.0f, 1.0f},
+            {x + half, y - half, z, 0xffffffff, 1.0f, 0.0f},
+            {x + half, y + half, z, 0xffffffff, 1.0f, 1.0f},
+        };
+        STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, vertices, sizeof(vertex));
     }
 
     void lens_flare::clamp_brightness() {

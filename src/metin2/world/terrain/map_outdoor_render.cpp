@@ -169,6 +169,7 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::render_after_lens_flare() {
+        screen_filter_value_.render();
         lens_flare_value_.adjust_brightness();
         lens_flare_value_.draw_flare();
     }
@@ -418,7 +419,10 @@ namespace metin2::inline world::inline terrain {
 
         if (vct_blend_thing_inst_sort.size() != 0) {
 
-            std::sort(vct_blend_thing_inst_sort.begin(), vct_blend_thing_inst_sort.end(), map_outdoor_less_thing_instance_ptr_render_order());
+            // Blended objects must be drawn farthest first, the opposite of the opaque order.
+            std::sort(vct_blend_thing_inst_sort.begin(), vct_blend_thing_inst_sort.end(), [](graphic_thing_instance *left, graphic_thing_instance *right) -> bool {
+                return map_outdoor_less_thing_instance_ptr_render_order()(right, left);
+            });
 
             STATEMANAGER.save_render_state(gpu::state::Z_WRITE_ENABLE, true);
             STATEMANAGER.save_render_state(gpu::state::ALPHA_BLEND_ENABLE, true);

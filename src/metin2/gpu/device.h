@@ -205,6 +205,15 @@ namespace metin2::gpu {
         virtual auto draw_user(primitive type, uint32_t primitive_count, const void *vertices, uint32_t stride) -> bool = 0;
         virtual auto draw_indexed_user(primitive type, uint32_t min_index, uint32_t vertex_count, uint32_t primitive_count, const void *indices, format index_format, const void *vertices, uint32_t stride) -> bool = 0;
 
+        // An occlusion query counts the samples the draws between begin and end leave after the depth
+        // test. The result is read without waiting: occlusion_query_result is false until the GPU has
+        // finished those draws, usually a frame later, so callers keep a query per frame in flight.
+        virtual auto create_occlusion_query() -> uint32_t = 0;
+        virtual void destroy_occlusion_query(uint32_t query) = 0;
+        virtual void begin_occlusion_query(uint32_t query) = 0;
+        virtual void end_occlusion_query() = 0;
+        virtual auto occlusion_query_result(uint32_t query, uint32_t &samples) -> bool = 0;
+
         // Called around the buffer swap in present (the dev tools and window code hook in here).
         void set_present_hooks(std::function<void()> before_swap, std::function<void()> after_swap) {
             before_swap_ = std::move(before_swap);

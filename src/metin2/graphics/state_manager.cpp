@@ -63,10 +63,7 @@ namespace metin2::inline graphics {
         const gpu::device_caps &caps = device_.caps();
         best_mag_filter_ = caps.anisotropic_filter ? gpu::filter::ANISOTROPIC : gpu::filter::LINEAR;
         best_min_filter_ = caps.anisotropic_filter ? gpu::filter::ANISOTROPIC : gpu::filter::LINEAR;
-
-        const uint32_t max_anisotropy = std::min(caps.max_anisotropy, 4u);
-        for (uint32_t i = 0; i < STATEMANAGER_MAX_STAGES; ++i)
-            device_.set_texture_stage_state(i, gpu::stage_state::MAX_ANISOTROPY, max_anisotropy);
+        max_anisotropy_ = std::min(caps.max_anisotropy, 16u);
 
         set_default_state();
     }
@@ -86,6 +83,10 @@ namespace metin2::inline graphics {
 
         scene_ = false;
         force_ = true;
+
+        // A device reset clears the anisotropy with the rest of the state.
+        for (uint32_t i = 0; i < STATEMANAGER_MAX_STAGES; ++i)
+            device_.set_texture_stage_state(i, gpu::stage_state::MAX_ANISOTROPY, max_anisotropy_);
 
         math::matrix identity;
         identity = math::matrix_identity();
@@ -239,13 +240,8 @@ namespace metin2::inline graphics {
         set_texture_stage_state(6, gpu::stage_state::TEXCOORD_INDEX, 6);
         set_texture_stage_state(7, gpu::stage_state::TEXCOORD_INDEX, 7);
 
-        set_texture_stage_state(0, gpu::stage_state::MIN_FILTER, gpu::filter::LINEAR);
-        set_texture_stage_state(0, gpu::stage_state::MAG_FILTER, gpu::filter::LINEAR);
-        set_texture_stage_state(0, gpu::stage_state::MIP_FILTER, gpu::filter::LINEAR);
-
-        set_texture_stage_state(1, gpu::stage_state::MIN_FILTER, gpu::filter::LINEAR);
-        set_texture_stage_state(1, gpu::stage_state::MAG_FILTER, gpu::filter::LINEAR);
-        set_texture_stage_state(1, gpu::stage_state::MIP_FILTER, gpu::filter::LINEAR);
+        set_best_filtering(0);
+        set_best_filtering(1);
 
         set_texture_stage_state(2, gpu::stage_state::MIN_FILTER, gpu::filter::LINEAR);
         set_texture_stage_state(2, gpu::stage_state::MAG_FILTER, gpu::filter::LINEAR);
@@ -466,6 +462,26 @@ namespace metin2::inline graphics {
 
     auto state_manager::draw_indexed_primitive(gpu::primitive primitive_type, uint32_t min_index, uint32_t num_vertices, uint32_t start_index, uint32_t prim_count) -> bool {
         return device_.draw_indexed(primitive_type, min_index, num_vertices, start_index, prim_count);
+    }
+
+    auto state_manager::create_occlusion_query() -> uint32_t {
+        return device_.create_occlusion_query();
+    }
+
+    void state_manager::destroy_occlusion_query(uint32_t query) {
+        device_.destroy_occlusion_query(query);
+    }
+
+    void state_manager::begin_occlusion_query(uint32_t query) {
+        device_.begin_occlusion_query(query);
+    }
+
+    void state_manager::end_occlusion_query() {
+        device_.end_occlusion_query();
+    }
+
+    auto state_manager::occlusion_query_result(uint32_t query, uint32_t &samples) -> bool {
+        return device_.occlusion_query_result(query, samples);
     }
 
     auto state_manager::draw_indexed_primitive_up(gpu::primitive primitive_type, uint32_t min_vertex_index, uint32_t num_vertex_indices, uint32_t primitive_count, const void *index_data, gpu::format index_data_format, const void *vertex_stream_zero_data, uint32_t vertex_stream_zero_stride) -> bool {

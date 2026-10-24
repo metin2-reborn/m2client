@@ -34,9 +34,7 @@ namespace metin2::inline ui {
     }
 
     void python_graphic::set_game_render_state() {
-        STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::MIN_FILTER, gpu::filter::LINEAR);
-        STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::MAG_FILTER, gpu::filter::LINEAR);
-        STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::MIP_FILTER, gpu::filter::LINEAR);
+        STATEMANAGER.set_best_filtering(0);
 
         STATEMANAGER.set_render_state(gpu::state::ALPHA_BLEND_ENABLE, false);
         STATEMANAGER.set_render_state(gpu::state::LIGHTING, true);

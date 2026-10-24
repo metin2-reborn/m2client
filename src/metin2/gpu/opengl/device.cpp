@@ -810,6 +810,36 @@ namespace metin2::gpu::opengl {
         return true;
     }
 
+    auto gl_device::create_occlusion_query() -> uint32_t {
+        GLuint query = 0;
+        glGenQueries(1, &query);
+        return query;
+    }
+
+    void gl_device::destroy_occlusion_query(uint32_t query) {
+        if (query)
+            glDeleteQueries(1, &query);
+    }
+
+    void gl_device::begin_occlusion_query(uint32_t query) {
+        glBeginQuery(GL_SAMPLES_PASSED, query);
+    }
+
+    void gl_device::end_occlusion_query() {
+        glEndQuery(GL_SAMPLES_PASSED);
+    }
+
+    auto gl_device::occlusion_query_result(uint32_t query, uint32_t &samples) -> bool {
+        GLuint available = 0;
+        glGetQueryObjectuiv(query, GL_QUERY_RESULT_AVAILABLE, &available);
+        if (!available)
+            return false;
+        GLuint result = 0;
+        glGetQueryObjectuiv(query, GL_QUERY_RESULT, &result);
+        samples = result;
+        return true;
+    }
+
     auto gl_device::draw_indexed_user(primitive type, uint32_t min_index, uint32_t vertex_count, uint32_t primitive_count, const void *indices, format index_format, const void *vertices, uint32_t stride) -> bool {
         const vertex_layout *layout = current_layout();
         if (!layout || !vertices || !indices || stride == 0)

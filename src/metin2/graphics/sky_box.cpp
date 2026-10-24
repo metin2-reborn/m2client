@@ -780,7 +780,9 @@ namespace metin2::inline graphics {
         STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::ALPHA_ARG1, gpu::texture_arg::TEXTURE);
 
         math::matrix proj_cloud;
-        proj_cloud = math::matrix_perspective_fov_rh(math::PI * 0.25f, 1.33333f, 50.0f, 999999.0f);
+        // The cloud layer was authored for a 45° vertical field of view; the real aspect keeps it from
+        // stretching on wide screens.
+        proj_cloud = math::matrix_perspective_fov_rh(math::PI * 0.25f, aspect_, 50.0f, 999999.0f);
         STATEMANAGER.set_transform(gpu::transform::WORLD, &world_cloud_);
         STATEMANAGER.save_transform(gpu::transform::PROJECTION, &proj_cloud);
         STATEMANAGER.set_texture(0, cloud_graphic_image_instance->texture_pointer()->gpu_texture());

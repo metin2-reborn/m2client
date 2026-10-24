@@ -115,7 +115,7 @@ namespace metin2::inline world::inline terrain {
 
         bool is_dynamic_shadow = terrain_patch_proxy->is_in(tprs.player, 3000.0f);
 
-        if (!draw_chr_shadow_)
+        if (!draw_shadow_ || !draw_chr_shadow_)
             is_dynamic_shadow = false;
 
         int32_t patch_num = terrain_patch_proxy->patch_num();
@@ -189,7 +189,10 @@ namespace metin2::inline world::inline terrain {
                 break;
         }
 
-        if (draw_shadow_) {
+        // The lighting pass: the splats are unlit, so it always runs; the shadow maps join it only when
+        // shadows are on (an unbound stage samples white).
+        {
+            gpu::texture *shadow_texture = draw_shadow_ ? terrain->shadow_texture() : nullptr;
             software_transform_patch_set_shadow_stream(trans_vertex);
             software_transform_patch_apply_static_shadow_render_state();
 
@@ -201,12 +204,12 @@ namespace metin2::inline world::inline terrain {
             if (is_fog_enable) {
                 STATEMANAGER.set_render_state(gpu::state::FOG_ENABLE, true);
                 STATEMANAGER.set_render_state(gpu::state::FOG_COLOR, 0xFFFFFFFF);
-                STATEMANAGER.set_texture(0, terrain->shadow_texture());
+                STATEMANAGER.set_texture(0, shadow_texture);
                 STATEMANAGER.draw_indexed_primitive(primitive_type, 0, patch_terrain_vertex_count_, 0, primitive_count);
                 STATEMANAGER.set_render_state(gpu::state::FOG_COLOR, tprs.fog_color);
                 STATEMANAGER.set_render_state(gpu::state::FOG_ENABLE, false);
             } else {
-                STATEMANAGER.set_texture(0, terrain->shadow_texture());
+                STATEMANAGER.set_texture(0, shadow_texture);
                 STATEMANAGER.draw_indexed_primitive(primitive_type, 0, patch_terrain_vertex_count_, 0, primitive_count);
             }
 

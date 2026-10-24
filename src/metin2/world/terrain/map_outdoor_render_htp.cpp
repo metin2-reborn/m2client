@@ -273,7 +273,9 @@ namespace metin2::inline world::inline terrain {
                 break;
         }
 
-        if (draw_shadow_) {
+        // The splats above are unlit: this pass multiplies them by the vertex lighting and, when shadows
+        // are on, by the baked and the character shadow maps. An unbound stage samples white.
+        {
             STATEMANAGER.set_render_state(gpu::state::LIGHTING, true);
 
             STATEMANAGER.set_render_state(gpu::state::FOG_COLOR, 0xFFFFFFFF);
@@ -284,7 +286,7 @@ namespace metin2::inline world::inline terrain {
             shadow_tex_transform = tex_transform * static_shadow_;
 
             STATEMANAGER.set_transform(gpu::transform::TEXTURE0, &shadow_tex_transform);
-            STATEMANAGER.set_texture(0, terrain->shadow_texture());
+            STATEMANAGER.set_texture(0, draw_shadow_ ? terrain->shadow_texture() : nullptr);
 
             STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::COLOR_ARG1, gpu::texture_arg::TEXTURE);
             STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::COLOR_ARG2, gpu::texture_arg::CURRENT);
@@ -295,7 +297,7 @@ namespace metin2::inline world::inline terrain {
             STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::ADDRESS_U, gpu::address::CLAMP);
             STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::ADDRESS_V, gpu::address::CLAMP);
 
-            if (draw_chr_shadow_) {
+            if (draw_shadow_ && draw_chr_shadow_) {
                 STATEMANAGER.set_transform(gpu::transform::TEXTURE1, &dynamic_shadow_);
 
                 STATEMANAGER.set_texture(1, character_shadow_target_.texture());
@@ -313,7 +315,7 @@ namespace metin2::inline world::inline terrain {
             STATEMANAGER.draw_indexed_primitive(primitive_type, 0, patch_terrain_vertex_count_, 0, primitive_count);
             ++rendered_splat_num_;
 
-            if (draw_chr_shadow_) {
+            if (draw_shadow_ && draw_chr_shadow_) {
                 STATEMANAGER.set_texture_stage_state(1, gpu::stage_state::COLOR_ARG1, gpu::texture_arg::CURRENT);
                 STATEMANAGER.set_texture_stage_state(1, gpu::stage_state::COLOR_OP, gpu::texture_op::SELECT_ARG1);
                 STATEMANAGER.set_texture_stage_state(1, gpu::stage_state::ALPHA_ARG1, gpu::texture_arg::TEXTURE);

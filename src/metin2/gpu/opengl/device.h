@@ -142,6 +142,12 @@ namespace metin2::gpu::opengl {
         auto draw_user(primitive type, uint32_t primitive_count, const void *vertices, uint32_t stride) -> bool override;
         auto draw_indexed_user(primitive type, uint32_t min_index, uint32_t vertex_count, uint32_t primitive_count, const void *indices, format index_format, const void *vertices, uint32_t stride) -> bool override;
 
+        auto create_occlusion_query() -> uint32_t override;
+        void destroy_occlusion_query(uint32_t query) override;
+        void begin_occlusion_query(uint32_t query) override;
+        void end_occlusion_query() override;
+        auto occlusion_query_result(uint32_t query, uint32_t &samples) -> bool override;
+
       private:
         struct stream {
             std::shared_ptr<gl_vertex_buffer> buffer;
