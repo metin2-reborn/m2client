@@ -469,16 +469,13 @@ namespace metin2::inline client::inline characters {
         pixel_position p_pos_eye;
 
         auto operator()(instance_base *inst_left, instance_base *inst_right) -> bool {
-            int left_dead_point = inst_left->is_dead();
-            int right_dead_point = inst_right->is_dead();
+            const int left_dead_point = inst_left->is_dead();
+            const int right_dead_point = inst_right->is_dead();
 
-            if (left_dead_point < right_dead_point)
-                return true;
+            if (left_dead_point != right_dead_point)
+                return left_dead_point < right_dead_point;
 
-            if (inst_left->calculate_distance_sq3d(p_pos_eye) < inst_right->calculate_distance_sq3d(p_pos_eye))
-                return true;
-
-            return false;
+            return inst_left->calculate_distance_sq3d(p_pos_eye) < inst_right->calculate_distance_sq3d(p_pos_eye);
         }
     };
 

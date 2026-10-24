@@ -2,6 +2,7 @@
 
 #include "python_character_manager.h"
 
+#include <cmath>
 #include <metin2/client/background/python_background.h>
 #include <metin2/core/random.h>
 #include <metin2/world/terrain/terrain.h>
@@ -156,10 +157,10 @@ namespace metin2::inline client::inline characters {
 
                 float half_fan_rot = (half_fan_rot_max - half_fan_rot_min) - rpm * each_inst_distance + half_fan_rot_min;
 
-                float min_dst_dir_rot = dst_rot - half_fan_rot;
-                float max_dst_dir_rot = dst_rot + half_fan_rot;
+                // The shortest angle between the two headings, so the fan also works across 0/360°.
+                const float delta_rot = std::fabs(std::fmod(each_inst_dir_rot - dst_rot + 540.0f, 360.0f) - 180.0f);
 
-                if (each_inst_dir_rot >= min_dst_dir_rot && each_inst_dir_rot <= max_dst_dir_rot)
+                if (delta_rot <= half_fan_rot)
                     map_inst_near.insert(std::multimap<float, instance_base *>::value_type(each_inst_distance, inst_each));
             }
         }

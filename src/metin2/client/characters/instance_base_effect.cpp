@@ -103,8 +103,9 @@ namespace metin2::inline client::inline characters {
             else
                 eft_mgr.create_effect(affect_effect_crcs_[EFFECT_DAMAGE_TARGETMISS], pos, rot);
             return;
-        } else if (flag & DAMAGE_CRITICAL) {
         }
+        if ((flag & DAMAGE_CRITICAL) && affect_effect_crcs_[EFFECT_DAMAGE_CRITICAL])
+            eft_mgr.create_effect(affect_effect_crcs_[EFFECT_DAMAGE_CRITICAL], pos, rot);
 
         std::string damage_type;
         uint32_t crc_eft = 0;

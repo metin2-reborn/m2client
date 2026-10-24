@@ -200,6 +200,7 @@ namespace metin2::inline graphics {
 
         // Screen Effect - Waving, Flashing and so on..
         static uint32_t waving_end_time_;
+        static uint32_t waving_duration_;
         static int waving_power_;
         static uint32_t flashing_end_time_;
         static math::color flashing_color_;

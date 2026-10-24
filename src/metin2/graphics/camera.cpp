@@ -1,4 +1,5 @@
 #include "camera.h"
+#include <algorithm>
 #include <metin2/core/utils.h>
 
 namespace metin2::inline graphics {
@@ -70,7 +71,9 @@ namespace metin2::inline graphics {
         if (is_lock())
             return;
 
-        angular_velocity_.y = (float)(len)*resistance_;
+        // Wheel notches add up (one notch is 120), bounded so a fast scroll stays controllable.
+        const float limit = 4.0f * 120.0f * resistance_;
+        angular_velocity_.y = std::clamp(angular_velocity_.y + static_cast<float>(len) * resistance_, -limit, limit);
     }
 
     void camera::begin_drag(int mouse_x, int mouse_y) {
@@ -249,7 +252,7 @@ namespace metin2::inline graphics {
         const auto vv3 = (center_ray + object_collision_radius_ * cross_);
         const auto vv4 = (center_ray - object_collision_radius_ * cross_);
         const auto vv5 = (center_ray + object_collision_radius_ * up_);
-        const auto vv6 = (center_ray + object_collision_radius_ * up_);
+        const auto vv6 = (center_ray - object_collision_radius_ * up_);
         left_object_collision_ray_.set_direction(center_ray + object_collision_radius_ * cross_, math::length(vv3));
         right_object_collision_ray_.set_direction(center_ray - object_collision_radius_ * cross_, math::length(vv4));
         top_object_collision_ray_.set_direction(center_ray + object_collision_radius_ * up_, math::length(vv5));

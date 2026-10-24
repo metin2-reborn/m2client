@@ -1,4 +1,5 @@
 #include "grp_base.h"
+#include <algorithm>
 #include <metin2/core/random.h>
 #include <metin2/core/timer.h>
 #include <metin2/core/utils.h>
@@ -50,6 +51,7 @@ namespace metin2::inline graphics {
     float graphic_base::aspect_;
 
     uint32_t graphic_base::waving_end_time_;
+    uint32_t graphic_base::waving_duration_;
     int graphic_base::waving_power_;
     uint32_t graphic_base::flashing_end_time_;
     math::color graphic_base::flashing_color_;
@@ -137,12 +139,15 @@ namespace metin2::inline graphics {
     }
 
     void graphic_base::set_position_camera(float fx, float fy, float fz, float distance, float pitch, float roll) {
-        if (waving_end_time_ > get_timer().current_millisecond()) {
-            if (waving_power_ > 0) {
-                fx += float(metin2::random::number(0, static_cast<int>(waving_power_) - 1)) / 10.0f;
-                fy += float(metin2::random::number(0, static_cast<int>(waving_power_) - 1)) / 10.0f;
-                fz += float(metin2::random::number(0, static_cast<int>(waving_power_) - 1)) / 10.0f;
-            }
+        const uint32_t now = get_timer().current_millisecond();
+        if (waving_end_time_ > now && waving_power_ > 0 && waving_duration_ > 0) {
+            // A shake around the true position that dies out over the event, instead of a one-sided
+            // offset that stops abruptly.
+            const float left = static_cast<float>(waving_end_time_ - now) / static_cast<float>(waving_duration_);
+            const float amplitude = static_cast<float>(waving_power_) / 10.0f * std::min(1.0f, left);
+            fx += amplitude * static_cast<float>(metin2::random::number(-1000, 1000)) / 1000.0f;
+            fy += amplitude * static_cast<float>(metin2::random::number(-1000, 1000)) / 1000.0f;
+            fz += amplitude * static_cast<float>(metin2::random::number(-1000, 1000)) / 1000.0f;
         }
 
         camera *camera = get_camera_manager().current_camera();
@@ -244,7 +249,8 @@ namespace metin2::inline graphics {
     }
 
     void graphic_base::set_screen_effect_waving(float during_time, int power) {
-        waving_end_time_ = get_timer().current_millisecond() + int32_t(during_time * 1000.0f);
+        waving_duration_ = static_cast<uint32_t>(during_time * 1000.0f);
+        waving_end_time_ = get_timer().current_millisecond() + waving_duration_;
         waving_power_ = power;
     }
 
