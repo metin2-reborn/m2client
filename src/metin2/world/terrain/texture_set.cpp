@@ -1,18 +1,16 @@
 #include "texture_set.h"
-#include <metin2/core/parse.h>
 
 #include "terrain_type.h"
 
-#include <cstdio>
-#include <cstdlib>
-
+#include <metin2/core/parse.h>
 #include <metin2/core/stl.h>
 #include <metin2/core/util.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/log/log.h>
 
-namespace metin2::inline world::inline terrain {
+#include <cstdio>
 
+namespace metin2::inline world::inline terrain {
     texture_set::texture_set() = default;
 
     texture_set::~texture_set() {
@@ -20,7 +18,7 @@ namespace metin2::inline world::inline terrain {
     }
 
     void texture_set::create() {
-        resource *resource = get_resource_manager().resource_pointer("d:/ymir work/special/error.tga");
+        auto *resource = get_resource_manager().resource_pointer("d:/ymir work/special/error.tga");
         error_texture_.image_instance.set_image_pointer(static_cast<graphic_image *>(resource));
         add_empty_texture(); // The eraser texture has to be the first entry.
     }
@@ -61,10 +59,11 @@ namespace metin2::inline world::inline terrain {
         for (int i = 0; i < i_count; ++i) {
             snprintf(texture_name, sizeof(texture_name), "texture%03d", i + 1);
 
-            if (token_vector_map.end() == token_vector_map.find(texture_name))
+            if (token_vector_map.end() == token_vector_map.find(texture_name)) {
                 continue;
+            }
 
-            const token_vector &vector = token_vector_map[texture_name];
+            const auto &vector = token_vector_map[texture_name];
             if (vector.size() < 8) {
                 metin2::log::error("Texture {} needs 8 values in texture set {}", texture_name, texture_set_file_name);
                 continue;
@@ -91,11 +90,13 @@ namespace metin2::inline world::inline terrain {
             us_begin = static_cast<unsigned short>(metin2::to_number<int>(begin.c_str()));
             us_end = static_cast<unsigned short>(metin2::to_number<int>(end.c_str()));
 
-            if (!set_texture(i + 1, file_name.c_str(), fu_scale, fv_scale, fu_offset, fv_offset, splat, us_begin, us_end, terrain_tex_coord_base))
+            if (!set_texture(i + 1, file_name.c_str(), fu_scale, fv_scale, fu_offset, fv_offset, splat, us_begin, us_end, terrain_tex_coord_base)) {
                 metin2::log::error("Cannot set texture {}", file_name.c_str());
+            }
         }
 
         file_name_.assign(texture_set_file_name);
+
         return true;
     }
 
@@ -115,8 +116,9 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto texture_set::texture(uint32_t index) -> terrain_texture & {
-        if (texture_count() <= index)
+        if (texture_count() <= index) {
             return error_texture_;
+        }
 
         return textures_[index];
     }
@@ -137,8 +139,7 @@ namespace metin2::inline world::inline terrain {
             return false;
         }
 
-        resource *resource = get_resource_manager().resource_pointer(file_name);
-
+        auto *resource = get_resource_manager().resource_pointer(file_name);
         if (!resource || !resource->is_type(graphic_image::type())) {
             metin2::log::error("Texture {} is not an image file", file_name);
             return false;
@@ -156,10 +157,10 @@ namespace metin2::inline world::inline terrain {
         tex.end = us_end;
         tex.image_instance.set_image_pointer(static_cast<graphic_image *>(resource));
         tex.gpu_texture = tex.image_instance.texture_pointer()->gpu_texture();
-
         tex.transform = math::matrix_scaling(terrain_tex_coord_base * tex.u_scale, -terrain_tex_coord_base * tex.v_scale, 0.0f);
         tex.transform._41 = tex.u_offset;
         tex.transform._42 = -tex.v_offset;
+
         return true;
     }
 }

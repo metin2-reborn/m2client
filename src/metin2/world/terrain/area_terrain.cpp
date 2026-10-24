@@ -1,15 +1,14 @@
+#include "area_terrain.h"
 
+#include <metin2/core/timer.h>
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/graphics/state_manager.h>
 #include <metin2/log/log.h>
 
-#include <metin2/core/timer.h>
-#include "area_terrain.h"
 #include "map_outdoor.h"
 
 namespace metin2::inline world::inline terrain {
-
     dynamic_pool<terrain_area> terrain_area::pool_value;
 
     void terrain_area::destroy_system() {
@@ -54,9 +53,11 @@ namespace metin2::inline world::inline terrain {
         ready_ = false;
         marked_ = false;
 
-        for (uint8_t y = 0; y < PATCH_YCOUNT; ++y)
-            for (uint8_t x = 0; x < PATCH_XCOUNT; ++x)
+        for (uint8_t y = 0; y < PATCH_YCOUNT; ++y) {
+            for (uint8_t x = 0; x < PATCH_XCOUNT; ++x) {
                 terrain_patch_list_[y * PATCH_XCOUNT + x].clear();
+            }
+        }
 
         return true;
     }
@@ -80,9 +81,9 @@ namespace metin2::inline world::inline terrain {
         auto *image = (graphic_image *)get_resource_manager().resource_pointer(shadow_file_name);
         shadow_graphic_image_instance_.set_image_pointer(image);
 
-        if (!shadow_graphic_image_instance_.texture_pointer()->is_empty())
+        if (!shadow_graphic_image_instance_.texture_pointer()->is_empty()) {
             shadow_texture_ = shadow_graphic_image_instance_.texture_pointer()->gpu_texture();
-        else {
+        } else {
             metin2::log::error("Shadow texture is empty");
             shadow_texture_ = nullptr;
         }
@@ -122,17 +123,21 @@ namespace metin2::inline world::inline terrain {
     auto terrain_area::get_normal(int ix, int iy, math::vector3 *normal) -> bool {
         int32_t map_width = XSIZE * CELLSCALE;
         int32_t map_height = YSIZE * CELLSCALE;
-        while (ix < 0)
+        while (ix < 0) {
             ix += map_width;
+        }
 
-        while (iy < 0)
+        while (iy < 0) {
             iy += map_height;
+        }
 
-        while (ix > map_width)
+        while (ix > map_width) {
             ix -= map_width;
+        }
 
-        while (iy > map_height)
+        while (iy > map_height) {
             iy -= map_height;
+        }
 
         ix /= CELLSCALE;
         iy /= CELLSCALE;
@@ -144,14 +149,15 @@ namespace metin2::inline world::inline terrain {
 
         return true;
     }
+
     // Returns the height of the terrain at the given world coordinate.
     auto terrain_area::height(int x, int y) -> float {
-
         x -= x_ * XSIZE * CELLSCALE;
         y -= y_ * YSIZE * CELLSCALE;
 
-        if (x < 0 || y < 0 || x > XSIZE * CELLSCALE || y > XSIZE * CELLSCALE)
+        if (x < 0 || y < 0 || x > XSIZE * CELLSCALE || y > XSIZE * CELLSCALE) {
             return 0.0f;
+        }
 
         int32_t xdist;
         int32_t ydist;
@@ -234,10 +240,13 @@ namespace metin2::inline world::inline terrain {
 
     auto terrain_area::load_height_map(const char *file_name) -> bool {
         terrain_impl::load_height_map(file_name);
+
         uint32_t start = el_timer_get_m_sec();
-        for (uint16_t y = 0; y < NORMALMAP_YSIZE; ++y)
-            for (uint16_t x = 0; x < NORMALMAP_XSIZE; ++x)
+        for (uint16_t y = 0; y < NORMALMAP_YSIZE; ++y) {
+            for (uint16_t x = 0; x < NORMALMAP_XSIZE; ++x) {
                 calculate_normal(x, y);
+            }
+        }
 
         metin2::log::debug("Height map normals calculated in {} ms", el_timer_get_m_sec() - start);
         return true;
@@ -255,13 +264,14 @@ namespace metin2::inline world::inline terrain {
 
         uint8_t map_attr = attr_map_[coord_y * ATTRMAP_XSIZE + coord_x];
 
-        if (attr_flag < 16)
+        if (attr_flag < 16) {
             return (map_attr & attr_flag) ? true : false;
-        else {
-            if (attr_flag / 16 == map_attr / 16)
+        } else {
+            if (attr_flag / 16 == map_attr / 16) {
                 return true;
-            else
+            } else {
                 return false;
+            }
         }
     }
 
@@ -289,7 +299,6 @@ namespace metin2::inline world::inline terrain {
             return false;
         }
         *pl_water_height = water_height_[water_num] / 2;
-
         return true;
     }
 
@@ -310,11 +319,11 @@ namespace metin2::inline world::inline terrain {
 
         terrain_splat_patch_value_.needs_update = true;
 
-        for (uint32_t t = 0; t < tex_count; ++t)
+        for (uint32_t t = 0; t < tex_count; ++t) {
             terrain_splat_patch_value_.splats[t].needs_update = 1;
+        }
 
         raw_count_tiles();
-
         raw_generate_splat();
 
         terrain_splat_patch_value_.needs_update = false;
@@ -348,10 +357,11 @@ namespace metin2::inline world::inline terrain {
                         ++terrain_splat_patch_value_.patch_tile_count[std::max(0, patch_index_y - 1) * PATCH_XCOUNT + std::max(0, patch_index_x - 1)][tilenum];
                     }
                 } else {
-                    if (0 == x % PATCH_TILE_XSIZE && 0 != x && (TILEMAP_RAW_XSIZE - 2) != x)
+                    if (0 == x % PATCH_TILE_XSIZE && 0 != x && (TILEMAP_RAW_XSIZE - 2) != x) {
                         ++terrain_splat_patch_value_.patch_tile_count[patch_index_y * PATCH_XCOUNT + std::min(PATCH_XCOUNT - 1, patch_index_x + 1)][tilenum];
-                    else if (1 == x % PATCH_TILE_XSIZE && (TILEMAP_RAW_XSIZE - 1) != x && 1 != x)
+                    } else if (1 == x % PATCH_TILE_XSIZE && (TILEMAP_RAW_XSIZE - 1) != x && 1 != x) {
                         ++terrain_splat_patch_value_.patch_tile_count[patch_index_y * PATCH_XCOUNT + std::max(0, patch_index_x - 1)][tilenum];
+                    }
                 }
 
                 ++terrain_splat_patch_value_.tile_count[tilenum];
@@ -360,8 +370,9 @@ namespace metin2::inline world::inline terrain {
     }
 
     void terrain_area::raw_generate_splat() {
-        if (!terrain_splat_patch_value_.needs_update)
+        if (!terrain_splat_patch_value_.needs_update) {
             return;
+        }
 
         terrain_splat_patch_value_.needs_update = false;
 
@@ -389,51 +400,68 @@ namespace metin2::inline world::inline terrain {
                             int32_t tile_map_offset = y * TILEMAP_RAW_XSIZE + x;
 
                             uint8_t tile_num = tile_map_[tile_map_offset];
-                            if (tile_num == i)
+                            if (tile_num == i) {
                                 *aptr = 0xFF;
-                            else if (tile_num > i) {
+                            } else if (tile_num > i) {
                                 uint8_t tile_tl, tile_tr, tile_bl, tile_br, tile_t, tile_b, tile_l, tile_r;
 
-                                if (x > 0 && y > 0)
+                                if (x > 0 && y > 0) {
                                     tile_tl = tile_map_[tile_map_offset - TILEMAP_RAW_YSIZE - 1];
-                                else
+                                } else {
                                     tile_tl = 0;
-                                if (x < (SPLATALPHA_RAW_XSIZE - 1) && y > 0)
+                                }
+
+                                if (x < (SPLATALPHA_RAW_XSIZE - 1) && y > 0) {
                                     tile_tr = tile_map_[tile_map_offset - TILEMAP_RAW_YSIZE + 1];
-                                else
+                                } else {
                                     tile_tr = 0;
-                                if (x > 0 && y < (SPLATALPHA_RAW_YSIZE - 1))
+                                }
+
+                                if (x > 0 && y < (SPLATALPHA_RAW_YSIZE - 1)) {
                                     tile_bl = tile_map_[tile_map_offset + TILEMAP_RAW_YSIZE - 1];
-                                else
+                                } else {
                                     tile_bl = 0;
-                                if (x < (SPLATALPHA_RAW_XSIZE - 1) && y < (SPLATALPHA_RAW_YSIZE - 1))
+                                }
+
+                                if (x < (SPLATALPHA_RAW_XSIZE - 1) && y < (SPLATALPHA_RAW_YSIZE - 1)) {
                                     tile_br = tile_map_[tile_map_offset + TILEMAP_RAW_YSIZE + 1];
-                                else
+                                } else {
                                     tile_br = 0;
-                                if (y > 0)
+                                }
+
+                                if (y > 0) {
                                     tile_t = tile_map_[tile_map_offset - TILEMAP_RAW_YSIZE];
-                                else
+                                } else {
                                     tile_t = 0;
-                                if (y < (SPLATALPHA_RAW_YSIZE - 1))
+                                }
+
+                                if (y < (SPLATALPHA_RAW_YSIZE - 1)) {
                                     tile_b = tile_map_[tile_map_offset + TILEMAP_RAW_YSIZE];
-                                else
+                                } else {
                                     tile_b = 0;
-                                if (x > 0)
+                                }
+
+                                if (x > 0) {
                                     tile_l = tile_map_[tile_map_offset - 1];
-                                else
+                                } else {
                                     tile_l = 0;
-                                if (x < (SPLATALPHA_RAW_XSIZE - 1))
+                                }
+
+                                if (x < (SPLATALPHA_RAW_XSIZE - 1)) {
                                     tile_r = tile_map_[tile_map_offset + 1];
-                                else
+                                } else {
                                     tile_r = 0;
+                                }
 
                                 if (tile_tl == i || tile_tr == i || tile_bl == i || tile_br == i ||
-                                    tile_t == i || tile_b == i || tile_l == i || tile_r == i)
+                                    tile_t == i || tile_b == i || tile_l == i || tile_r == i) {
                                     *aptr = 0xFF;
-                                else
+                                } else {
                                     *aptr = 0x00;
-                            } else
+                                }
+                            } else {
                                 *aptr = 0x00;
+                            }
 
                             ++aptr;
                         }
@@ -445,6 +473,7 @@ namespace metin2::inline world::inline terrain {
                         alpha_texture_[i].reset();
                         splat.gpu_texture = nullptr;
                     }
+
                     splat.needs_update = 0;
                     splat.active = 0;
                 }
@@ -459,10 +488,11 @@ namespace metin2::inline world::inline terrain {
 
         gpu::format format;
 
-        if (support_dxt_)
+        if (support_dxt_) {
             format = gpu::format::A8R8G8B8;
-        else
+        } else {
             format = gpu::format::A4R4G4B4;
+        }
 
         bool resized_and_success = false;
 
@@ -493,13 +523,15 @@ namespace metin2::inline world::inline terrain {
             }
 
             gpu::locked_rect locked;
-            if (!tex->lock(0, locked))
+            if (!tex->lock(0, locked)) {
                 return nullptr;
+            }
 
-            if (support_dxt_)
+            if (support_dxt_) {
                 put_image32(resize_image, locked.bits, 256, static_cast<int32_t>(locked.pitch), 256, 256, resized_and_success);
-            else
+            } else {
                 put_image16(resize_image, locked.bits, 256, static_cast<int32_t>(locked.pitch), 256, 256, resized_and_success);
+            }
 
             tex->unlock(0);
         }
@@ -526,13 +558,15 @@ namespace metin2::inline world::inline terrain {
 
             gpu::locked_rect locked;
 
-            if (!tex->lock(mip_map_level, locked))
+            if (!tex->lock(mip_map_level, locked)) {
                 continue;
+            }
 
-            if (support_dxt_)
+            if (support_dxt_) {
                 put_image32(dst_buffer, locked.bits, dst_size, static_cast<int32_t>(locked.pitch), dst_size, dst_size, resized_and_success);
-            else
+            } else {
                 put_image16(dst_buffer, locked.bits, dst_size, static_cast<int32_t>(locked.pitch), dst_size, dst_size, resized_and_success);
+            }
 
             tex->unlock(mip_map_level);
 
@@ -576,14 +610,17 @@ namespace metin2::inline world::inline terrain {
     }
 
     void terrain_area::calculate_terrain_patch() {
-        for (uint8_t patch_num_y = 0; patch_num_y < PATCH_YCOUNT; ++patch_num_y)
-            for (uint8_t patch_num_x = 0; patch_num_x < PATCH_XCOUNT; ++patch_num_x)
+        for (uint8_t patch_num_y = 0; patch_num_y < PATCH_YCOUNT; ++patch_num_y) {
+            for (uint8_t patch_num_x = 0; patch_num_x < PATCH_XCOUNT; ++patch_num_x) {
                 calculate_terrain_patch_impl(patch_num_x, patch_num_y);
+            }
+        }
     }
 
     auto terrain_area::terrain_patch_ptr(uint8_t patch_num_x, uint8_t patch_num_y) -> terrain_patch * {
-        if (patch_num_x >= PATCH_XCOUNT || patch_num_y >= PATCH_YCOUNT)
+        if (patch_num_x >= PATCH_XCOUNT || patch_num_y >= PATCH_YCOUNT) {
             return nullptr;
+        }
 
         return &terrain_patch_list_[patch_num_y * PATCH_XCOUNT + patch_num_x];
     }
@@ -592,8 +629,9 @@ namespace metin2::inline world::inline terrain {
         uint32_t patch_num = patch_num_y * PATCH_XCOUNT + patch_num_x;
 
         terrain_patch &terrain_patch = terrain_patch_list_[patch_num];
-        if (!terrain_patch.need_update())
+        if (!terrain_patch.need_update()) {
             return;
+        }
 
         const float opaque_water_depth = owner_outdoor_map_->opaque_water_depth();
         const float oo_opaque_water_depth = 1.0f / opaque_water_depth;
@@ -656,17 +694,20 @@ namespace metin2::inline world::inline terrain {
                 terrain_vertex->position_value = position;
                 terrain_vertex->normal_value = normal;
 
-                if (0.5f > normal.z) // Slope steeper than 60 degrees: cliff.
+                if (0.5f > normal.z) { // Slope steeper than 60 degrees: cliff.
                     ++num_cliff_type;
-                else if (0.8660254f > normal.z) // Slope steeper than 30 degrees: hill.
+                } else if (0.8660254f > normal.z) { // Slope steeper than 30 degrees: hill.
                     ++num_hill_type;
-                else // Anything else: plain.
+                } else { // Anything else: plain.
                     ++num_plain_type;
+                }
 
-                if (position.z > max_z)
+                if (position.z > max_z) {
                     max_z = position.z;
-                if (position.z < min_z)
+                }
+                if (position.z < min_z) {
                     min_z = position.z;
+                }
 
                 if (XSIZE > dw_x && YSIZE > dw_y &&
                     (start_x + PATCH_XSIZE) != dw_x && (start_y + PATCH_YSIZE) != dw_y) {
@@ -676,28 +717,36 @@ namespace metin2::inline world::inline terrain {
                         int32_t water_height = water_height_[num_water];
                         if (-1 != water_height) {
                             auto water_terrain_height_difference0 = (float)(water_height - (int32_t)hgt);
-                            if (water_terrain_height_difference0 >= transparent_water_depth)
+                            if (water_terrain_height_difference0 >= transparent_water_depth) {
                                 water_terrain_height_difference0 = transparent_water_depth;
-                            if (water_terrain_height_difference0 <= 0.0f)
+                            }
+                            if (water_terrain_height_difference0 <= 0.0f) {
                                 water_terrain_height_difference0 = 0.0f;
+                            }
 
                             auto water_terrain_height_difference1 = (float)(water_height - (int32_t)(*(raw_height + terrain_impl::HEIGHTMAP_RAW_XSIZE - 1)));
-                            if (water_terrain_height_difference1 >= transparent_water_depth)
+                            if (water_terrain_height_difference1 >= transparent_water_depth) {
                                 water_terrain_height_difference1 = transparent_water_depth;
-                            if (water_terrain_height_difference1 <= 0.0f)
+                            }
+                            if (water_terrain_height_difference1 <= 0.0f) {
                                 water_terrain_height_difference1 = 0.0f;
+                            }
 
                             auto water_terrain_height_difference2 = (float)(water_height - (int32_t)(*(raw_height)));
-                            if (water_terrain_height_difference2 >= transparent_water_depth)
+                            if (water_terrain_height_difference2 >= transparent_water_depth) {
                                 water_terrain_height_difference2 = transparent_water_depth;
-                            if (water_terrain_height_difference2 <= 0.0f)
+                            }
+                            if (water_terrain_height_difference2 <= 0.0f) {
                                 water_terrain_height_difference2 = 0.0f;
+                            }
 
                             auto water_terrain_height_difference3 = (float)(water_height - (int32_t)(*(raw_height + terrain_impl::HEIGHTMAP_RAW_XSIZE)));
-                            if (water_terrain_height_difference3 >= transparent_water_depth)
+                            if (water_terrain_height_difference3 >= transparent_water_depth) {
                                 water_terrain_height_difference3 = transparent_water_depth;
-                            if (water_terrain_height_difference3 <= 0.0f)
+                            }
+                            if (water_terrain_height_difference3 <= 0.0f) {
                                 water_terrain_height_difference3 = 0.0f;
+                            }
 
                             uint32_t alpha0;
                             uint32_t alpha1;
@@ -767,10 +816,11 @@ namespace metin2::inline world::inline terrain {
         }
 
         if (num_plain_type <= std::max(num_hill_type, num_cliff_type)) {
-            if (num_cliff_type <= num_hill_type)
+            if (num_cliff_type <= num_hill_type) {
                 terrain_patch.set_type(terrain_patch::PATCH_TYPE_HILL);
-            else
+            } else {
                 terrain_patch.set_type(terrain_patch::PATCH_TYPE_CLIFF);
+            }
         }
 
         terrain_patch.set_water_exist(water_exist);
@@ -781,8 +831,9 @@ namespace metin2::inline world::inline terrain {
         assert((PATCH_XSIZE + 1) * (PATCH_YSIZE + 1) == terrain_vertex_count);
         terrain_patch.build_terrain_vertex_buffer(src_terrain_vertex);
 
-        if (water_exist)
+        if (water_exist) {
             terrain_patch.build_water_vertex_buffer(src_water_vertex, water_vertex_count);
+        }
 
         terrain_patch.need_update(false);
     }
@@ -791,8 +842,9 @@ namespace metin2::inline world::inline terrain {
         terain_splat &attr_splat = marked_splat_patch_.splats[0];
 
         marked_texture_ = device_->create_texture(ATTRMAP_XSIZE, ATTRMAP_YSIZE, 1, 0, gpu::format::A8R8G8B8);
-        if (!marked_texture_)
+        if (!marked_texture_) {
             return;
+        }
 
         gpu::locked_rect locked;
         if (marked_texture_->lock(0, locked)) {

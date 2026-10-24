@@ -1,9 +1,10 @@
 #pragma once
-#include <cstdint>
+
 #include <metin2/math/math.h>
 
-namespace metin2::inline world::inline terrain {
+#include <cstdint>
 
+namespace metin2::inline world::inline terrain {
     class terrain_quadtree_node {
       public:
         terrain_quadtree_node();

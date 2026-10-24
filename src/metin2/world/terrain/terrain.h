@@ -1,14 +1,13 @@
 #pragma once
 
-#include <cstdint>
-
-#include <metin2/gpu/types.h>
-
 #include "terrain_type.h"
 #include "texture_set.h"
 
-namespace metin2::inline world::inline terrain {
+#include <metin2/gpu/types.h>
 
+#include <cstdint>
+
+namespace metin2::inline world::inline terrain {
     class terrain_impl {
       public:
         enum {
@@ -71,6 +70,7 @@ namespace metin2::inline world::inline terrain {
 
       public:
         terrain_impl();
+
         virtual ~terrain_impl();
 
         auto get_terrain_splat_patch() -> terrain_splat_patch & { return terrain_splat_patch_value_; }
@@ -86,11 +86,13 @@ namespace metin2::inline world::inline terrain {
 
       protected:
         void initialize();
+
         virtual void clear();
 
         auto load_height_map(const char *file_name) -> bool;
         auto raw_load_tile_map(const char *file_name) -> bool;
         auto load_attr_map(const char *file_name) -> bool;
+
         inline auto height_map_value(short sx, short sy) -> uint16_t;
 
       protected:

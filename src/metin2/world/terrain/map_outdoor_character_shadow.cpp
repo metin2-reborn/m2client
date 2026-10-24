@@ -1,13 +1,12 @@
+#include "map_outdoor.h"
+
+#include <metin2/core/utils.h>
+#include <metin2/gpu/types.h>
 #include <metin2/graphics/camera.h>
 #include <metin2/graphics/state_manager.h>
 #include <metin2/log/log.h>
 
-#include <metin2/core/utils.h>
-#include <metin2/gpu/types.h>
-#include "map_outdoor.h"
-
 namespace metin2::inline world::inline terrain {
-
     static int recreate = false;
 
     void map_outdoor::set_shadow_texture_size(uint16_t size) {
@@ -23,14 +22,16 @@ namespace metin2::inline world::inline terrain {
 
         release_character_shadow_texture();
 
-        if (is_low_texture_memory())
+        if (is_low_texture_memory()) {
             set_shadow_texture_size(128);
+        }
 
         shadow_map_viewport_ = {1, 1, static_cast<uint32_t>(shadow_map_size_ - 2), static_cast<uint32_t>(shadow_map_size_ - 2), 0.0f, 1.0f};
 
         if (!character_shadow_raw_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::R5G6B5, gpu::format::D16) ||
-            !character_shadow_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::R5G6B5, gpu::format::UNKNOWN))
+            !character_shadow_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::R5G6B5, gpu::format::UNKNOWN)) {
             metin2::log::error("Cannot create the character shadow render target");
+        }
     }
 
     void map_outdoor::release_character_shadow_texture() {
@@ -45,8 +46,9 @@ namespace metin2::inline world::inline terrain {
 
         camera *current_camera = get_camera_manager().current_camera();
 
-        if (!current_camera)
+        if (!current_camera) {
             return false;
+        }
 
         if (recreate) {
             create_character_shadow_texture();
@@ -98,8 +100,9 @@ namespace metin2::inline world::inline terrain {
     // filter that softens the shadow edges by about a texel. The one-texel border stays white: the
     // terrain clamps the map, so anything in the border would be drawn out to the horizon.
     void map_outdoor::blur_character_shadow_texture() {
-        if (!character_shadow_target_.is_created() || !character_shadow_target_.begin())
+        if (!character_shadow_target_.is_created() || !character_shadow_target_.begin()) {
             return;
+        }
 
         device_->clear({}, gpu::clear::TARGET, 0xffffffff, 1.0f, 0);
         device_->set_viewport(shadow_map_viewport_);
@@ -143,6 +146,7 @@ namespace metin2::inline world::inline terrain {
             {-texel, texel },
             {texel,  texel }
         };
+
         const float uv_lo = inset * texel;
         const float uv_hi = extent * texel;
         for (int pass = 0; pass < 4; ++pass) {
@@ -154,8 +158,11 @@ namespace metin2::inline world::inline terrain {
                 {extent, inset,  0.0f, 0xffffffff, uv_hi + u, uv_lo + v},
                 {extent, extent, 0.0f, 0xffffffff, uv_hi + u, uv_hi + v},
             };
-            if (pass == 1)
+
+            if (pass == 1) {
                 STATEMANAGER.set_render_state(gpu::state::ALPHA_BLEND_ENABLE, true);
+            }
+
             STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, vertices, sizeof(vertex));
         }
 

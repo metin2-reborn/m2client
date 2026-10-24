@@ -1,8 +1,8 @@
 #include "terrain_patch.h"
+
 #include <metin2/gpu/types.h>
 
 namespace metin2::inline world::inline terrain {
-
     void terrain_patch::clear() {
         ht_.vb.destroy();
 
@@ -20,8 +20,9 @@ namespace metin2::inline world::inline terrain {
     void terrain_patch::build_water_vertex_buffer(water_vertex *src_vertex, uint32_t water_vertex_count) {
         graphic_vertex_buffer &vb = water_vertex_buffer_;
 
-        if (!vb.create(water_vertex_count, gpu::fvf::XYZ | gpu::fvf::DIFFUSE, gpu::usage::WRITE_ONLY))
+        if (!vb.create(water_vertex_count, gpu::fvf::XYZ | gpu::fvf::DIFFUSE, gpu::usage::WRITE_ONLY)) {
             return;
+        }
 
         water_vertex *dst_water_vertex;
         if (vb.lock((void **)&dst_water_vertex)) {
@@ -34,10 +35,10 @@ namespace metin2::inline world::inline terrain {
     }
 
     void terrain_patch::build_terrain_vertex_buffer(hardware_transform_patch_source_vertex *src_vertex) {
-
         graphic_vertex_buffer &vb = ht_.vb;
-        if (!vb.create(TERRAIN_VERTEX_COUNT, gpu::fvf::XYZ | gpu::fvf::NORMAL, gpu::usage::WRITE_ONLY))
+        if (!vb.create(TERRAIN_VERTEX_COUNT, gpu::fvf::XYZ | gpu::fvf::NORMAL, gpu::usage::WRITE_ONLY)) {
             return;
+        }
 
         hardware_transform_patch_source_vertex *dst_vertex;
         if (vb.lock((void **)&dst_vertex)) {
@@ -70,22 +71,21 @@ namespace metin2::inline world::inline terrain {
         float dist = dx * dx + dy * dy;
         float check = radius * radius;
 
-        if (dist < check)
-            return true;
-
-        return false;
+        return dist < check;
     }
 
     auto terrain_patch_proxy::hardware_transform_patch_get_vertex_buffer_ptr() -> graphic_vertex_buffer * {
-        if (terrain_patch_value_)
+        if (terrain_patch_value_) {
             return terrain_patch_value_->hardware_transform_patch_get_vertex_buffer_ptr();
+        }
 
         return nullptr;
     }
 
     auto terrain_patch_proxy::water_face_count() -> uint32_t {
-        if (terrain_patch_value_)
+        if (terrain_patch_value_) {
             return terrain_patch_value_->water_face_count();
+        }
 
         return 0;
     }

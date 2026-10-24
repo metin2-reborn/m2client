@@ -1,17 +1,18 @@
-#include <algorithm>
-#include <metin2/graphics/camera.h>
-#include <metin2/log/log.h>
-
-#include <metin2/core/timer.h>
-#include <metin2/core/utils.h>
-#include <metin2/world/actors/actor_instance.h>
-#include "area_terrain.h"
 #include "map_outdoor.h"
+
+#include "area_terrain.h"
 #include "terrain_patch.h"
 #include "terrain_quadtree.h"
 
-namespace metin2::inline world::inline terrain {
+#include <metin2/core/timer.h>
+#include <metin2/core/utils.h>
+#include <metin2/graphics/camera.h>
+#include <metin2/log/log.h>
+#include <metin2/world/actors/actor_instance.h>
 
+#include <algorithm>
+
+namespace metin2::inline world::inline terrain {
     // std::vector access was too slow here, so the spheres live in a fixed array on the stack.
     class pc_blocker_dynamic_sphere_instance_vector {
       public:
@@ -23,6 +24,7 @@ namespace metin2::inline world::inline terrain {
 
       public:
         pc_blocker_dynamic_sphere_instance_vector() = default;
+
         ~pc_blocker_dynamic_sphere_instance_vector() = default;
 
         auto begin() -> iterator {
@@ -45,8 +47,10 @@ namespace metin2::inline world::inline terrain {
 
         int ix, iy;
         PR_FLOAT_TO_INT(x, ix);
-        if (y < 0)
+        if (y < 0) {
             y = -y;
+        }
+
         PR_FLOAT_TO_INT(y, iy);
 
         short coord_x = std::max(0, std::min(ix / terrain_impl::TERRAIN_XSIZE, terrain_count_x_ - 1));
@@ -91,6 +95,7 @@ namespace metin2::inline world::inline terrain {
 
             metin2::log::debug("Terrain update loaded in {} ms", el_timer_get_m_sec() - t1);
         }
+
         update_garvage();
         update_terrain(x, y);
         update_area(player);
@@ -107,16 +112,21 @@ namespace metin2::inline world::inline terrain {
         bool collide;
         std::vector<graphic_object_instance *> *vct_shadow_receiver;
         dynamic_sphere_instance *pdsi;
+
         get_shadow_receiver_from_collision_data_fn(dynamic_sphere_instance *pdsi_value, std::vector<graphic_object_instance *> *vct_shadow_receiver_value) : collide(false), pdsi(pdsi_value) {
             vct_shadow_receiver = vct_shadow_receiver_value;
             vct_shadow_receiver->clear();
         }
-        void operator()(graphic_object_instance *instance) {
-            if (!instance)
-                return;
 
-            if (TREE_OBJECT == instance->get_type() || ACTOR_OBJECT == instance->get_type() || EFFECT_OBJECT == instance->get_type())
+        void operator()(graphic_object_instance *instance) {
+            if (!instance) {
                 return;
+            }
+
+            if (TREE_OBJECT == instance->get_type() || ACTOR_OBJECT == instance->get_type() || EFFECT_OBJECT == instance->get_type()) {
+                return;
+            }
+
             if (instance->collision_dynamic_sphere(*pdsi)) {
                 vct_shadow_receiver->push_back(instance);
                 collide = true;
@@ -138,8 +148,9 @@ namespace metin2::inline world::inline terrain {
     void map_outdoor::update_around_ambience(float x, float y, float z) {
         for (int i = 0; i < AROUND_AREA_NUM; ++i) {
             area *area;
-            if (area_pointer(i, &area))
+            if (area_pointer(i, &area)) {
                 area->update_around_ambience(x, y, z);
+            }
         }
     }
 
@@ -150,10 +161,12 @@ namespace metin2::inline world::inline terrain {
     void map_outdoor::game_update_area(math::vector3 &player) {
         pc_blocker_vector_.clear();
         shadow_receiver_vector_.clear();
-        camera_manager &cmr_mgr = get_camera_manager();
-        camera *camera = cmr_mgr.current_camera();
-        if (!camera)
+
+        auto &cmr_mgr = get_camera_manager();
+        auto *camera = cmr_mgr.current_camera();
+        if (!camera) {
             return;
+        }
 
         float distance = camera->distance();
 
@@ -167,11 +180,13 @@ namespace metin2::inline world::inline terrain {
         collect_collision_shadow_receiver(player, light);
         update_around_area_list();
     }
+
     void map_outdoor::update_around_area_list() {
         for (int i = 0; i < AROUND_AREA_NUM; ++i) {
             area *area;
-            if (area_pointer(i, &area))
+            if (area_pointer(i, &area)) {
                 area->update();
+            }
         }
     }
 
@@ -196,8 +211,9 @@ namespace metin2::inline world::inline terrain {
         }
 
         auto collect_item(uint32_t index) -> graphic_object_instance * {
-            if (index >= collect_count)
+            if (index >= collect_count) {
                 return nullptr;
+            }
 
             return shadow_receiver[index];
         }
@@ -209,19 +225,25 @@ namespace metin2::inline world::inline terrain {
         void operator()(graphic_object_instance *instance) {
             check_count++;
 
-            if (!instance)
+            if (!instance) {
                 return;
+            }
 
-            if (from_y < 0)
+            if (from_y < 0) {
                 from_y = -from_y;
-            if (to_y < 0)
+            }
+
+            if (to_y < 0) {
                 to_y = -to_y;
+            }
+
             if (instance->object_height(from_x, from_y, &return_height) ||
                 instance->object_height(to_x, to_y, &return_height)) {
-                if (collect_count < COLLECT_MAX)
+                if (collect_count < COLLECT_MAX) {
                     shadow_receiver[collect_count++] = instance;
-                else
+                } else {
                     collect_over_count++;
+                }
 
                 receiver_found = true;
             }
@@ -245,8 +267,9 @@ namespace metin2::inline world::inline terrain {
         if (get_shadow_receiver_from_height_data.receiver_found) {
             for (uint32_t i = 0; i < get_shadow_receiver_from_height_data.get_collect_count(); ++i) {
                 graphic_object_instance *obj_inst_each = get_shadow_receiver_from_height_data.collect_item(i);
-                if (!is_in_shadow_receiver_list(obj_inst_each))
+                if (!is_in_shadow_receiver_list(obj_inst_each)) {
                     shadow_receiver_vector_.push_back(obj_inst_each);
+                }
             }
         }
     }
@@ -273,8 +296,9 @@ namespace metin2::inline world::inline terrain {
 
         pc_blocker_instance_list(pc_blocker_dynamic_sphere_instance_vector *dsi_vector_value) {
             camera_value = get_camera_manager().current_camera();
-            if (!camera_value)
+            if (!camera_value) {
                 return;
+            }
 
             math::vector3 view_value = camera_value->view();
             math::vector3 target_value = camera_value->target();
@@ -290,6 +314,7 @@ namespace metin2::inline world::inline terrain {
             blocker_over_count = 0;
             inst_count = 0;
         }
+
         ~pc_blocker_instance_list() = default;
 
         auto begin() -> iterator {
@@ -304,17 +329,19 @@ namespace metin2::inline world::inline terrain {
         }
 
         auto is_empty() -> bool {
-            if (blocker_count > 0)
+            if (blocker_count > 0) {
                 return false;
+            }
 
             return true;
         }
 
         void append_pc_blocker(graphic_object_instance *instance) {
-            if (blocker_count < CAPACITY)
+            if (blocker_count < CAPACITY) {
                 pc_blocker[blocker_count++] = instance;
-            else
+            } else {
                 blocker_over_count++;
+            }
         }
 
         void append_object(graphic_object_instance *instance) {
@@ -332,11 +359,13 @@ namespace metin2::inline world::inline terrain {
         }
 
         void operator()(graphic_object_instance *instance) {
-            if (!camera_value)
+            if (!camera_value) {
                 return;
+            }
 
-            if (!instance)
+            if (!instance) {
                 return;
+            }
 
             ++inst_count;
 
@@ -361,7 +390,6 @@ namespace metin2::inline world::inline terrain {
     };
 
     void map_outdoor::collect_collision_pc_blocker(math::vector3 &eye, math::vector3 &target, float distance) {
-
         vector3d v3d_ray_start;
         v3d_ray_start.set(eye.x, eye.y, eye.z);
 
@@ -400,18 +428,23 @@ namespace metin2::inline world::inline terrain {
             for (i = pc_blocker_list.begin(); i != pc_blocker_list.end(); ++i) {
                 graphic_object_instance *obj_inst_each = *i;
 
-                if (!obj_inst_each)
+                if (!obj_inst_each) {
                     continue;
+                }
 
-                if (TREE_OBJECT == obj_inst_each->get_type() && !transparent_tree_)
+                if (TREE_OBJECT == obj_inst_each->get_type() && !transparent_tree_) {
                     continue;
+                }
 
-                if (!is_in_shadow_receiver_list(obj_inst_each))
-                    if (!is_in_pc_blocker_list(obj_inst_each))
+                if (!is_in_shadow_receiver_list(obj_inst_each)) {
+                    if (!is_in_pc_blocker_list(obj_inst_each)) {
                         pc_blocker_vector_.push_back(obj_inst_each);
+                    }
+                }
             }
         }
-        std::sort(pc_blocker_vector_.begin(), pc_blocker_vector_.end(), pc_blocker_distance_sort_fn(eye));
+
+        std::ranges::sort(pc_blocker_vector_, pc_blocker_distance_sort_fn(eye));
     }
 
     void map_outdoor::collect_collision_shadow_receiver(math::vector3 &target, math::vector3 &light) {
@@ -428,35 +461,41 @@ namespace metin2::inline world::inline terrain {
         std::vector<graphic_object_instance *> vct_shadow_receiver;
         get_shadow_receiver_from_collision_data_fn get_shadow_receiver_from_collision_data(&s, &vct_shadow_receiver);
         culling_mgr.for_in_range(vector3d, 100.0f, &get_shadow_receiver_from_collision_data);
-        if (!get_shadow_receiver_from_collision_data.collide)
+        if (!get_shadow_receiver_from_collision_data.collide) {
             return;
+        }
 
         std::vector<graphic_object_instance *>::iterator i;
         for (i = vct_shadow_receiver.begin(); i != vct_shadow_receiver.end(); ++i) {
             graphic_object_instance *obj_inst_each = *i;
-            if (!is_in_pc_blocker_list(obj_inst_each))
-                if (!is_in_shadow_receiver_list(obj_inst_each))
+            if (!is_in_pc_blocker_list(obj_inst_each)) {
+                if (!is_in_shadow_receiver_list(obj_inst_each)) {
                     shadow_receiver_vector_.push_back(obj_inst_each);
+                }
+            }
         }
     }
 
     auto map_outdoor::is_in_shadow_receiver_list(graphic_object_instance *obj_inst_test) -> bool {
-        if (shadow_receiver_vector_.end() == std::find(shadow_receiver_vector_.begin(), shadow_receiver_vector_.end(), obj_inst_test))
+        if (shadow_receiver_vector_.end() == std::find(shadow_receiver_vector_.begin(), shadow_receiver_vector_.end(), obj_inst_test)) {
             return false;
+        }
 
         return true;
     }
 
     auto map_outdoor::is_in_pc_blocker_list(graphic_object_instance *obj_inst_test) -> bool {
-        if (pc_blocker_vector_.end() == std::find(pc_blocker_vector_.begin(), pc_blocker_vector_.end(), obj_inst_test))
+        if (pc_blocker_vector_.end() == std::find(pc_blocker_vector_.begin(), pc_blocker_vector_.end(), obj_inst_test)) {
             return false;
+        }
 
         return true;
     }
 
     void map_outdoor::update_terrain(float x, float y) {
-        if (y < 0)
+        if (y < 0) {
             y = -y;
+        }
 
         int sx, sy;
         PR_FLOAT_TO_INT(x, sx);
@@ -479,9 +518,10 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::push_terrain_to_delete_vector_fn::operator()(terrain_area *terrain) {
-        auto iterator = std::find(return_terrain_vector.begin(), return_terrain_vector.end(), terrain);
-        if (iterator != return_terrain_vector.end())
+        auto iterator = std::ranges::find(return_terrain_vector, terrain);
+        if (iterator != return_terrain_vector.end()) {
             return;
+        }
 
         uint16_t reference_coord_x = cur_coordinate.terrain_coord_x;
         uint16_t reference_coord_y = cur_coordinate.terrain_coord_y;
@@ -491,39 +531,49 @@ namespace metin2::inline world::inline terrain {
 
         switch (lr_delete_dir) {
         case DELETE_LEFT:
-            if (coord_x < reference_coord_x - LOAD_SIZE_WIDTH)
+            if (coord_x < reference_coord_x - LOAD_SIZE_WIDTH) {
                 return_terrain_vector.push_back(terrain);
+            }
             break;
+
         case DELETE_RIGHT:
-            if (coord_x > reference_coord_x + LOAD_SIZE_WIDTH)
+            if (coord_x > reference_coord_x + LOAD_SIZE_WIDTH) {
                 return_terrain_vector.push_back(terrain);
+            }
             break;
+
         default:
             break;
         }
 
-        iterator = std::find(return_terrain_vector.begin(), return_terrain_vector.end(), terrain);
-        if (iterator != return_terrain_vector.end())
+        iterator = std::ranges::find(return_terrain_vector, terrain);
+        if (iterator != return_terrain_vector.end()) {
             return;
+        }
 
         switch (tb_delete_dir) {
         case DELETE_TOP:
-            if (coord_y < reference_coord_y - LOAD_SIZE_WIDTH)
+            if (coord_y < reference_coord_y - LOAD_SIZE_WIDTH) {
                 return_terrain_vector.push_back(terrain);
+            }
             break;
+
         case DELETE_BOTTOM:
-            if (coord_y > reference_coord_y + LOAD_SIZE_WIDTH)
+            if (coord_y > reference_coord_y + LOAD_SIZE_WIDTH) {
                 return_terrain_vector.push_back(terrain);
+            }
             break;
+
         default:
             break;
         }
     }
 
     void map_outdoor::push_area_to_delete_vector_fn::operator()(area *area) {
-        auto iterator = std::find(return_area_vector.begin(), return_area_vector.end(), area);
-        if (iterator != return_area_vector.end())
+        auto iterator = std::ranges::find(return_area_vector, area);
+        if (iterator != return_area_vector.end()) {
             return;
+        }
 
         uint16_t reference_coord_x = cur_coordinate.terrain_coord_x;
         uint16_t reference_coord_y = cur_coordinate.terrain_coord_y;
@@ -533,40 +583,49 @@ namespace metin2::inline world::inline terrain {
 
         switch (lr_delete_dir) {
         case DELETE_LEFT:
-            if (coord_x < reference_coord_x - LOAD_SIZE_WIDTH)
+            if (coord_x < reference_coord_x - LOAD_SIZE_WIDTH) {
                 return_area_vector.push_back(area);
+            }
             break;
+
         case DELETE_RIGHT:
-            if (coord_x > reference_coord_x + LOAD_SIZE_WIDTH)
+            if (coord_x > reference_coord_x + LOAD_SIZE_WIDTH) {
                 return_area_vector.push_back(area);
+            }
             break;
+
         default:
             break;
         }
 
         iterator = std::find(return_area_vector.begin(), return_area_vector.end(), area);
-        if (iterator != return_area_vector.end())
+        if (iterator != return_area_vector.end()) {
             return;
+        }
 
         switch (tb_delete_dir) {
         case DELETE_TOP:
-            if (coord_y < reference_coord_y - LOAD_SIZE_WIDTH)
+            if (coord_y < reference_coord_y - LOAD_SIZE_WIDTH) {
                 return_area_vector.push_back(area);
+            }
             break;
+
         case DELETE_BOTTOM:
-            if (coord_y > reference_coord_y + LOAD_SIZE_WIDTH)
+            if (coord_y > reference_coord_y + LOAD_SIZE_WIDTH) {
                 return_area_vector.push_back(area);
+            }
             break;
+
         default:
             break;
         }
     }
 
     void map_outdoor::clear_garvage() {
-        std::for_each(terrain_delete_vector_.begin(), terrain_delete_vector_.end(), terrain_area::delete_value);
+        std::ranges::for_each(terrain_delete_vector_, terrain_area::delete_value);
         terrain_delete_vector_.clear();
 
-        std::for_each(area_delete_vector_.begin(), area_delete_vector_.end(), area::delete_value);
+        std::ranges::for_each(area_delete_vector_, area::delete_value);
         area_delete_vector_.clear();
     }
 
@@ -575,8 +634,10 @@ namespace metin2::inline world::inline terrain {
         static uint32_t erase_time = el_timer_get_m_sec();
 
         if (!terrain_delete_vector_.empty()) {
-            if (el_timer_get_m_sec() - erase_time <= terrain_erase_interval)
+            if (el_timer_get_m_sec() - erase_time <= terrain_erase_interval) {
                 return;
+            }
+
             auto terrain_ptr_delete_itertor = terrain_delete_vector_.begin();
             terrain_area *terrain = *terrain_ptr_delete_itertor;
             terrain_area::delete_value(terrain);
@@ -588,8 +649,10 @@ namespace metin2::inline world::inline terrain {
         }
 
         if (!area_delete_vector_.empty()) {
-            if (el_timer_get_m_sec() - erase_time <= terrain_erase_interval)
+            if (el_timer_get_m_sec() - erase_time <= terrain_erase_interval) {
                 return;
+            }
+
             auto area_ptr_delete_itertor = area_delete_vector_.begin();
 
             area *area = *area_ptr_delete_itertor;
@@ -603,21 +666,25 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::update_area_list(int32_t center_x, int32_t center_y) {
-        if (terrain_vector_.size() <= AROUND_AREA_NUM && area_vector_.size() <= AROUND_AREA_NUM)
+        if (terrain_vector_.size() <= AROUND_AREA_NUM && area_vector_.size() <= AROUND_AREA_NUM) {
             return;
+        }
 
         clear_garvage();
 
         push_to_delete_vector_fn::delete_dir delete_lr_dir, delete_tb_dir;
 
-        if (center_x > terrain_impl::XSIZE / 2)
+        if (center_x > terrain_impl::XSIZE / 2) {
             delete_lr_dir = push_to_delete_vector_fn::DELETE_LEFT;
-        else
+        } else {
             delete_lr_dir = push_to_delete_vector_fn::DELETE_RIGHT;
-        if (center_y > terrain_impl::YSIZE / 2)
+        }
+
+        if (center_y > terrain_impl::YSIZE / 2) {
             delete_tb_dir = push_to_delete_vector_fn::DELETE_TOP;
-        else
+        } else {
             delete_tb_dir = push_to_delete_vector_fn::DELETE_BOTTOM;
+        }
 
         push_terrain_to_delete_vector_fn push_terrain_to_delete_vector = std::for_each(terrain_vector_.begin(), terrain_vector_.end(),
             push_terrain_to_delete_vector_fn(delete_lr_dir, delete_tb_dir, cur_coordinate_));
@@ -626,7 +693,7 @@ namespace metin2::inline world::inline terrain {
 
         if (!push_terrain_to_delete_vector.return_terrain_vector.empty()) {
             terrain_delete_vector_.resize(push_terrain_to_delete_vector.return_terrain_vector.size());
-            std::copy(push_terrain_to_delete_vector.return_terrain_vector.begin(), push_terrain_to_delete_vector.return_terrain_vector.end(), terrain_delete_vector_.begin());
+            std::ranges::copy(push_terrain_to_delete_vector.return_terrain_vector, terrain_delete_vector_.begin());
 
             for (uint32_t index = 0; index < push_terrain_to_delete_vector.return_terrain_vector.size(); ++index) {
                 auto terrain_ptr_itertor = terrain_vector_.begin();
@@ -634,23 +701,25 @@ namespace metin2::inline world::inline terrain {
                     terrain_area *terrain = *terrain_ptr_itertor;
                     if (terrain == push_terrain_to_delete_vector.return_terrain_vector[index]) {
                         terrain_ptr_itertor = terrain_vector_.erase(terrain_ptr_itertor);
-                    } else
+                    } else {
                         ++terrain_ptr_itertor;
+                    }
                 }
             }
         }
         if (!push_area_to_delete_vector.return_area_vector.empty()) {
             area_delete_vector_.resize(push_area_to_delete_vector.return_area_vector.size());
-            std::copy(push_area_to_delete_vector.return_area_vector.begin(), push_area_to_delete_vector.return_area_vector.end(), area_delete_vector_.begin());
+            std::ranges::copy(push_area_to_delete_vector.return_area_vector, area_delete_vector_.begin());
 
             for (uint32_t index = 0; index < push_area_to_delete_vector.return_area_vector.size(); ++index) {
                 auto area_ptr_itertor = area_vector_.begin();
                 while (area_ptr_itertor != area_vector_.end()) {
                     area *area = *area_ptr_itertor;
-                    if (area == push_area_to_delete_vector.return_area_vector[index])
+                    if (area == push_area_to_delete_vector.return_area_vector[index]) {
                         area_ptr_itertor = area_vector_.erase(area_ptr_itertor);
-                    else
+                    } else {
                         ++area_ptr_itertor;
+                    }
                 }
             }
         }
@@ -659,8 +728,9 @@ namespace metin2::inline world::inline terrain {
     void map_outdoor::convert_terrain_to_tn_l(int32_t lx, int32_t ly) {
         assert(nullptr != terrain_patch_proxy_list_ && "CMapOutdoor::ConvertTerrainToTnL");
 
-        for (int32_t i = 0; i < patch_count_ * patch_count_; i++)
+        for (int32_t i = 0; i < patch_count_ * patch_count_; i++) {
             terrain_patch_proxy_list_[i].set_used(false);
+        }
 
         lx -= view_radius_; // Top-left corner of the view rectangle.
         ly -= view_radius_;
@@ -682,12 +752,16 @@ namespace metin2::inline world::inline terrain {
         for (int32_t yp = 0; yp < yw; yp++) {
             x0 = lx;
             y1 = (y0 / TERRAIN_PATCHSIZE + 1) * TERRAIN_PATCHSIZE;
-            if (y1 > ey)
+            if (y1 > ey) {
                 y1 = ey;
+            }
+
             for (int32_t xp = 0; xp < xw; xp++) {
                 x1 = (x0 / TERRAIN_PATCHSIZE + 1) * TERRAIN_PATCHSIZE;
-                if (x1 > ex)
+                if (x1 > ex) {
                     x1 = ex;
+                }
+
                 assign_patch(yp * patch_count_ + xp, x0, y0, x1, y1);
                 x0 = x1;
             }
@@ -710,8 +784,9 @@ namespace metin2::inline world::inline terrain {
                 terrain_patch_proxy->set_terrain_num(2);
                 x0 -= terrain_impl::XSIZE;
                 x1 -= terrain_impl::XSIZE;
-            } else
+            } else {
                 terrain_patch_proxy->set_terrain_num(1);
+            }
 
             y0 += terrain_impl::YSIZE;
             y1 += terrain_impl::YSIZE;
@@ -724,8 +799,9 @@ namespace metin2::inline world::inline terrain {
                 terrain_patch_proxy->set_terrain_num(8);
                 x0 -= terrain_impl::XSIZE;
                 x1 -= terrain_impl::XSIZE;
-            } else
+            } else {
                 terrain_patch_proxy->set_terrain_num(7);
+            }
 
             y0 -= terrain_impl::YSIZE;
             y1 -= terrain_impl::YSIZE;
@@ -738,21 +814,24 @@ namespace metin2::inline world::inline terrain {
                 terrain_patch_proxy->set_terrain_num(5);
                 x0 -= terrain_impl::XSIZE;
                 x1 -= terrain_impl::XSIZE;
-            } else
+            } else {
                 terrain_patch_proxy->set_terrain_num(4);
+            }
         }
 
         terrain_area *terrain;
-        if (!terrain_pointer(terrain_patch_proxy->terrain_num(), &terrain))
+        if (!terrain_pointer(terrain_patch_proxy->terrain_num(), &terrain)) {
             return;
+        }
 
         uint8_t patch_num_x, patch_num_y;
         patch_num_x = x0 / terrain_impl::PATCH_XSIZE;
         patch_num_y = y0 / terrain_impl::PATCH_YSIZE;
 
         terrain_patch *terrain_patch = terrain->terrain_patch_ptr(patch_num_x, patch_num_y);
-        if (!terrain_patch)
+        if (!terrain_patch) {
             return;
+        }
 
         terrain_patch_proxy->set_patch_num(patch_num_y * terrain_impl::PATCH_XCOUNT + patch_num_x);
         terrain_patch_proxy->set_terrain_patch(terrain_patch);
@@ -761,8 +840,9 @@ namespace metin2::inline world::inline terrain {
 
     void map_outdoor::update_quad_tree_heights(terrain_quadtree_node *node) {
         assert(nullptr != terrain_patch_proxy_list_ && "CMapOutdoor::UpdateQuadTreeHeights");
-        if (!terrain_patch_proxy_list_)
+        if (!terrain_patch_proxy_list_) {
             return;
+        }
 
         float minx, maxx, miny, maxy, minz, maxz;
         minx = maxx = miny = maxy = minz = maxz = 0;
@@ -780,23 +860,30 @@ namespace metin2::inline world::inline terrain {
             for (int32_t x = node->x0; x <= node->x1; x++) {
                 int32_t patch = y * patch_count_ + x;
 
-                if (!terrain_patch_proxy_list_[patch].is_used())
+                if (!terrain_patch_proxy_list_[patch].is_used()) {
                     continue;
+                }
 
-                if (terrain_patch_proxy_list_[patch].min_x() < minx)
+                if (terrain_patch_proxy_list_[patch].min_x() < minx) {
                     minx = terrain_patch_proxy_list_[patch].min_x();
-                if (terrain_patch_proxy_list_[patch].max_x() > maxx)
+                }
+                if (terrain_patch_proxy_list_[patch].max_x() > maxx) {
                     maxx = terrain_patch_proxy_list_[patch].max_x();
+                }
 
-                if (terrain_patch_proxy_list_[patch].min_y() < miny)
+                if (terrain_patch_proxy_list_[patch].min_y() < miny) {
                     miny = terrain_patch_proxy_list_[patch].min_y();
-                if (terrain_patch_proxy_list_[patch].max_y() > maxy)
+                }
+                if (terrain_patch_proxy_list_[patch].max_y() > maxy) {
                     maxy = terrain_patch_proxy_list_[patch].max_y();
+                }
 
-                if (terrain_patch_proxy_list_[patch].min_z() < minz)
+                if (terrain_patch_proxy_list_[patch].min_z() < minz) {
                     minz = terrain_patch_proxy_list_[patch].min_z();
-                if (terrain_patch_proxy_list_[patch].max_z() > maxz)
+                }
+                if (terrain_patch_proxy_list_[patch].max_z() > maxz) {
                     maxz = terrain_patch_proxy_list_[patch].max_z();
+                }
             }
         }
 
@@ -809,16 +896,20 @@ namespace metin2::inline world::inline terrain {
                              (maxz - minz) * (maxz - minz)) /
                        2.0f;
 
-        if (node->nw_node != nullptr)
+        if (node->nw_node != nullptr) {
             update_quad_tree_heights(node->nw_node);
+        }
 
-        if (node->ne_node != nullptr)
+        if (node->ne_node != nullptr) {
             update_quad_tree_heights(node->ne_node);
+        }
 
-        if (node->sw_node != nullptr)
+        if (node->sw_node != nullptr) {
             update_quad_tree_heights(node->sw_node);
+        }
 
-        if (node->se_node != nullptr)
+        if (node->se_node != nullptr) {
             update_quad_tree_heights(node->se_node);
+        }
     }
 }

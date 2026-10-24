@@ -1,8 +1,8 @@
-#include <metin2/log/log.h>
 #include "map_outdoor.h"
 
-namespace metin2::inline world::inline terrain {
+#include <metin2/log/log.h>
 
+namespace metin2::inline world::inline terrain {
     void map_outdoor::set_index_buffer() {
         void *indices;
         int32_t x, y;
@@ -16,8 +16,10 @@ namespace metin2::inline world::inline terrain {
             memset(pwa_indices_[uci], 0, sizeof(uint16_t) * index_num);
             count[uci] = 0;
             count2[uci] = 0;
-            if (!index_buffer_[uci].create(index_num, gpu::format::INDEX16))
+
+            if (!index_buffer_[uci].create(index_num, gpu::format::INDEX16)) {
                 metin2::log::error("Cannot create terrain index buffer");
+            }
         }
 
         uint8_t num_line_warp = TERRAIN_PATCHSIZE + 1;
@@ -44,53 +46,61 @@ namespace metin2::inline world::inline terrain {
 
                 if (0 == x % 2) {
                     if (0 == y) {
-                        if (0 == x)
+                        if (0 == x) {
                             add_lvl1tl(pwa_indices_[1], count[1], count2[1], num_line_warp);
-                        else if ((TERRAIN_PATCHSIZE - 2) == x)
+                        } else if ((TERRAIN_PATCHSIZE - 2) == x) {
                             add_lvl1tr(pwa_indices_[1], count[1], count2[1], num_line_warp);
-                        else
+                        } else {
                             add_lvl1t(pwa_indices_[1], count[1], count2[1], num_line_warp);
+                        }
                     } else if ((TERRAIN_PATCHSIZE - 2) == y) {
-                        if (0 == x)
+                        if (0 == x) {
                             add_lvl1bl(pwa_indices_[1], count[1], count2[1], num_line_warp);
-                        else if ((TERRAIN_PATCHSIZE - 2) == x)
+                        } else if ((TERRAIN_PATCHSIZE - 2) == x) {
                             add_lvl1br(pwa_indices_[1], count[1], count2[1], num_line_warp);
-                        else
+                        } else {
                             add_lvl1b(pwa_indices_[1], count[1], count2[1], num_line_warp);
+                        }
                     } else if (0 == y % 2) {
-                        if (0 == x)
+                        if (0 == x) {
                             add_lvl1l(pwa_indices_[1], count[1], count2[1], num_line_warp);
-                        else if ((TERRAIN_PATCHSIZE - 2) == x)
+                        } else if ((TERRAIN_PATCHSIZE - 2) == x) {
                             add_lvl1r(pwa_indices_[1], count[1], count2[1], num_line_warp);
-                        else
+                        } else {
                             add_lvl1m(pwa_indices_[1], count[1], count2[1], num_line_warp);
+                        }
                     }
+
                     count2[1] += 2;
                 }
 
                 if (0 == x % 4) {
                     if (0 == y) {
-                        if (0 == x)
+                        if (0 == x) {
                             add_lvl2tl(pwa_indices_[2], count[2], count2[2], num_line_warp);
-                        else if ((TERRAIN_PATCHSIZE - 4) == x)
+                        } else if ((TERRAIN_PATCHSIZE - 4) == x) {
                             add_lvl2tr(pwa_indices_[2], count[2], count2[2], num_line_warp);
-                        else
+                        } else {
                             add_lvl2t(pwa_indices_[2], count[2], count2[2], num_line_warp);
+                        }
                     } else if ((TERRAIN_PATCHSIZE - 4) == y) {
-                        if (0 == x)
+                        if (0 == x) {
                             add_lvl2bl(pwa_indices_[2], count[2], count2[2], num_line_warp);
-                        else if ((TERRAIN_PATCHSIZE - 4) == x)
+                        } else if ((TERRAIN_PATCHSIZE - 4) == x) {
                             add_lvl2br(pwa_indices_[2], count[2], count2[2], num_line_warp);
-                        else
+                        } else {
                             add_lvl2b(pwa_indices_[2], count[2], count2[2], num_line_warp);
+                        }
                     } else if (0 == y % 4) {
-                        if (0 == x)
+                        if (0 == x) {
                             add_lvl2l(pwa_indices_[2], count[2], count2[2], num_line_warp);
-                        else if ((TERRAIN_PATCHSIZE - 4) == x)
+                        } else if ((TERRAIN_PATCHSIZE - 4) == x) {
                             add_lvl2r(pwa_indices_[2], count[2], count2[2], num_line_warp);
-                        else
+                        } else {
                             add_lvl2m(pwa_indices_[2], count[2], count2[2], num_line_warp);
+                        }
                     }
+
                     count2[2] += 4;
                 }
             }
@@ -98,18 +108,24 @@ namespace metin2::inline world::inline terrain {
             if (y < TERRAIN_PATCHSIZE - 1) {
                 pwa_indices_[0][(count[0])++] = (uint16_t)(count2[0] + num_line_warp);
                 pwa_indices_[0][(count[0])++] = (uint16_t)(count2[0] + num_line_warp);
+
                 count2[0] += num_line_warp;
-                if (0 == y % 2)
+                if (0 == y % 2) {
                     count2[1] += 2;
-                if (0 == y % 4)
+                }
+
+                if (0 == y % 4) {
                     count2[2] += 4;
+                }
             }
         }
 
         for (uci = 0; uci < TERRAINPATCH_LODMAX; ++uci) {
             num_indices_[uci] = count[uci];
-            if (!index_buffer_[uci].lock((void **)&indices))
+            if (!index_buffer_[uci].lock((void **)&indices)) {
                 metin2::log::error("Cannot unlock terrain index buffer");
+            }
+
             memcpy(indices, pwa_indices_[uci], count[uci] * sizeof(uint16_t));
             index_buffer_[uci].unlock();
             delete[] pwa_indices_[uci];

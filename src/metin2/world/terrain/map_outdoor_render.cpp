@@ -1,6 +1,6 @@
-#include <metin2/log/log.h>
-#include "area_terrain.h"
 #include "map_outdoor.h"
+
+#include "area_terrain.h"
 #include "terrain_patch.h"
 #include "terrain_quadtree.h"
 
@@ -9,26 +9,32 @@
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/camera.h>
 #include <metin2/graphics/state_manager.h>
+#include <metin2/log/log.h>
+
+#include <algorithm>
 
 namespace metin2::inline world::inline terrain {
 
 #define MAX_RENDER_SPALT 150
-
     area::crc_with_number_vector rendered_crc_with_number_vector;
 
     void map_outdoor::render_terrain() {
-        if (!is_visible_part(PART_TERRAIN))
+        if (!is_visible_part(PART_TERRAIN)) {
             return;
+        }
 
-        if (!setting_terrain_visible_)
+        if (!setting_terrain_visible_) {
             return;
+        }
 
-        if (!terrain_patch_proxy_list_)
+        if (!terrain_patch_proxy_list_) {
             return;
+        }
 
         camera *camera = get_camera_manager().current_camera();
-        if (!camera)
+        if (!camera) {
             return;
+        }
 
         auto vv = view_ * proj_;
         build_view_frustum(vv);
@@ -65,14 +71,21 @@ namespace metin2::inline world::inline terrain {
             float distance = f_max(fabs(center.x + xfor_distance_caculation_), fabs(-center.y + yfor_distance_caculation_));
             render_terrain_append_patch(center, distance, node->patch_num);
         } else {
-            if (node->nw_node != nullptr)
+            if (node->nw_node != nullptr) {
                 render_terrain_recurse_render_quad_tree(node->nw_node, cull_check_need);
-            if (node->ne_node != nullptr)
+            }
+
+            if (node->ne_node != nullptr) {
                 render_terrain_recurse_render_quad_tree(node->ne_node, cull_check_need);
-            if (node->sw_node != nullptr)
+            }
+
+            if (node->sw_node != nullptr) {
                 render_terrain_recurse_render_quad_tree(node->sw_node, cull_check_need);
-            if (node->se_node != nullptr)
+            }
+
+            if (node->se_node != nullptr) {
                 render_terrain_recurse_render_quad_tree(node->se_node, cull_check_need);
+            }
         }
     }
 
@@ -87,13 +100,15 @@ namespace metin2::inline world::inline terrain {
         float distance[count];
         for (i = 0; i < count; ++i) {
             distance[i] = math::plane_dot_coord(plane_[i], center);
-            if (distance[i] <= -radius)
+            if (distance[i] <= -radius) {
                 return VIEW_NONE;
+            }
         }
 
         for (i = 0; i < count; ++i) {
-            if (distance[i] <= radius)
+            if (distance[i] <= radius) {
                 return VIEW_PART;
+            }
         }
 
         return VIEW_ALL;
@@ -101,8 +116,9 @@ namespace metin2::inline world::inline terrain {
 
     void map_outdoor::render_terrain_append_patch(const math::vector3 &center, float distance, int32_t patch_num) {
         assert(nullptr != terrain_patch_proxy_list_ && "CMapOutdoor::__RenderTerrain_AppendPatch");
-        if (!terrain_patch_proxy_list_[patch_num].is_used())
+        if (!terrain_patch_proxy_list_[patch_num].is_used()) {
             return;
+        }
 
         terrain_patch_proxy_list_[patch_num].set_center_position(center);
         patch_vector_.push_back(std::make_pair(distance, patch_num));
@@ -128,8 +144,9 @@ namespace metin2::inline world::inline terrain {
 
     auto map_outdoor::is_visible_part(int part_value) -> bool {
         uint32_t mask = (1 << part_value);
-        if (mask & visible_part_flags_)
+        if (mask & visible_part_flags_) {
             return true;
+        }
 
         return false;
     }
@@ -173,31 +190,35 @@ namespace metin2::inline world::inline terrain {
     void map_outdoor::render_collision() {
         for (int i = 0; i < AROUND_AREA_NUM; ++i) {
             area *area;
-            if (area_pointer(i, &area))
+            if (area_pointer(i, &area)) {
                 area->render_collision();
+            }
         }
     }
 
     void map_outdoor::render_sky() {
-        if (is_visible_part(PART_SKY))
+        if (is_visible_part(PART_SKY)) {
             sky_box_value_.render();
+        }
     }
 
     void map_outdoor::render_cloud() {
-        if (is_visible_part(PART_CLOUD))
+        if (is_visible_part(PART_CLOUD)) {
             sky_box_value_.render_cloud();
+        }
     }
 
     void map_outdoor::render_tree() {
-        if (is_visible_part(PART_TREE))
+        if (is_visible_part(PART_TREE)) {
             get_speed_tree_forest_direct_x8().render();
+        }
     }
 
     void map_outdoor::set_inverse_view_and_dynamic_shaodw_matrices() {
-        camera *camera = get_camera_manager().current_camera();
-
-        if (!camera)
+        auto *camera = get_camera_manager().current_camera();
+        if (!camera) {
             return;
+        }
 
         view_inverse_ = camera->inverse_view_matrix();
 
@@ -209,23 +230,26 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto map_outdoor::shadow_light_eye(const math::vector3 &target) const -> math::vector3 {
-        // The old fixed offset, kept as the fallback: 60 degrees up from the south-west.
         math::vector3 to_light(-0.433f, -0.25f, 0.866f);
         if (mc_environment_data_ && mc_environment_data_->dir_lights_enable[ENV_DIRLIGHT_BACKGROUND]) {
             const math::vector3 &direction = mc_environment_data_->dir_lights[ENV_DIRLIGHT_BACKGROUND].direction;
-            if (math::length_sq(direction) > 0.0f)
+            if (math::length_sq(direction) > 0.0f) {
                 to_light = math::normalize(-direction);
+            }
         }
+
         if (to_light.z < 0.5f) {
             to_light.z = 0.5f;
             to_light = math::normalize(to_light);
         }
+
         // A sun straight overhead would make the look-at (up is +z) degenerate; keep a little tilt.
         if (to_light.x * to_light.x + to_light.y * to_light.y < 0.01f) {
             to_light.x = -0.1f;
             to_light.y = -0.1f;
             to_light = math::normalize(to_light);
         }
+
         return target + to_light * 5000.0f;
     }
 
@@ -235,8 +259,11 @@ namespace metin2::inline world::inline terrain {
         set_blend_operation();
         render_area();
         render_tree();
-        if (!enable_terrain_only_for_height_)
+
+        if (!enable_terrain_only_for_height_) {
             render_terrain();
+        }
+
         render_blend_area();
     }
 
@@ -264,6 +291,7 @@ namespace metin2::inline world::inline terrain {
                     return;
                 }
             }
+
             STATEMANAGER.set_texture_stage_state(1, gpu::stage_state::ALPHA_OP, gpu::texture_op::SELECT_ARG1);
 
             instance->render_pc_blocker();
@@ -271,8 +299,10 @@ namespace metin2::inline world::inline terrain {
     };
 
     void map_outdoor::render_effect() {
-        if (!is_visible_part(PART_OBJECT))
+        if (!is_visible_part(PART_OBJECT)) {
             return;
+        }
+
         for (int i = 0; i < AROUND_AREA_NUM; ++i) {
             area *area;
             if (area_pointer(i, &area)) {
@@ -299,6 +329,7 @@ namespace metin2::inline world::inline terrain {
             thing_inst->render();
         }
     };
+
     struct map_outdoor_blend_thing_instance_render {
         inline void operator()(graphic_thing_instance *thing_inst) {
             thing_inst->blend_render();
@@ -306,8 +337,9 @@ namespace metin2::inline world::inline terrain {
     };
 
     void map_outdoor::render_area(bool render_ambience) {
-        if (!is_visible_part(PART_OBJECT))
+        if (!is_visible_part(PART_OBJECT)) {
             return;
+        }
 
         rendered_crc_num_ = 0;
         rendered_graphic_thing_instance_num_ = 0;
@@ -320,11 +352,12 @@ namespace metin2::inline world::inline terrain {
             }
         }
 
-        std::for_each(pc_blocker_vector_.begin(), pc_blocker_vector_.end(), pc_blocker_hide_fn());
+        std::ranges::for_each(pc_blocker_vector_, pc_blocker_hide_fn());
 
         if (draw_shadow_ && draw_chr_shadow_) {
-            if (mc_environment_data_ != nullptr)
+            if (mc_environment_data_ != nullptr) {
                 STATEMANAGER.set_render_state(gpu::state::FOG_COLOR, 0xFFFFFFFF);
+            }
 
             STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::COLOR_ARG1, gpu::texture_arg::TEXTURE);
             STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::COLOR_ARG2, gpu::texture_arg::DIFFUSE);
@@ -344,7 +377,7 @@ namespace metin2::inline world::inline terrain {
             STATEMANAGER.save_texture_stage_state(1, gpu::stage_state::ADDRESS_V, gpu::address::BORDER);
             STATEMANAGER.save_texture_stage_state(1, gpu::stage_state::BORDER_COLOR, 0xFFFFFFFF);
 
-            std::for_each(shadow_receiver_vector_.begin(), shadow_receiver_vector_.end(), area_render_shadow_fn());
+            std::ranges::for_each(shadow_receiver_vector_, area_render_shadow_fn());
 
             STATEMANAGER.restore_texture_stage_state(1, gpu::stage_state::TEXCOORD_INDEX);
             STATEMANAGER.restore_texture_stage_state(1, gpu::stage_state::TEXTURE_TRANSFORM_FLAGS);
@@ -354,8 +387,9 @@ namespace metin2::inline world::inline terrain {
 
             STATEMANAGER.restore_transform(gpu::transform::TEXTURE1);
 
-            if (mc_environment_data_ != nullptr)
+            if (mc_environment_data_ != nullptr) {
                 STATEMANAGER.set_render_state(gpu::state::FOG_COLOR, mc_environment_data_->fog_color);
+            }
         }
 
         STATEMANAGER.save_render_state(gpu::state::Z_WRITE_ENABLE, true);
@@ -417,8 +451,9 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::render_blend_area() {
-        if (!is_visible_part(PART_OBJECT))
+        if (!is_visible_part(PART_OBJECT)) {
             return;
+        }
 
         static std::vector<graphic_thing_instance *> vct_blend_thing_inst_sort;
         vct_blend_thing_inst_sort.clear();
@@ -450,7 +485,7 @@ namespace metin2::inline world::inline terrain {
             STATEMANAGER.set_texture_stage_state(1, gpu::stage_state::COLOR_OP, gpu::texture_op::SELECT_ARG1);
             STATEMANAGER.set_texture_stage_state(1, gpu::stage_state::ALPHA_OP, gpu::texture_op::DISABLE);
 
-            std::for_each(vct_blend_thing_inst_sort.begin(), vct_blend_thing_inst_sort.end(), map_outdoor_blend_thing_instance_render());
+            std::ranges::for_each(vct_blend_thing_inst_sort, map_outdoor_blend_thing_instance_render());
 
             STATEMANAGER.restore_render_state(gpu::state::ALPHA_BLEND_ENABLE);
             STATEMANAGER.restore_render_state(gpu::state::SRC_BLEND);
@@ -461,8 +496,10 @@ namespace metin2::inline world::inline terrain {
     void map_outdoor::render_dungeon() {
         for (int i = 0; i < AROUND_AREA_NUM; ++i) {
             area *area;
-            if (!area_pointer(i, &area))
+            if (!area_pointer(i, &area)) {
                 continue;
+            }
+
             area->render_dungeon();
         }
     }
@@ -516,6 +553,7 @@ namespace metin2::inline world::inline terrain {
             *primitive_count = num_indices_[lod_level] / 3;
             *pe_primitive_type = gpu::primitive::TRIANGLE_LIST;
         }
+
         STATEMANAGER.set_indices(index_buffer_[lod_level].gpu_buffer(), 0);
     }
 
@@ -529,17 +567,20 @@ namespace metin2::inline world::inline terrain {
 
     struct patch_num_match_fn {
         int32_t patch_num_to_check;
+
         patch_num_match_fn(int32_t patch_num) {
             patch_num_to_check = patch_num;
         }
+
         auto operator()(std::pair<int32_t, uint8_t> pair) -> bool {
             return patch_num_to_check == pair.first;
         }
     };
 
     void map_outdoor::render_marked_area() {
-        if (!terrain_patch_proxy_list_)
+        if (!terrain_patch_proxy_list_) {
             return;
+        }
 
         world_for_common_use_._41 = 0.0f;
         world_for_common_use_._42 = 0.0f;
@@ -610,45 +651,56 @@ namespace metin2::inline world::inline terrain {
 
     void map_outdoor::recurse_render_attr(terrain_quadtree_node *node, bool cull_enable) {
         if (cull_enable) {
-            if (render_terrain_recurse_render_quad_tree_check_bounding_circle(node->center, node->radius) == VIEW_NONE)
+            if (render_terrain_recurse_render_quad_tree_check_bounding_circle(node->center, node->radius) == VIEW_NONE) {
                 return;
+            }
         }
 
-        {
-            if (node->size == 1) {
-                draw_patch_attr(node->patch_num);
-            } else {
-                if (node->nw_node != nullptr)
-                    recurse_render_attr(node->nw_node, cull_enable);
-                if (node->ne_node != nullptr)
-                    recurse_render_attr(node->ne_node, cull_enable);
-                if (node->sw_node != nullptr)
-                    recurse_render_attr(node->sw_node, cull_enable);
-                if (node->se_node != nullptr)
-                    recurse_render_attr(node->se_node, cull_enable);
+        if (node->size == 1) {
+            draw_patch_attr(node->patch_num);
+        } else {
+            if (node->nw_node != nullptr) {
+                recurse_render_attr(node->nw_node, cull_enable);
+            }
+
+            if (node->ne_node != nullptr) {
+                recurse_render_attr(node->ne_node, cull_enable);
+            }
+
+            if (node->sw_node != nullptr) {
+                recurse_render_attr(node->sw_node, cull_enable);
+            }
+
+            if (node->se_node != nullptr) {
+                recurse_render_attr(node->se_node, cull_enable);
             }
         }
     }
 
     void map_outdoor::draw_patch_attr(int32_t patchnum) {
         terrain_patch_proxy *terrain_patch_proxy = &terrain_patch_proxy_list_[patchnum];
-        if (!terrain_patch_proxy->is_used())
+        if (!terrain_patch_proxy->is_used()) {
             return;
+        }
 
         int32_t patch_num = terrain_patch_proxy->patch_num();
-        if (patch_num < 0)
+        if (patch_num < 0) {
             return;
+        }
 
         uint8_t terrain_num = terrain_patch_proxy->terrain_num();
-        if (0xFF == terrain_num)
+        if (0xFF == terrain_num) {
             return;
+        }
 
         terrain_area *terrain;
-        if (!terrain_pointer(terrain_num, &terrain))
+        if (!terrain_pointer(terrain_num, &terrain)) {
             return;
+        }
 
-        if (!terrain->is_marked())
+        if (!terrain->is_marked()) {
             return;
+        }
 
         uint16_t coord_x, coord_y;
         terrain->coordinate(&coord_x, &coord_y);

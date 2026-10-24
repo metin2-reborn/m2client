@@ -1,11 +1,12 @@
-#include <metin2/graphics/resource_manager.h>
-#include <metin2/graphics/state_manager.h>
+#include "map_outdoor.h"
+
+#include "terrain_patch.h"
 
 #include <metin2/core/random.h>
 #include <metin2/core/timer.h>
 #include <metin2/gpu/types.h>
-#include "map_outdoor.h"
-#include "terrain_patch.h"
+#include <metin2/graphics/resource_manager.h>
+#include <metin2/graphics/state_manager.h>
 
 #include <cstring>
 
@@ -21,16 +22,19 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::unload_water_texture() {
-        for (int i = 0; i < 30; ++i)
+        for (int i = 0; i < 30; ++i) {
             water_instances_[i].destroy();
+        }
     }
 
     void map_outdoor::render_water() {
-        if (patch_vector_.empty())
+        if (patch_vector_.empty()) {
             return;
+        }
 
-        if (!is_visible_part(PART_WATER))
+        if (!is_visible_part(PART_WATER)) {
             return;
+        }
 
         math::matrix tex_transform_water;
 
@@ -81,10 +85,11 @@ namespace metin2::inline world::inline terrain {
         if ((get_timer().current_millisecond() - last_height_change_time) > blendtime) {
             blendtime = metin2::random::number(1000, 3000);
 
-            if (water_height_end == 0)
+            if (water_height_end == 0) {
                 water_height_end = -metin2::random::number(0, 15);
-            else
+            } else {
                 water_height_end = 0;
+            }
 
             water_height_begin = water_height_current;
             last_height_change_time = get_timer().current_millisecond();
@@ -102,16 +107,18 @@ namespace metin2::inline world::inline terrain {
         std::vector<std::pair<float, int32_t>>::iterator i;
 
         for (i = patch_vector_.begin(); i != patch_vector_.end(); ++i) {
-            if (i->first < fog_distance_value)
+            if (i->first < fog_distance_value) {
                 draw_water(i->second);
+            }
         }
 
         STATEMANAGER.set_texture(0, nullptr);
         STATEMANAGER.set_render_state(gpu::state::ALPHA_BLEND_ENABLE, false);
 
         for (i = patch_vector_.begin(); i != patch_vector_.end(); ++i) {
-            if (i->first >= fog_distance_value)
+            if (i->first >= fog_distance_value) {
                 draw_water(i->second);
+            }
         }
 
         world_for_common_use_._43 = 0.0f;
@@ -137,27 +144,32 @@ namespace metin2::inline world::inline terrain {
 
     void map_outdoor::draw_water(int32_t patchnum) {
         assert(nullptr != terrain_patch_proxy_list_);
-        if (!terrain_patch_proxy_list_)
+        if (!terrain_patch_proxy_list_) {
             return;
+        }
 
-        terrain_patch_proxy &terrain_patch_proxy = terrain_patch_proxy_list_[patchnum];
-
-        if (!terrain_patch_proxy.is_used())
+        auto &terrain_patch_proxy = terrain_patch_proxy_list_[patchnum];
+        if (!terrain_patch_proxy.is_used()) {
             return;
+        }
 
-        if (!terrain_patch_proxy.is_water_exists())
+        if (!terrain_patch_proxy.is_water_exists()) {
             return;
+        }
 
         graphic_vertex_buffer *vb = terrain_patch_proxy.water_vertex_buffer_pointer();
-        if (!vb)
+        if (!vb) {
             return;
+        }
 
-        if (!vb->gpu_buffer())
+        if (!vb->gpu_buffer()) {
             return;
+        }
 
         uint32_t pri_count = terrain_patch_proxy.water_face_count();
-        if (!pri_count)
+        if (!pri_count) {
             return;
+        }
 
         STATEMANAGER.set_stream_source(0, vb->gpu_buffer(), sizeof(water_vertex));
         STATEMANAGER.draw_primitive(gpu::primitive::TRIANGLE_LIST, 0, pri_count);

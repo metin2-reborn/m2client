@@ -6,7 +6,8 @@ Checks: >
   modernize-use-ranges,
   modernize-use-equals-default,
   modernize-use-auto,
-  readability-identifier-naming
+  readability-identifier-naming,
+  readability-braces-around-statements
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*/src/metin2/.*'
 ExcludeHeaderFilterRegex: '.*/src/metin2/platform/.*'

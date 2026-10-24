@@ -1,12 +1,11 @@
 #pragma once
 
+#include <metin2/gpu/device.h>
+
 #include <cmath>
 #include <cstdint>
 
-#include <metin2/gpu/device.h>
-
 namespace metin2::inline world::inline terrain {
-
 #define TERRAIN_PATCHSIZE  16
 #define TERRAIN_SIZE       128
 #define TERRAIN_PATCHCOUNT (TERRAIN_SIZE / TERRAIN_PATCHSIZE)

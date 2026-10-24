@@ -1,14 +1,13 @@
 #pragma once
 
-#include <metin2/gpu/types.h>
-#include <metin2/graphics/grp_vertex_buffer.h>
 #include "terrain.h"
 
-namespace metin2::inline world::inline terrain {
+#include <metin2/gpu/types.h>
+#include <metin2/graphics/grp_vertex_buffer.h>
 
+namespace metin2::inline world::inline terrain {
 #pragma pack(push)
 #pragma pack(1)
-
     struct hardware_transform_patch_source_vertex {
         math::vector3 position_value;
         math::vector3 normal_value;
@@ -34,6 +33,7 @@ namespace metin2::inline world::inline terrain {
 
       public:
         terrain_patch() { clear(); }
+
         ~terrain_patch() { clear(); }
 
         void clear();

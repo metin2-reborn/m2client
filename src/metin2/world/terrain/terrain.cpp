@@ -1,28 +1,28 @@
 #include "terrain.h"
 
-#include <algorithm>
-#include <cstring>
-
 #include <metin2/core/timer.h>
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/log/log.h>
 
-namespace metin2::inline world::inline terrain {
+#include <cstring>
 
+namespace metin2::inline world::inline terrain {
     texture_set *terrain_impl::texture_set_value_ = nullptr;
 
     void terrain_impl::set_texture_set(texture_set *texture_set_value) {
         static texture_set empty_texture_set;
 
-        if (!texture_set_value)
+        if (!texture_set_value) {
             texture_set_value_ = &empty_texture_set;
-        else
+        } else {
             texture_set_value_ = texture_set_value;
+        }
     }
 
     auto terrain_impl::get_texture_set() -> texture_set * {
-        if (!texture_set_value_)
+        if (!texture_set_value_) {
             set_texture_set(nullptr);
+        }
 
         return texture_set_value_;
     }
@@ -40,8 +40,9 @@ namespace metin2::inline world::inline terrain {
 
         num_water_ = 0;
         memset(shadow_map_, 0xFF, sizeof(shadow_map_));
-        for (auto &texture : alpha_texture_)
+        for (auto &texture : alpha_texture_) {
             texture.reset();
+        }
 
         view_radius_ = 0;
 
@@ -104,6 +105,7 @@ namespace metin2::inline world::inline terrain {
                 uint16_t height;
             };
 #pragma pack(pop)
+
             static_assert(sizeof(attr_map_header) == 6, "attribute map header layout");
 
             if (file_size < sizeof(attr_map_header)) {
@@ -268,12 +270,15 @@ namespace metin2::inline world::inline terrain {
 
     auto terrain_impl::shadow_map_color(float fx, float fy) -> uint32_t {
         auto map_size = (float)(TERRAIN_XSIZE);
+
         float foo_map_size = 1.0f / map_size;
-        if (fx < 0 || fy < 0 || fx >= map_size || fy >= map_size)
+        if (fx < 0 || fy < 0 || fx >= map_size || fy >= map_size) {
             return 0xFFFFFFFF;
+        }
 
         fx = fx * foo_map_size * (float)(SHADOWMAP_XSIZE - 1);
         fy = fy * foo_map_size * (float)(SHADOWMAP_YSIZE - 1);
+
         int ix, iy;
         PR_FLOAT_TO_INT(fx, ix);
         PR_FLOAT_TO_INT(fy, iy);

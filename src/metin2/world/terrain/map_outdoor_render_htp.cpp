@@ -4,11 +4,11 @@
 #include <metin2/graphics/state_manager.h>
 
 namespace metin2::inline world::inline terrain {
-
     void map_outdoor::render_terrain_render_hardware_transform_patch() {
         uint32_t fog_color;
         float fog_far_distance;
         float fog_near_distance;
+
         if (mc_environment_data_) {
             fog_color = mc_environment_data_->fog_color;
             fog_near_distance = mc_environment_data_->get_fog_near_distance();
@@ -95,8 +95,9 @@ namespace metin2::inline world::inline terrain {
             }
 
             hardware_transform_patch_render_patch_splat(it->second, primitive_count, primitive_type);
-            if (rendered_splat_num_ >= splat_limit_)
+            if (rendered_splat_num_ >= splat_limit_) {
                 break;
+            }
         }
 
         STATEMANAGER.set_render_state(gpu::state::FOG_ENABLE, fog_enable);
@@ -113,8 +114,9 @@ namespace metin2::inline world::inline terrain {
 
                 hardware_transform_patch_render_patch_splat(it->second, primitive_count, primitive_type);
 
-                if (rendered_splat_num_ >= splat_limit_)
+                if (rendered_splat_num_ >= splat_limit_) {
                     break;
+                }
             }
         }
 
@@ -146,8 +148,9 @@ namespace metin2::inline world::inline terrain {
 
                 hardware_transform_patch_render_patch_none(it->second, primitive_count, primitive_type);
 
-                if (rendered_splat_num_ >= splat_limit_)
+                if (rendered_splat_num_ >= splat_limit_) {
                     break;
+                }
             }
         }
 
@@ -187,26 +190,31 @@ namespace metin2::inline world::inline terrain {
         assert(nullptr != terrain_patch_proxy_list_ && "__HardwareTransformPatch_RenderPatchSplat");
         terrain_patch_proxy *terrain_patch_proxy = &terrain_patch_proxy_list_[patchnum];
 
-        if (!terrain_patch_proxy->is_used())
+        if (!terrain_patch_proxy->is_used()) {
             return;
+        }
 
         int32_t patch_num = terrain_patch_proxy->patch_num();
-        if (patch_num < 0)
+        if (patch_num < 0) {
             return;
+        }
 
         uint8_t terrain_num = terrain_patch_proxy->terrain_num();
-        if (0xFF == terrain_num)
+        if (0xFF == terrain_num) {
             return;
+        }
 
         terrain_area *terrain;
-        if (!terrain_pointer(terrain_num, &terrain))
+        if (!terrain_pointer(terrain_num, &terrain)) {
             return;
+        }
 
         uint32_t fog_color;
-        if (mc_environment_data_)
+        if (mc_environment_data_) {
             fog_color = mc_environment_data_->fog_color;
-        else
+        } else {
             fog_color = 0xffffffff;
+        }
 
         uint16_t coord_x, coord_y;
         terrain->coordinate(&coord_x, &coord_y);
@@ -228,9 +236,10 @@ namespace metin2::inline world::inline terrain {
         splat_color_tex_transform = view_inverse_ * tiling;
         STATEMANAGER.set_transform(gpu::transform::TEXTURE0, &splat_color_tex_transform);
 
-        graphic_vertex_buffer *vb = terrain_patch_proxy->hardware_transform_patch_get_vertex_buffer_ptr();
-        if (!vb)
+        auto *vb = terrain_patch_proxy->hardware_transform_patch_get_vertex_buffer_ptr();
+        if (!vb) {
             return;
+        }
 
         STATEMANAGER.set_stream_source(0, vb->gpu_buffer(), patch_terrain_vertex_size_);
 
@@ -242,11 +251,13 @@ namespace metin2::inline world::inline terrain {
         for (uint32_t j = 1; j < terrain->num_textures(); ++j) {
             terain_splat &splat = terrain_splat_patch.splats[j];
 
-            if (!splat.active)
+            if (!splat.active) {
                 continue;
+            }
 
-            if (terrain_splat_patch.patch_tile_count[patch_num][j] == 0)
+            if (terrain_splat_patch.patch_tile_count[patch_num][j] == 0) {
                 continue;
+            }
 
             const terrain_texture &texture = texture_set_value_.texture(j);
 
@@ -266,11 +277,14 @@ namespace metin2::inline world::inline terrain {
             }
 
             auto iterator = std::find(rendered_texture_num_vector_.begin(), rendered_texture_num_vector_.end(), (int)j);
-            if (iterator == rendered_texture_num_vector_.end())
+            if (iterator == rendered_texture_num_vector_.end()) {
                 rendered_texture_num_vector_.push_back(j);
+            }
+
             ++rendered_splat_num_;
-            if (rendered_splat_num_ >= splat_limit_)
+            if (rendered_splat_num_ >= splat_limit_) {
                 break;
+            }
         }
 
         // The splats above are unlit: this pass multiplies them by the vertex lighting and, when shadows
@@ -347,12 +361,14 @@ namespace metin2::inline world::inline terrain {
         assert(nullptr != terrain_patch_proxy_list_ && "__HardwareTransformPatch_RenderPatchNone");
         terrain_patch_proxy *terrain_patch_proxy = &terrain_patch_proxy_list_[patchnum];
 
-        if (!terrain_patch_proxy->is_used())
+        if (!terrain_patch_proxy->is_used()) {
             return;
+        }
 
         graphic_vertex_buffer *vb = terrain_patch_proxy->hardware_transform_patch_get_vertex_buffer_ptr();
-        if (!vb)
+        if (!vb) {
             return;
+        }
 
         STATEMANAGER.set_stream_source(0, vb->gpu_buffer(), patch_terrain_vertex_size_);
         STATEMANAGER.draw_indexed_primitive(primitive_type, 0, patch_terrain_vertex_count_, 0, primitive_count);

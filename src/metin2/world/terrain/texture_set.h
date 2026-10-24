@@ -1,16 +1,14 @@
 #pragma once
 
+#include <metin2/gpu/types.h>
+#include <metin2/graphics/grp_image_instance.h>
+#include <metin2/math/math.h>
+
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#include <metin2/gpu/types.h>
-#include <metin2/math/math.h>
-
-#include <metin2/graphics/grp_image_instance.h>
-
 namespace metin2::inline world::inline terrain {
-
     struct terrain_texture {
         terrain_texture() : gpu_texture(nullptr), u_scale(4.0f), v_scale(4.0f), u_offset(0.0f), v_offset(0.0f), splat(true), begin(0), end(0) {
             transform = math::matrix_identity();
@@ -33,6 +31,7 @@ namespace metin2::inline world::inline terrain {
         using texture_vector = std::vector<terrain_texture>;
 
         texture_set();
+
         virtual ~texture_set();
 
         void clear();
@@ -43,8 +42,7 @@ namespace metin2::inline world::inline terrain {
         auto texture_count() -> uint32_t;
         auto texture(uint32_t index) -> terrain_texture &;
 
-        auto set_texture(uint32_t index, const char *file_name, float fu_scale, float fv_scale, float fu_offset, float fv_offset, bool splat,
-            uint16_t us_begin, uint16_t us_end, float terrain_tex_coord_base) -> bool;
+        auto set_texture(uint32_t index, const char *file_name, float fu_scale, float fv_scale, float fu_offset, float fv_offset, bool splat, uint16_t us_begin, uint16_t us_end, float terrain_tex_coord_base) -> bool;
 
       protected:
         void add_empty_texture();

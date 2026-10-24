@@ -1,3 +1,7 @@
+#include "map_outdoor.h"
+
+#include "area_terrain.h"
+
 #include <metin2/core/parse.h>
 #include <metin2/core/timer.h>
 #include <metin2/core/util.h>
@@ -5,8 +9,6 @@
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/log/log.h>
-#include "area_terrain.h"
-#include "map_outdoor.h"
 
 namespace metin2::inline world::inline terrain {
 
@@ -23,8 +25,9 @@ namespace metin2::inline world::inline terrain {
 
         std::string file_name = map_data_directory() + "\\Setting.txt";
 
-        if (!load_setting(file_name.c_str()))
+        if (!load_setting(file_name.c_str())) {
             metin2::log::error("Cannot load map settings {}", file_name.c_str());
+        }
 
         create_terrain_patch_proxy_list();
         build_quad_tree();
@@ -41,6 +44,7 @@ namespace metin2::inline world::inline terrain {
         } else {
             const std::string &environment_root = "d:/ymir work/environment/";
             const std::string &map_name = get_name();
+
             env_data_name_ = environment_root + settings_env_data_name_;
 
             if (0 == env_data_name_.compare(environment_root)) {
@@ -48,6 +52,7 @@ namespace metin2::inline world::inline terrain {
                 env_data_name_ = environment_root + append_name + ".msenv";
             }
         }
+
         return true;
     }
 
@@ -61,9 +66,11 @@ namespace metin2::inline world::inline terrain {
             uint16_t us_coord_x, us_coord_y;
             terrain->coordinate(&us_coord_x, &us_coord_y);
 
-            if (us_coord_x == x && us_coord_y == y)
+            if (us_coord_x == x && us_coord_y == y) {
                 return true;
+            }
         }
+
         return false;
     }
 
@@ -73,9 +80,11 @@ namespace metin2::inline world::inline terrain {
             uint16_t us_coord_x, us_coord_y;
             area->coordinate(&us_coord_x, &us_coord_y);
 
-            if (us_coord_x == x && us_coord_y == y)
+            if (us_coord_x == x && us_coord_y == y) {
                 return true;
+            }
         }
+
         return false;
     }
 
@@ -122,8 +131,10 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto map_outdoor::load_area(uint16_t area_coord_x, uint16_t area_coord_y, uint16_t cell_coord_x, uint16_t cell_coord_y) -> bool {
-        if (is_area_loaded(area_coord_x, area_coord_y))
+        if (is_area_loaded(area_coord_x, area_coord_y)) {
             return true;
+        }
+
         uint32_t id = uint32_t(area_coord_x) * 1000 + uint32_t(area_coord_y);
         char area_path_name[64 + 1];
         snprintf(area_path_name, sizeof(area_path_name), "%s\\%06u\\", map_data_directory().c_str(), id);
@@ -132,8 +143,9 @@ namespace metin2::inline world::inline terrain {
         area->set_map_out_door(this);
 
         area->set_coordinate(area_coord_x, area_coord_y);
-        if (!area->load(area_path_name))
+        if (!area->load(area_path_name)) {
             metin2::log::error("Cannot load area ({}, {}): shadow map missing", area_coord_x, area_coord_y);
+        }
 
         area_vector_.push_back(area);
 
@@ -143,8 +155,9 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto map_outdoor::load_terrain(uint16_t terrain_coord_x, uint16_t terrain_coord_y, uint16_t cell_coord_x, uint16_t cell_coord_y) -> bool {
-        if (is_terrain_loaded(terrain_coord_x, terrain_coord_y))
+        if (is_terrain_loaded(terrain_coord_x, terrain_coord_y)) {
             return true;
+        }
 
         uint32_t start_time = el_timer_get_m_sec();
 
@@ -202,22 +215,27 @@ namespace metin2::inline world::inline terrain {
         snprintf(shadow_map_name, sizeof(shadow_map_name), "%s\\%06u\\shadowmap.raw", map_data_directory().c_str(), id);
         snprintf(mini_map_tex_name, sizeof(mini_map_tex_name), "%s\\%06u\\minimap.dds", map_data_directory().c_str(), id);
 
-        if (!terrain->load_water_map(water_map_name))
+        if (!terrain->load_water_map(water_map_name)) {
             metin2::log::error("Cannot load terrain ({}, {}): water map missing", terrain_coord_x, terrain_coord_y);
+        }
 
-        if (!terrain->load_height_map(raw_height_fieldname))
+        if (!terrain->load_height_map(raw_height_fieldname)) {
             metin2::log::error("Cannot load terrain ({}, {}): height map missing", terrain_coord_x, terrain_coord_y);
+        }
 
-        if (!terrain->load_attr_map(attr_map_name))
+        if (!terrain->load_attr_map(attr_map_name)) {
             metin2::log::error("Cannot load terrain ({}, {}): attribute map missing", terrain_coord_x, terrain_coord_y);
+        }
 
-        if (!terrain->raw_load_tile_map(splat_name))
+        if (!terrain->raw_load_tile_map(splat_name)) {
             metin2::log::error("Cannot load terrain ({}, {}): tile map missing", terrain_coord_x, terrain_coord_y);
+        }
 
         terrain->load_shadow_texture(shadow_tex_name);
 
-        if (!terrain->load_shadow_map(shadow_map_name))
+        if (!terrain->load_shadow_map(shadow_map_name)) {
             metin2::log::error("Cannot load terrain ({}, {}): shadow map missing", terrain_coord_x, terrain_coord_y);
+        }
 
         terrain->load_mini_map_texture(mini_map_tex_name);
         terrain->set_name(area_name.c_str());
@@ -315,8 +333,9 @@ namespace metin2::inline world::inline terrain {
         std::string texture_set_file_name = texture_set;
 
         // Do not prepend the texture set folder when the name already has it.
-        if (0 != texture_set_file_name.find_first_of("textureset", 0))
+        if (0 != texture_set_file_name.find_first_of("textureset", 0)) {
             texture_set_file_name = "textureset\\" + texture_set;
+        }
 
         if (!texture_set_value_.load(texture_set_file_name.c_str(), terrain_tex_coord_base_)) {
             metin2::log::error("Map settings {}: cannot load texture set {}", file_name, texture_set_file_name.c_str());
@@ -327,10 +346,11 @@ namespace metin2::inline world::inline terrain {
 
         if (token_vector_map.end() != token_vector_map.find("environment")) {
             const token_vector &environment_vector = token_vector_map["environment"];
-            if (!environment_vector.empty())
+            if (!environment_vector.empty()) {
                 settings_env_data_name_ = environment_vector[0];
-            else
+            } else {
                 metin2::log::error("Map settings {}: cannot load environment data", file_name);
+            }
         }
 
         water_tex_coord_base_ = 1.0f / (float)(terrain_impl::CELLSCALE * 4);

@@ -1,26 +1,22 @@
 #pragma once
 
-#include <memory>
+#include "area_terrain.h"
+#include "texture_set.h"
 
+#include <metin2/core/rectangle.h>
+#include <metin2/gpu/types.h>
 #include <metin2/graphics/lens_flare.h>
 #include <metin2/graphics/render_target.h>
 #include <metin2/graphics/screen_filter.h>
 #include <metin2/graphics/sky_box.h>
-
-#include "terrain_type.h"
-#include "texture_set.h"
-
 #include <metin2/trees/speed_tree_forest_direct_x8.h>
-
-#include <list>
-#include <metin2/core/rectangle.h>
-#include <metin2/gpu/types.h>
 #include <metin2/world/maps/area.h>
 #include <metin2/world/maps/map_base.h>
-#include "area_terrain.h"
+
+#include <list>
+#include <memory>
 
 namespace metin2::inline world::inline terrain {
-
 #define LOAD_SIZE_WIDTH 1
 
 #define AROUND_AREA_NUM  1 + (LOAD_SIZE_WIDTH * 2) * (LOAD_SIZE_WIDTH * 2) * 2

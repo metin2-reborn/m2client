@@ -1,26 +1,28 @@
-#include <metin2/effects/effect_manager.h>
-#include <metin2/graphics/camera.h>
-#include <metin2/graphics/state_manager.h>
+#include "map_outdoor.h"
+
+#include "area_terrain.h"
+#include "terrain_patch.h"
 
 #include <metin2/core/crc32.h>
 #include <metin2/core/utils.h>
+#include <metin2/effects/effect_manager.h>
 #include <metin2/gpu/types.h>
-#include "area_terrain.h"
-#include "map_outdoor.h"
-#include "terrain_patch.h"
+#include <metin2/graphics/camera.h>
+#include <metin2/graphics/state_manager.h>
 
 namespace metin2::inline world::inline terrain {
-
     struct get_object_height_fn {
         bool height_found;
         float return_height;
         float request_x, request_y;
+
         get_object_height_fn(float request_x_value, float request_y_value) {
             request_x = request_x_value;
             request_y = request_y_value;
             height_found = false;
             return_height = 0.0f;
         }
+
         void operator()(graphic_object_instance *object) {
             if (object->object_height(request_x, request_y, &return_height)) {
                 height_found = true;
@@ -38,8 +40,9 @@ namespace metin2::inline world::inline terrain {
         void operator()(graphic_object_instance *instance) {
             if (instance && instance->get_type() == graphic_thing_instance::ID) {
                 auto *thing = (graphic_thing_instance *)instance;
-                if (!thing->is_object_height())
+                if (!thing->is_object_height()) {
                     return;
+                }
 
                 float x, y, z;
                 if (thing->picking(start, dir_value, x, y)) {
@@ -94,8 +97,9 @@ namespace metin2::inline world::inline terrain {
         old_read_x_ = old_read_y_ = -1;
 
         memset(pwa_indices_, 0, sizeof(pwa_indices_));
-        for (i = 0; i < TERRAINPATCH_LODMAX; ++i)
+        for (i = 0; i < TERRAINPATCH_LODMAX; ++i) {
             index_buffer_[i].destroy();
+        }
 
         setting_terrain_visible_ = false;
         draw_shadow_ = false;
@@ -181,11 +185,13 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto map_outdoor::set_terrain_count(short terrain_count_x, short terrain_count_y) -> bool {
-        if (0 == terrain_count_x || MAX_MAPSIZE < terrain_count_x)
+        if (0 == terrain_count_x || MAX_MAPSIZE < terrain_count_x) {
             return false;
+        }
 
-        if (0 == terrain_count_y || MAX_MAPSIZE < terrain_count_y)
+        if (0 == terrain_count_y || MAX_MAPSIZE < terrain_count_y) {
             return false;
+        }
 
         terrain_count_x_ = terrain_count_x;
         terrain_count_y_ = terrain_count_y;
@@ -193,15 +199,17 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::on_begin_environment() {
-        if (!mc_environment_data_)
+        if (!mc_environment_data_) {
             return;
+        }
 
-        speed_tree_forest_direct_x8 &forest = get_speed_tree_forest_direct_x8();
+        auto &forest = get_speed_tree_forest_direct_x8();
         forest.set_fog(
             mc_environment_data_->get_fog_near_distance(),
             mc_environment_data_->get_fog_far_distance());
 
-        const gpu::light &light = mc_environment_data_->dir_lights[ENV_DIRLIGHT_CHARACTER];
+        const auto &light = mc_environment_data_->dir_lights[ENV_DIRLIGHT_CHARACTER];
+
         forest.set_light(
             (const float *)&light.direction,
             (const float *)&light.ambient,
@@ -222,8 +230,9 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::set_environment_screen_filter() {
-        if (!mc_environment_data_)
+        if (!mc_environment_data_) {
             return;
+        }
 
         screen_filter_value_.set_enable(mc_environment_data_->filtering_enable);
         screen_filter_value_.set_blend_type(mc_environment_data_->filtering_alpha_src, mc_environment_data_->filtering_alpha_dest);
@@ -231,20 +240,23 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::set_environment_sky_box() {
-        if (!mc_environment_data_)
+        if (!mc_environment_data_) {
             return;
+        }
 
         sky_box_value_.set_sky_box_scale(mc_environment_data_->sky_box_scale);
         sky_box_value_.set_gradient_level(mc_environment_data_->sky_box_gradient_level_upper, mc_environment_data_->sky_box_gradient_level_lower);
         sky_box_value_.set_render_mode((mc_environment_data_->sky_box_texture_render_mode == true) ? sky_object::SKY_RENDER_MODE_TEXTURE : sky_object::SKY_RENDER_MODE_DIFFUSE);
 
         for (int i = 0; i < 6; ++i) {
-            if (!mc_environment_data_->sky_box_face_file_name[i].empty())
+            if (!mc_environment_data_->sky_box_face_file_name[i].empty()) {
                 sky_box_value_.set_face_texture(mc_environment_data_->sky_box_face_file_name[i].c_str(), i);
+            }
         }
 
-        if (!mc_environment_data_->cloud_texture_file_name.empty())
+        if (!mc_environment_data_->cloud_texture_file_name.empty()) {
             sky_box_value_.set_cloud_texture(mc_environment_data_->cloud_texture_file_name.c_str());
+        }
 
         sky_box_value_.set_cloud_scale(mc_environment_data_->cloud_scale);
         sky_box_value_.set_cloud_height(mc_environment_data_->cloud_height);
@@ -254,15 +266,17 @@ namespace metin2::inline world::inline terrain {
 
         sky_box_value_.set_cloud_color(mc_environment_data_->cloud_gradient_color, mc_environment_data_->cloud_gradient_color, 1);
 
-        if (!mc_environment_data_->sky_box_gradient_color_vector.empty())
+        if (!mc_environment_data_->sky_box_gradient_color_vector.empty()) {
             sky_box_value_.set_sky_color(mc_environment_data_->sky_box_gradient_color_vector, mc_environment_data_->sky_box_gradient_color_vector, 1);
+        }
 
         sky_box_value_.start_transition();
     }
 
     void map_outdoor::set_environment_lens_flare() {
-        if (!mc_environment_data_)
+        if (!mc_environment_data_) {
             return;
+        }
 
         lens_flare_value_.characterize_flare(mc_environment_data_->lens_flare_enable == 1 ? true : false,
             mc_environment_data_->main_flare_enable == 1 ? true : false,
@@ -271,9 +285,10 @@ namespace metin2::inline world::inline terrain {
 
         lens_flare_value_.initialize("d:/ymir work/environment");
 
-        if (!mc_environment_data_->main_flare_texture_file_name.empty())
+        if (!mc_environment_data_->main_flare_texture_file_name.empty()) {
             lens_flare_value_.set_main_flare(mc_environment_data_->main_flare_texture_file_name.c_str(),
                 mc_environment_data_->main_flare_size);
+        }
     }
 
     void map_outdoor::create_terrain_patch_proxy_list() {
@@ -295,16 +310,19 @@ namespace metin2::inline world::inline terrain {
             terrain_patch_proxy_list_.reset();
         }
 
-        for (int i = 0; i < TERRAINPATCH_LODMAX; ++i)
+        for (int i = 0; i < TERRAINPATCH_LODMAX; ++i) {
             index_buffer_[i].destroy();
+        }
     }
 
     void map_outdoor::enable_portal(bool flag) {
         enable_portal_ = flag;
 
-        for (int i = 0; i < AROUND_AREA_NUM; ++i)
-            if (area_value_[i])
+        for (int i = 0; i < AROUND_AREA_NUM; ++i) {
+            if (area_value_[i]) {
                 area_value_[i]->enable_portal(flag);
+            }
+        }
     }
 
     void map_outdoor::destroy_area() {
@@ -313,8 +331,9 @@ namespace metin2::inline world::inline terrain {
 
         area::pool_value.free_all();
 
-        for (int i = 0; i < AROUND_AREA_NUM; ++i)
+        for (int i = 0; i < AROUND_AREA_NUM; ++i) {
             area_value_[i] = nullptr;
+        }
     }
 
     void map_outdoor::destroy_terrain() {
@@ -322,13 +341,15 @@ namespace metin2::inline world::inline terrain {
         terrain_delete_vector_.clear();
 
         terrain_area::pool_value.free_all();
-        for (int i = 0; i < AROUND_AREA_NUM; ++i)
+        for (int i = 0; i < AROUND_AREA_NUM; ++i) {
             terrain_[i] = nullptr;
+        }
     }
 
     auto map_outdoor::terrain_num(float fx, float fy, uint8_t *terrain_num) -> bool {
-        if (fy < 0)
+        if (fy < 0) {
             fy = -fy;
+        }
 
         int ix, iy;
 
@@ -381,6 +402,7 @@ namespace metin2::inline world::inline terrain {
 
         math::vector3 start, end, dir;
         float ray_range;
+
         ray.start_point(&start);
         ray.get_direction(&dir, &ray_range);
         ray.end_point(&end);
@@ -403,18 +425,22 @@ namespace metin2::inline world::inline terrain {
         float pos = 0.0f;
 
         b_terrain_pick = true;
-        if (!pick_terrain_height(pos, start, end, 5.0f, ray_range, 5000.0f, &v3_terrain_pick))
-            if (!pick_terrain_height(pos, start, end, 10.0f, ray_range, 10000.0f, &v3_terrain_pick))
-                if (!pick_terrain_height(pos, start, end, 100.0f, ray_range, 100000.0f, &v3_terrain_pick))
+        if (!pick_terrain_height(pos, start, end, 5.0f, ray_range, 5000.0f, &v3_terrain_pick)) {
+            if (!pick_terrain_height(pos, start, end, 10.0f, ray_range, 10000.0f, &v3_terrain_pick)) {
+                if (!pick_terrain_height(pos, start, end, 100.0f, ray_range, 100000.0f, &v3_terrain_pick)) {
                     b_terrain_pick = false;
+                }
+            }
+        }
 
         if (b_object_pick && b_terrain_pick) {
             const auto vv = (v3_terrain_pick - start);
             const auto vv2 = (v3_object_pick - start);
-            if (math::length(vv2) >= math::length(vv))
+            if (math::length(vv2) >= math::length(vv)) {
                 *intersect_pt = v3_terrain_pick;
-            else
+            } else {
                 *intersect_pt = v3_object_pick;
+            }
             return true;
         } else if (b_object_pick) {
             *intersect_pt = v3_object_pick;
@@ -443,10 +469,13 @@ namespace metin2::inline world::inline terrain {
 
         float pos = 0.0f;
         b_terrain_pick = true;
-        if (!pick_terrain_height(pos, start, end, 5.0f, ray_range, 5000.0f, &v3_terrain_pick))
-            if (!pick_terrain_height(pos, start, end, 10.0f, ray_range, 10000.0f, &v3_terrain_pick))
-                if (!pick_terrain_height(pos, start, end, 100.0f, ray_range, 100000.0f, &v3_terrain_pick))
+        if (!pick_terrain_height(pos, start, end, 5.0f, ray_range, 5000.0f, &v3_terrain_pick)) {
+            if (!pick_terrain_height(pos, start, end, 10.0f, ray_range, 10000.0f, &v3_terrain_pick)) {
+                if (!pick_terrain_height(pos, start, end, 100.0f, ray_range, 100000.0f, &v3_terrain_pick)) {
                     b_terrain_pick = false;
+                }
+            }
+        }
 
         if (b_terrain_pick) {
             *intersect_pt = v3_terrain_pick;
@@ -493,19 +522,23 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto map_outdoor::water_height(int x, int y, int32_t *pl_water_height) -> bool {
-        if (x < 0 || y < 0 || x > terrain_count_x_ * terrain_impl::TERRAIN_XSIZE || y > terrain_count_y_ * terrain_impl::TERRAIN_YSIZE)
+        if (x < 0 || y < 0 || x > terrain_count_x_ * terrain_impl::TERRAIN_XSIZE || y > terrain_count_y_ * terrain_impl::TERRAIN_YSIZE) {
             return false;
+        }
 
         uint16_t terrain_coord_x, terrain_coord_y;
         terrain_coord_x = x / terrain_impl::TERRAIN_XSIZE;
         terrain_coord_y = y / terrain_impl::TERRAIN_YSIZE;
 
         uint8_t terrain_num;
-        if (!terrain_num_from_coord(terrain_coord_x, terrain_coord_y, &terrain_num))
+        if (!terrain_num_from_coord(terrain_coord_x, terrain_coord_y, &terrain_num)) {
             return false;
+        }
+
         terrain_area *terrain;
-        if (!terrain_pointer(terrain_num, &terrain))
+        if (!terrain_pointer(terrain_num, &terrain)) {
             return false;
+        }
 
         uint16_t local_x, local_y;
         local_x = (x - terrain_coord_x * terrain_impl::TERRAIN_XSIZE) / (terrain_impl::WATERMAP_XSIZE);
@@ -518,8 +551,10 @@ namespace metin2::inline world::inline terrain {
         *terrain_num = (coord_y - cur_coordinate_.terrain_coord_y + LOAD_SIZE_WIDTH) * 3 +
                        (coord_x - cur_coordinate_.terrain_coord_x + LOAD_SIZE_WIDTH);
 
-        if (*terrain_num > AROUND_AREA_NUM)
+        if (*terrain_num > AROUND_AREA_NUM) {
             return false;
+        }
+
         return true;
     }
 
@@ -531,15 +566,16 @@ namespace metin2::inline world::inline terrain {
         plane_[4] = math::plane(mat._14 + mat._12, mat._24 + mat._22, mat._34 + mat._32, mat._44 + mat._42); // Bottom
         plane_[5] = math::plane(mat._14 - mat._12, mat._24 - mat._22, mat._34 - mat._32, mat._44 - mat._42); // Top
 
-        for (int i = 0; i < 6; ++i)
+        for (int i = 0; i < 6; ++i) {
             plane_[i] = math::plane_normalize(plane_[i]);
+        }
     }
 
     auto map_outdoor::height(float fx, float fy) -> float {
         float terrain_height_value = terrain_height(fx, fy);
 
         if (!enable_terrain_only_for_height_) {
-            culling_manager &culling_mgr = get_culling_manager();
+            auto &culling_manager = get_culling_manager();
 
             float check_height = 25000.0f;
             float object_height_value = -check_height;
@@ -550,10 +586,11 @@ namespace metin2::inline world::inline terrain {
             get_object_height_fn get_obj_height(fx, fy);
 
             range_tester<get_object_height_fn> range_tester_get_obj_height(&get_obj_height);
-            culling_mgr.point_test2d(vector3d_value, &range_tester_get_obj_height);
+            culling_manager.point_test2d(vector3d_value, &range_tester_get_obj_height);
 
-            if (get_obj_height.height_found)
+            if (get_obj_height.height_found) {
                 object_height_value = get_obj_height.return_height;
+            }
 
             return f_max(object_height_value, terrain_height_value);
         }
@@ -561,49 +598,59 @@ namespace metin2::inline world::inline terrain {
         return terrain_height_value;
     }
 
-    auto map_outdoor::get_normal(int ix, int iy, math::vector3 *normal) -> bool {
-        if (ix <= 0)
-            ix = 0;
-        else if (ix >= terrain_count_x_ * terrain_impl::TERRAIN_XSIZE)
-            ix = terrain_count_x_ * terrain_impl::TERRAIN_XSIZE;
+    auto map_outdoor::get_normal(int x, int y, math::vector3 *normal) -> bool {
+        if (x <= 0) {
+            x = 0;
+        } else if (x >= terrain_count_x_ * terrain_impl::TERRAIN_XSIZE) {
+            x = terrain_count_x_ * terrain_impl::TERRAIN_XSIZE;
+        }
 
-        if (iy <= 0)
-            iy = 0;
-        else if (iy >= terrain_count_y_ * terrain_impl::TERRAIN_YSIZE)
-            iy = terrain_count_y_ * terrain_impl::TERRAIN_YSIZE;
+        if (y <= 0) {
+            y = 0;
+        } else if (y >= terrain_count_y_ * terrain_impl::TERRAIN_YSIZE) {
+            y = terrain_count_y_ * terrain_impl::TERRAIN_YSIZE;
+        }
 
         uint16_t us_coord_x, us_coord_y;
 
-        us_coord_x = (uint16_t)(ix / (terrain_impl::TERRAIN_XSIZE));
-        us_coord_y = (uint16_t)(iy / (terrain_impl::TERRAIN_YSIZE));
+        us_coord_x = (uint16_t)(x / (terrain_impl::TERRAIN_XSIZE));
+        us_coord_y = (uint16_t)(y / (terrain_impl::TERRAIN_YSIZE));
 
-        if (us_coord_x >= terrain_count_x_ - 1)
+        if (us_coord_x >= terrain_count_x_ - 1) {
             us_coord_x = terrain_count_x_ - 1;
+        }
 
-        if (us_coord_y >= terrain_count_y_ - 1)
+        if (us_coord_y >= terrain_count_y_ - 1) {
             us_coord_y = terrain_count_y_ - 1;
+        }
 
         uint8_t terrain_num;
-        if (!terrain_num_from_coord(us_coord_x, us_coord_y, &terrain_num))
+        if (!terrain_num_from_coord(us_coord_x, us_coord_y, &terrain_num)) {
             return false;
+        }
 
         terrain_area *terrain;
 
-        if (!terrain_pointer(terrain_num, &terrain))
+        if (!terrain_pointer(terrain_num, &terrain)) {
             return false;
+        }
 
-        while (ix >= terrain_impl::TERRAIN_XSIZE)
-            ix -= terrain_impl::TERRAIN_XSIZE;
+        while (x >= terrain_impl::TERRAIN_XSIZE) {
+            x -= terrain_impl::TERRAIN_XSIZE;
+        }
 
-        while (iy >= terrain_impl::TERRAIN_YSIZE)
-            iy -= terrain_impl::TERRAIN_YSIZE;
+        while (y >= terrain_impl::TERRAIN_YSIZE) {
+            y -= terrain_impl::TERRAIN_YSIZE;
+        }
 
-        return terrain->get_normal(ix, iy, normal);
+        return terrain->get_normal(x, y, normal);
     }
 
     auto map_outdoor::terrain_height(float fx, float fy) -> float {
-        if (fy < 0)
+        if (fy < 0) {
             fy = -fy;
+        }
+
         int32_t lx, ly;
         PR_FLOAT_TO_INT(fx, lx);
         PR_FLOAT_TO_INT(fy, ly);
@@ -614,13 +661,15 @@ namespace metin2::inline world::inline terrain {
         us_coord_y = (uint16_t)(ly / terrain_impl::TERRAIN_YSIZE);
 
         uint8_t terrain_num;
-        if (!terrain_num_from_coord(us_coord_x, us_coord_y, &terrain_num))
+        if (!terrain_num_from_coord(us_coord_x, us_coord_y, &terrain_num)) {
             return 0.0f;
+        }
 
         terrain_area *terrain;
 
-        if (!terrain_pointer(terrain_num, &terrain))
+        if (!terrain_pointer(terrain_num, &terrain)) {
             return 0.0f;
+        }
 
         return terrain->height(lx, ly);
     }
@@ -676,8 +725,9 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto map_outdoor::shadow_map_color(float fx, float fy) -> uint32_t {
-        if (fy < 0)
+        if (fy < 0) {
             fy = -fy;
+        }
 
         auto terrain_size = (float)(terrain_impl::TERRAIN_XSIZE);
         float x_ref = fx - (float)(cur_coord_start_x_);
@@ -685,70 +735,83 @@ namespace metin2::inline world::inline terrain {
 
         terrain_area *terrain;
 
-        if (y_ref < -terrain_size)
+        if (y_ref < -terrain_size) {
             return 0xFFFFFFFF;
-        else if (y_ref >= -terrain_size && y_ref < 0.0f) {
-            if (x_ref < -terrain_size)
+        } else if (y_ref >= -terrain_size && y_ref < 0.0f) {
+            if (x_ref < -terrain_size) {
                 return 0xFFFFFFFF;
-            else if (x_ref >= -terrain_size && x_ref < 0.0f) {
-                if (terrain_pointer(0, &terrain))
+            } else if (x_ref >= -terrain_size && x_ref < 0.0f) {
+                if (terrain_pointer(0, &terrain)) {
                     return terrain->shadow_map_color(x_ref + terrain_size, y_ref + terrain_size);
-                else
+                } else {
                     return 0xFFFFFFFF;
+                }
             } else if (x_ref >= 0.0f && x_ref < terrain_size) {
-                if (terrain_pointer(1, &terrain))
+                if (terrain_pointer(1, &terrain)) {
                     return terrain->shadow_map_color(x_ref, y_ref + terrain_size);
-                else
+                } else {
                     return 0xFFFFFFFF;
+                }
             } else if (x_ref >= terrain_size && x_ref < 2.0f * terrain_size) {
-                if (terrain_pointer(2, &terrain))
+                if (terrain_pointer(2, &terrain)) {
                     return terrain->shadow_map_color(x_ref - terrain_size, y_ref + terrain_size);
-                else
+                } else {
                     return 0xFFFFFFFF;
-            } else
+                }
+            } else {
                 return 0xFFFFFFFF;
+            }
         } else if (y_ref >= 0.0f && y_ref < terrain_size) {
-            if (x_ref < -terrain_size)
+            if (x_ref < -terrain_size) {
                 return 0xFFFFFFFF;
-            else if (x_ref >= -terrain_size && x_ref < 0.0f) {
-                if (terrain_pointer(3, &terrain))
+            } else if (x_ref >= -terrain_size && x_ref < 0.0f) {
+                if (terrain_pointer(3, &terrain)) {
                     return terrain->shadow_map_color(x_ref + terrain_size, y_ref);
-                else
+                } else {
                     return 0xFFFFFFFF;
+                }
             } else if (x_ref >= 0.0f && x_ref < terrain_size) {
-                if (terrain_pointer(4, &terrain))
+                if (terrain_pointer(4, &terrain)) {
                     return terrain->shadow_map_color(x_ref, y_ref);
-                else
+                } else {
                     return 0xFFFFFFFF;
+                }
             } else if (x_ref >= terrain_size && x_ref < 2.0f * terrain_size) {
-                if (terrain_pointer(5, &terrain))
+                if (terrain_pointer(5, &terrain)) {
                     return terrain->shadow_map_color(x_ref - terrain_size, y_ref);
-                else
+                } else {
                     return 0xFFFFFFFF;
-            } else
+                }
+            } else {
                 return 0xFFFFFFFF;
+            }
         } else if (y_ref >= terrain_size && y_ref < 2.0f * terrain_size) {
-            if (x_ref < -terrain_size)
+            if (x_ref < -terrain_size) {
                 return 0xFFFFFFFF;
-            else if (x_ref >= -terrain_size && x_ref < 0.0f) {
-                if (terrain_pointer(6, &terrain))
+            } else if (x_ref >= -terrain_size && x_ref < 0.0f) {
+                if (terrain_pointer(6, &terrain)) {
                     return terrain->shadow_map_color(x_ref + terrain_size, y_ref - terrain_size);
-                else
+                } else {
                     return 0xFFFFFFFF;
+                }
             } else if (x_ref >= 0.0f && x_ref < terrain_size) {
-                if (terrain_pointer(7, &terrain))
+                if (terrain_pointer(7, &terrain)) {
                     return terrain->shadow_map_color(x_ref, y_ref - terrain_size);
-                else
+                } else {
                     return 0xFFFFFFFF;
+                }
             } else if (x_ref >= terrain_size && x_ref < 2.0f * terrain_size) {
-                if (terrain_pointer(8, &terrain))
+                if (terrain_pointer(8, &terrain)) {
                     return terrain->shadow_map_color(x_ref - terrain_size, y_ref - terrain_size);
-                else
+                } else {
                     return 0xFFFFFFFF;
-            } else
+                }
+            } else {
                 return 0xFFFFFFFF;
-        } else
+            }
+        } else {
             return 0xFFFFFFFF;
+        }
 
         return 0xFFFFFFFF;
     }
@@ -770,19 +833,23 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto map_outdoor::is_attr_on(int x, int y, uint8_t attr) -> bool {
-        if (x < 0 || y < 0 || x > terrain_count_x_ * terrain_impl::TERRAIN_XSIZE || y > terrain_count_y_ * terrain_impl::TERRAIN_YSIZE)
+        if (x < 0 || y < 0 || x > terrain_count_x_ * terrain_impl::TERRAIN_XSIZE || y > terrain_count_y_ * terrain_impl::TERRAIN_YSIZE) {
             return false;
+        }
 
         uint16_t terrain_coord_x, terrain_coord_y;
         terrain_coord_x = x / terrain_impl::TERRAIN_XSIZE;
         terrain_coord_y = y / terrain_impl::TERRAIN_YSIZE;
 
         uint8_t terrain_num;
-        if (!terrain_num_from_coord(terrain_coord_x, terrain_coord_y, &terrain_num))
+        if (!terrain_num_from_coord(terrain_coord_x, terrain_coord_y, &terrain_num)) {
             return false;
+        }
+
         terrain_area *terrain;
-        if (!terrain_pointer(terrain_num, &terrain))
+        if (!terrain_pointer(terrain_num, &terrain)) {
             return false;
+        }
 
         uint16_t local_x, local_y;
         local_x = (x - terrain_coord_x * terrain_impl::TERRAIN_XSIZE) / (terrain_impl::HALF_CELLSCALE);
@@ -792,19 +859,23 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto map_outdoor::attr(int x, int y, uint8_t *pby_attr) -> bool {
-        if (x < 0 || y < 0 || x > terrain_count_x_ * terrain_impl::TERRAIN_XSIZE || y > terrain_count_y_ * terrain_impl::TERRAIN_YSIZE)
+        if (x < 0 || y < 0 || x > terrain_count_x_ * terrain_impl::TERRAIN_XSIZE || y > terrain_count_y_ * terrain_impl::TERRAIN_YSIZE) {
             return false;
+        }
 
         uint16_t terrain_coord_x, terrain_coord_y;
         terrain_coord_x = x / terrain_impl::TERRAIN_XSIZE;
         terrain_coord_y = y / terrain_impl::TERRAIN_YSIZE;
 
         uint8_t terrain_num;
-        if (!terrain_num_from_coord(terrain_coord_x, terrain_coord_y, &terrain_num))
+        if (!terrain_num_from_coord(terrain_coord_x, terrain_coord_y, &terrain_num)) {
             return false;
+        }
+
         terrain_area *terrain;
-        if (!terrain_pointer(terrain_num, &terrain))
+        if (!terrain_pointer(terrain_num, &terrain)) {
             return false;
+        }
 
         uint16_t local_x, local_y;
         local_x = (uint16_t)(x - terrain_coord_x * terrain_impl::TERRAIN_XSIZE) / (terrain_impl::HALF_CELLSCALE);
@@ -834,14 +905,15 @@ namespace metin2::inline world::inline terrain {
 
     void map_outdoor::x_mas_tree_destroy() {
         if (x_mas_.tree) {
-            speed_tree_forest_direct_x8 &forest = get_speed_tree_forest_direct_x8();
+            auto &forest = get_speed_tree_forest_direct_x8();
             x_mas_.tree->clear();
             forest.delete_instance(x_mas_.tree);
             x_mas_.tree = nullptr;
         }
+
         if (-1 != x_mas_.effect_id) {
-            effect_manager &eff_mgr = get_effect_manager();
-            eff_mgr.destroy_effect_instance(x_mas_.effect_id);
+            auto &effect_manager = get_effect_manager();
+            effect_manager.destroy_effect_instance(x_mas_.effect_id);
             x_mas_.effect_id = -1;
         }
     }
@@ -850,13 +922,13 @@ namespace metin2::inline world::inline terrain {
         assert(nullptr == x_mas_.tree);
         assert(-1 == x_mas_.effect_id);
 
-        speed_tree_forest_direct_x8 &forest = get_speed_tree_forest_direct_x8();
-        uint32_t crc32 = get_case_crc32(tree_name, strlen(tree_name));
+        auto &forest = get_speed_tree_forest_direct_x8();
+        auto crc32 = get_case_crc32(tree_name, strlen(tree_name));
         x_mas_.tree = forest.create_instance(x, y, z, crc32, tree_name);
 
-        effect_manager &eff_mgr = get_effect_manager();
-        eff_mgr.register_effect(eff_name);
-        x_mas_.effect_id = eff_mgr.create_effect(eff_name,
+        auto &effect_manager = get_effect_manager();
+        effect_manager.register_effect(eff_name);
+        x_mas_.effect_id = effect_manager.create_effect(eff_name,
             math::vector3(x, y, z),
             math::vector3(0.0f, 0.0f, 0.0f));
     }
@@ -867,34 +939,37 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::special_effect_create(uint32_t id, float x, float y, float z, const char *eff_name) {
-        effect_manager &eff_mgr = get_effect_manager();
+        auto &effect_manager = get_effect_manager();
 
         auto itor = map_id_effect_id_.find(id);
         if (map_id_effect_id_.end() != itor) {
             uint32_t effect_id = itor->second;
-            if (eff_mgr.select_effect_instance(effect_id)) {
+
+            if (effect_manager.select_effect_instance(effect_id)) {
                 math::matrix mat;
                 mat = math::matrix_identity();
                 mat._41 = x;
                 mat._42 = y;
                 mat._43 = z;
-                eff_mgr.set_effect_instance_global_matrix(mat);
+                effect_manager.set_effect_instance_global_matrix(mat);
                 return;
             }
         }
 
-        eff_mgr.register_effect(eff_name);
-        uint32_t effect_id = eff_mgr.create_effect(eff_name,
+        effect_manager.register_effect(eff_name);
+        uint32_t effect_id = effect_manager.create_effect(eff_name,
             math::vector3(x, y, z),
             math::vector3(0.0f, 0.0f, 0.0f));
+
         map_id_effect_id_.insert(std::make_pair(id, effect_id));
     }
 
     void map_outdoor::special_effect_delete(uint32_t id) {
         auto itor = map_id_effect_id_.find(id);
 
-        if (map_id_effect_id_.end() == itor)
+        if (map_id_effect_id_.end() == itor) {
             return;
+        }
 
         effect_manager &eff_mgr = get_effect_manager();
         int effect_id = itor->second;
@@ -954,7 +1029,7 @@ namespace metin2::inline world::inline terrain {
             ix2_cell = ix2_cell + wx2_terrain_num * terrain_area::ATTRMAP_XSIZE;
             iy2_cell = iy2_cell + wy2_terrain_num * terrain_area::ATTRMAP_YSIZE;
 
-            for (int ix_cell = ix1_cell; ix_cell <= ix2_cell; ++ix_cell)
+            for (int ix_cell = ix1_cell; ix_cell <= ix2_cell; ++ix_cell) {
                 for (int iy_cell = iy1_cell; iy_cell <= iy2_cell; ++iy_cell) {
                     int ix_local_cell = ix_cell % terrain_area::ATTRMAP_XSIZE;
                     int iy_local_cell = iy_cell % terrain_area::ATTRMAP_YSIZE;
@@ -963,17 +1038,23 @@ namespace metin2::inline world::inline terrain {
                     int i_terrain_num = ix_terrain + iy_terrain * 100;
 
                     uint8_t by_terrain_num;
-                    if (!terrain_num_from_coord(ix_terrain, iy_terrain, &by_terrain_num))
+                    if (!terrain_num_from_coord(ix_terrain, iy_terrain, &by_terrain_num)) {
                         continue;
+                    }
+
                     terrain_area *terrain;
-                    if (!terrain_pointer(by_terrain_num, &terrain))
+                    if (!terrain_pointer(by_terrain_num, &terrain)) {
                         continue;
+                    }
 
                     std::vector<uint8_t> &mark = map_mark_buf[i_terrain_num];
-                    if (mark.empty())
+                    if (mark.empty()) {
                         mark.assign(terrain_area::ATTRMAP_XSIZE * terrain_area::ATTRMAP_YSIZE, 0);
+                    }
+
                     mark[ix_local_cell + iy_local_cell * terrain_area::ATTRMAP_XSIZE] = 0xff;
                 }
+            }
         }
 
         auto itor_terrain = map_mark_buf.begin();
@@ -984,11 +1065,14 @@ namespace metin2::inline world::inline terrain {
             uint8_t *buf = itor_terrain->second.data();
 
             uint8_t terrain_num_2;
-            if (!terrain_num_from_coord(ix_terrain, iy_terrain, &terrain_num_2))
+            if (!terrain_num_from_coord(ix_terrain, iy_terrain, &terrain_num_2)) {
                 continue;
+            }
+
             terrain_area *terrain;
-            if (!terrain_pointer(terrain_num_2, &terrain))
+            if (!terrain_pointer(terrain_num_2, &terrain)) {
                 continue;
+            }
 
             terrain->allocate_marked_splats(buf);
         }
@@ -996,16 +1080,18 @@ namespace metin2::inline world::inline terrain {
 
     void map_outdoor::disable_marked_area() {
         for (int i = 0; i < AROUND_AREA_NUM; ++i) {
-            if (!terrain_[i])
+            if (!terrain_[i]) {
                 continue;
+            }
 
             terrain_[i]->deallocate_marked_splats();
         }
     }
 
     void map_outdoor::convert_to_map_coords(float fx, float fy, int *i_cell_x, int *i_cell_y, uint8_t *puc_sub_cell_x, uint8_t *puc_sub_cell_y, uint16_t *terrain_num_x, uint16_t *terrain_num_y) {
-        if (fy < 0)
+        if (fy < 0) {
             fy = -fy;
+        }
 
         int ix, iy;
         PR_FLOAT_TO_INT(fx, ix);
@@ -1017,17 +1103,21 @@ namespace metin2::inline world::inline terrain {
         auto maxx = (float)terrain_impl::TERRAIN_XSIZE;
         auto maxy = (float)terrain_impl::TERRAIN_YSIZE;
 
-        while (fx < 0)
+        while (fx < 0) {
             fx += maxx;
+        }
 
-        while (fy < 0)
+        while (fy < 0) {
             fy += maxy;
+        }
 
-        while (fx >= maxx)
+        while (fx >= maxx) {
             fx -= maxx;
+        }
 
-        while (fy >= maxy)
+        while (fy >= maxy) {
             fy -= maxy;
+        }
 
         float fooscale = 1.0f / (float)(terrain_impl::HALF_CELLSCALE);
 
@@ -1047,6 +1137,7 @@ namespace metin2::inline world::inline terrain {
 
         PR_FLOAT_TO_INT(subcell_x, *puc_sub_cell_x);
         PR_FLOAT_TO_INT(subcell_y, *puc_sub_cell_y);
+
         *puc_sub_cell_x = (*puc_sub_cell_x) % terrain_impl::HEIGHT_TILE_XRATIO;
         *puc_sub_cell_y = (*puc_sub_cell_y) % terrain_impl::HEIGHT_TILE_YRATIO;
     }
