@@ -2,9 +2,8 @@
 
 #include "terrain_type.h"
 
-#include <metin2/core/parse.h>
-#include <metin2/core/stl.h>
-#include <metin2/core/util.h>
+#include <metin2/core/mapped_file.h>
+#include <metin2/files/eter_file_manager.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/log/log.h>
 
@@ -13,8 +12,9 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstdio>
 #include <cstring>
+
+#include <toml++/toml.hpp>
 
 namespace metin2::inline world::inline terrain {
     namespace {
@@ -57,6 +57,25 @@ namespace metin2::inline world::inline terrain {
             return 0xff000000u | (static_cast<uint32_t>(sum[0] / 16) << 16) | (static_cast<uint32_t>(sum[1] / 16) << 8) | static_cast<uint32_t>(sum[2] / 16);
         }
 
+        // A missing value keeps the default.
+        auto read_pair(const toml::node *node, float &first, float &second) -> bool {
+            if (!node) {
+                return true;
+            }
+            const toml::array *pair = node->as_array();
+            if (!pair || pair->size() != 2) {
+                return false;
+            }
+            const auto a = (*pair)[0].value<double>();
+            const auto b = (*pair)[1].value<double>();
+            if (!a || !b) {
+                return false;
+            }
+            first = static_cast<float>(*a);
+            second = static_cast<float>(*b);
+            return true;
+        }
+
         // From the smallest mip level, read back from the GPU.
         auto texture_average_color(gpu::texture *texture, uint32_t fallback) -> uint32_t {
             if (!texture) {
@@ -83,6 +102,70 @@ namespace metin2::inline world::inline terrain {
         }
     }
 
+    auto parse_texture_set(std::string_view text, std::string_view name) -> std::optional<std::vector<texture_set_entry>> {
+        toml::parse_result parsed = toml::parse(text, name);
+        if (!parsed) {
+            const toml::parse_error &error = parsed.error();
+            metin2::log::error("{}:{}: {}", name, error.source().begin.line, error.description());
+            return std::nullopt;
+        }
+
+        std::vector<texture_set_entry> entries;
+        for (const auto &[key, node] : parsed.table()) {
+            if (key.str() != "texture") {
+                metin2::log::warn("{}:{}: unknown key {}", name, node.source().begin.line, key.str());
+            }
+        }
+        const toml::array *textures = parsed.table()["texture"].as_array();
+        if (!textures) {
+            return entries;
+        }
+
+        for (const toml::node &node : *textures) {
+            const auto line = node.source().begin.line;
+            const toml::table *table = node.as_table();
+            if (!table) {
+                metin2::log::error("{}:{}: texture must be a table ([[texture]])", name, line);
+                continue;
+            }
+            for (const auto &[key, value] : *table) {
+                if (key.str() != "index" && key.str() != "path" && key.str() != "uv_scale" && key.str() != "uv_offset") {
+                    metin2::log::warn("{}:{}: unknown key {}", name, value.source().begin.line, key.str());
+                }
+            }
+
+            texture_set_entry entry;
+            const auto index = (*table)["index"].value_exact<int64_t>();
+            if (!index || *index < 1 || *index >= MAXTERRAINTEXTURES) {
+                metin2::log::error("{}:{}: index must be a whole number from 1 to {}", name, line, MAXTERRAINTEXTURES - 1);
+                continue;
+            }
+            entry.index = static_cast<uint32_t>(*index);
+            if (std::ranges::any_of(entries, [&](const texture_set_entry &other) { return other.index == entry.index; })) {
+                metin2::log::error("{}:{}: index {} is used twice", name, line, entry.index);
+                continue;
+            }
+
+            const auto path = (*table)["path"].value_exact<std::string>();
+            if (!path || path->empty()) {
+                metin2::log::error("{}:{}: path must be the texture's file name", name, line);
+                continue;
+            }
+            entry.path = *path;
+
+            if (!read_pair((*table)["uv_scale"].node(), entry.u_scale, entry.v_scale)) {
+                metin2::log::error("{}:{}: uv_scale must be two numbers", name, line);
+                continue;
+            }
+            if (!read_pair((*table)["uv_offset"].node(), entry.u_offset, entry.v_offset)) {
+                metin2::log::error("{}:{}: uv_offset must be two numbers", name, line);
+                continue;
+            }
+            entries.push_back(std::move(entry));
+        }
+        return entries;
+    }
+
     texture_set::texture_set() = default;
 
     texture_set::~texture_set() {
@@ -98,72 +181,29 @@ namespace metin2::inline world::inline terrain {
     auto texture_set::load(const char *texture_set_file_name, float terrain_tex_coord_base) -> bool {
         clear();
 
-        token_vector_map token_vector_map;
-
-        if (!load_multiple_text_data(texture_set_file_name, token_vector_map)) {
+        mapped_file file;
+        const void *data = nullptr;
+        if (!get_file_manager().get(file, texture_set_file_name, &data)) {
             metin2::log::error("Cannot load texture set {}", texture_set_file_name);
             return false;
         }
 
-        if (token_vector_map.end() == token_vector_map.find("textureset")) {
-            metin2::log::error("Texture set {}: no TextureSet header", texture_set_file_name);
-            return false;
-        }
-
-        if (token_vector_map.end() == token_vector_map.find("texturecount")) {
-            metin2::log::error("Texture set {}: no TextureCount entry", texture_set_file_name);
+        const auto entries = parse_texture_set(std::string_view(static_cast<const char *>(data), data ? file.size() : 0), texture_set_file_name);
+        if (!entries) {
             return false;
         }
 
         create();
 
-        const std::string &c_rstr_count = token_vector_map["texturecount"][0];
-
-        int i_count = metin2::to_number<int>(c_rstr_count.c_str());
-        if (i_count < 0 || i_count >= MAXTERRAINTEXTURES) {
-            metin2::log::error("Texture count {} out of range in texture set {}", i_count, texture_set_file_name);
-            return false;
+        uint32_t count = 0;
+        for (const texture_set_entry &entry : *entries) {
+            count = std::max(count, entry.index);
         }
-        char texture_name[32 + 1];
+        textures_.resize(count + 1);
 
-        textures_.resize(i_count + 1);
-
-        for (int i = 0; i < i_count; ++i) {
-            snprintf(texture_name, sizeof(texture_name), "texture%03d", i + 1);
-
-            if (token_vector_map.end() == token_vector_map.find(texture_name)) {
-                continue;
-            }
-
-            const auto &vector = token_vector_map[texture_name];
-            if (vector.size() < 8) {
-                metin2::log::error("Texture {} needs 8 values in texture set {}", texture_name, texture_set_file_name);
-                continue;
-            }
-
-            const std::string &file_name = vector[0];
-            const std::string &u_scale = vector[1];
-            const std::string &v_scale = vector[2];
-            const std::string &u_offset = vector[3];
-            const std::string &v_offset = vector[4];
-            const std::string &rstrb_splat = vector[5];
-            const std::string &begin = vector[6];
-            const std::string &end = vector[7];
-
-            float fu_scale, fv_scale, fu_offset, fv_offset;
-            bool splat;
-            unsigned short us_begin, us_end;
-
-            fu_scale = float(metin2::to_number<double>(u_scale.c_str()));
-            fv_scale = float(metin2::to_number<double>(v_scale.c_str()));
-            fu_offset = float(metin2::to_number<double>(u_offset.c_str()));
-            fv_offset = float(metin2::to_number<double>(v_offset.c_str()));
-            splat = 0 != metin2::to_number<int>(rstrb_splat.c_str());
-            us_begin = static_cast<unsigned short>(metin2::to_number<int>(begin.c_str()));
-            us_end = static_cast<unsigned short>(metin2::to_number<int>(end.c_str()));
-
-            if (!set_texture(i + 1, file_name.c_str(), fu_scale, fv_scale, fu_offset, fv_offset, splat, us_begin, us_end, terrain_tex_coord_base)) {
-                metin2::log::error("Cannot set texture {}", file_name.c_str());
+        for (const texture_set_entry &entry : *entries) {
+            if (!set_texture(entry.index, entry.path.c_str(), entry.u_scale, entry.v_scale, entry.u_offset, entry.v_offset, terrain_tex_coord_base)) {
+                metin2::log::error("Cannot set texture {}", entry.path);
             }
         }
 
@@ -201,9 +241,6 @@ namespace metin2::inline world::inline terrain {
         float fv_scale,
         float fu_offset,
         float fv_offset,
-        bool splat,
-        uint16_t us_begin,
-        uint16_t us_end,
         float terrain_tex_coord_base) -> bool {
 
         if (index >= textures_.size()) {
@@ -224,9 +261,6 @@ namespace metin2::inline world::inline terrain {
         tex.v_scale = fv_scale;
         tex.u_offset = fu_offset;
         tex.v_offset = fv_offset;
-        tex.splat = splat;
-        tex.begin = us_begin;
-        tex.end = us_end;
         tex.image_instance.set_image_pointer(static_cast<graphic_image *>(resource));
         tex.gpu_texture = tex.image_instance.texture_pointer()->gpu_texture();
         tex.transform = math::matrix_scaling(terrain_tex_coord_base * tex.u_scale, -terrain_tex_coord_base * tex.v_scale, 0.0f);

@@ -330,15 +330,8 @@ namespace metin2::inline world::inline terrain {
             set_base_xy((uint32_t)metin2::to_number<long>(map_base_x.c_str()), (uint32_t)metin2::to_number<long>(map_base_y.c_str()));
         }
 
-        std::string texture_set_file_name = texture_set;
-
-        // Do not prepend the texture set folder when the name already has it.
-        if (0 != texture_set_file_name.find_first_of("textureset", 0)) {
-            texture_set_file_name = "textureset\\" + texture_set;
-        }
-
-        if (!texture_set_value_.load(texture_set_file_name.c_str(), terrain_tex_coord_base_)) {
-            metin2::log::error("Map settings {}: cannot load texture set {}", file_name, texture_set_file_name.c_str());
+        if (!texture_set_value_.load(texture_set.c_str(), terrain_tex_coord_base_)) {
+            metin2::log::error("Map settings {}: cannot load texture set {}", file_name, texture_set);
             return false;
         }
 
