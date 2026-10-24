@@ -18,6 +18,10 @@ namespace metin2::inline ui {
             horizontal_align_value_ = HORIZONTAL_ALIGN_LEFT;
             vertical_align_value_ = VERTICAL_ALIGN_TOP;
             rect_.bottom = rect_.left = rect_.right = rect_.top = 0;
+            if (handler_) {
+                handler_has_on_update_ = PyObject_HasAttrString(handler_, "on_update") != 0;
+                handler_has_on_render_ = PyObject_HasAttrString(handler_, "on_render") != 0;
+            }
         }
 
         ui_window::~ui_window() = default;
@@ -113,7 +117,7 @@ namespace metin2::inline ui {
         }
 
         void ui_window::on_update() {
-            if (!handler_)
+            if (!handler_ || !handler_has_on_update_)
                 return;
 
             if (!is_show())
@@ -125,13 +129,15 @@ namespace metin2::inline ui {
         }
 
         void ui_window::on_render() {
-            if (!handler_)
+            if (!handler_ || !handler_has_on_render_)
                 return;
 
             if (!is_show())
                 return;
 
-            py_call_class_member_func(handler_, "on_render", build_empty_tuple());
+            static PyObject *func_name_on_render = PyString_InternFromString("on_render");
+
+            py_call_class_member_func_by_py_string(handler_, func_name_on_render, build_empty_tuple());
         }
 
         void ui_window::set_name(const char *name) {

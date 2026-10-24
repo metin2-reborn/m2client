@@ -174,6 +174,11 @@ namespace metin2::inline ui {
             uint32_t flag_;
 
             PyObject *handler_;
+            // Whether the handler defines on_update / on_render. Most widgets do not, and a failed
+            // attribute lookup per window per frame (with its AttributeError) is what the per-frame
+            // calls would otherwise cost.
+            bool handler_has_on_update_ = false;
+            bool handler_has_on_render_ = false;
 
             ui_window *parent_;
             window_container child_list_;

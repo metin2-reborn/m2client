@@ -4,6 +4,7 @@
 #include <metin2/core/utils.h>
 #include <metin2/gpu/types.h>
 #include <metin2/log/log.h>
+#include <vector>
 #include "state_manager.h"
 #include "text_tag.h"
 
@@ -241,6 +242,41 @@ namespace metin2::inline graphics {
         {
             const float font_half_weight = 1.0f;
 
+            // All glyph quads of the text go up in one stream and one draw per atlas page: a draw
+            // per glyph (five with the outline) was the most expensive part of a frame.
+            static std::vector<vertex> batch;
+            batch.clear();
+            uint32_t batch_page = 0;
+            bool batch_open = false;
+
+            auto flush = [&] {
+                if (batch.empty())
+                    return;
+                font_texture->select_texture(batch_page);
+                STATEMANAGER.set_texture(0, font_texture->gpu_texture());
+                // Longer runs than the user stream holds go in slices (each a whole number of quads).
+                constexpr size_t MAX_VERTICES = 4096 * 6;
+                for (size_t at = 0; at < batch.size(); at += MAX_VERTICES) {
+                    const size_t count = std::min(MAX_VERTICES, batch.size() - at);
+                    STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_LIST, static_cast<uint32_t>(count / 3), batch.data() + at, sizeof(vertex));
+                }
+                batch.clear();
+            };
+
+            // The quad arrives as the strip 0 1 2 3 the single draws used.
+            auto push_quad = [&](const vertex(&quad)[4], uint32_t page) {
+                if (batch_open && page != batch_page)
+                    flush();
+                batch_page = page;
+                batch_open = true;
+                batch.push_back(quad[0]);
+                batch.push_back(quad[1]);
+                batch.push_back(quad[2]);
+                batch.push_back(quad[2]);
+                batch.push_back(quad[1]);
+                batch.push_back(quad[3]);
+            };
+
             float cur_x;
             float cur_y;
 
@@ -301,9 +337,6 @@ namespace metin2::inline graphics {
                     font_ex = font_sx + font_width;
                     font_ey = font_sy + font_height;
 
-                    font_texture->select_texture(cur_char_info->index_value);
-                    STATEMANAGER.set_texture(0, font_texture->gpu_texture());
-
                     vertex[0].u = cur_char_info->left;
                     vertex[0].v = cur_char_info->top;
                     vertex[1].u = cur_char_info->left;
@@ -326,17 +359,13 @@ namespace metin2::inline graphics {
                     vertex[1].x = font_sx - font_half_weight - feather;
                     vertex[2].x = font_ex - font_half_weight + feather;
                     vertex[3].x = font_ex - font_half_weight + feather;
-
-                    if (graphic_base::set_pdt_stream((pdt_vertex *)vertex, 4))
-                        STATEMANAGER.draw_primitive(gpu::primitive::TRIANGLE_STRIP, 0, 2);
+                    push_quad(vertex, cur_char_info->index_value);
 
                     vertex[0].x = font_sx + font_half_weight - feather;
                     vertex[1].x = font_sx + font_half_weight - feather;
                     vertex[2].x = font_ex + font_half_weight + feather;
                     vertex[3].x = font_ex + font_half_weight + feather;
-
-                    if (graphic_base::set_pdt_stream((pdt_vertex *)vertex, 4))
-                        STATEMANAGER.draw_primitive(gpu::primitive::TRIANGLE_STRIP, 0, 2);
+                    push_quad(vertex, cur_char_info->index_value);
 
                     vertex[0].x = font_sx - feather;
                     vertex[1].x = font_sx - feather;
@@ -347,20 +376,17 @@ namespace metin2::inline graphics {
                     vertex[1].y = font_ey - font_half_weight + feather;
                     vertex[2].y = font_sy - font_half_weight - feather;
                     vertex[3].y = font_ey - font_half_weight + feather;
-
-                    if (graphic_base::set_pdt_stream((pdt_vertex *)vertex, 4))
-                        STATEMANAGER.draw_primitive(gpu::primitive::TRIANGLE_STRIP, 0, 2);
+                    push_quad(vertex, cur_char_info->index_value);
 
                     vertex[0].y = font_sy + font_half_weight - feather;
                     vertex[1].y = font_ey + font_half_weight + feather;
                     vertex[2].y = font_sy + font_half_weight - feather;
                     vertex[3].y = font_ey + font_half_weight + feather;
-
-                    if (graphic_base::set_pdt_stream((pdt_vertex *)vertex, 4))
-                        STATEMANAGER.draw_primitive(gpu::primitive::TRIANGLE_STRIP, 0, 2);
+                    push_quad(vertex, cur_char_info->index_value);
 
                     cur_x += font_advance;
                 }
+                flush();
             }
 
             cur_x = stan_x;
@@ -402,9 +428,6 @@ namespace metin2::inline graphics {
                 font_ex = font_sx + font_width;
                 font_ey = font_sy + font_height;
 
-                font_texture->select_texture(cur_char_info->index_value);
-                STATEMANAGER.set_texture(0, font_texture->gpu_texture());
-
                 vertex[0].x = font_sx;
                 vertex[0].y = font_sy;
                 vertex[0].u = cur_char_info->left;
@@ -426,12 +449,11 @@ namespace metin2::inline graphics {
                 vertex[3].v = cur_char_info->bottom;
 
                 vertex[0].color_value = vertex[1].color_value = vertex[2].color_value = vertex[3].color_value = color_info_vector_[i];
-
-                if (graphic_base::set_pdt_stream((pdt_vertex *)vertex, 4))
-                    STATEMANAGER.draw_primitive(gpu::primitive::TRIANGLE_STRIP, 0, 2);
+                push_quad(vertex, cur_char_info->index_value);
 
                 cur_x += font_advance;
             }
+            flush();
         }
 
         STATEMANAGER.restore_render_state(gpu::state::SRC_BLEND);
