@@ -1,6 +1,8 @@
 #include "effect_update_decorator.h"
 #include "particle_instance.h"
 
+#include <cmath>
+
 namespace metin2::inline effects {
     namespace update_decorators {
 
@@ -10,7 +12,8 @@ namespace metin2::inline effects {
         }
 
         void air_resistance_decorator::excute_impl(const decorator_data &d) {
-            d.instance->velocity_ *= 1.0f - d.instance->air_resistance_;
+            // air_resistance_ is the share of velocity lost per frame at 60 fps.
+            d.instance->velocity_ *= std::pow(1.0f - d.instance->air_resistance_, d.elapsed_time * 60.0f);
         }
         auto gravity_decorator::clone_impl(particle_instance *pfi, particle_instance *pi) -> base_decorator * {
             pi->gravity_ = pfi->gravity_;

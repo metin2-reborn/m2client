@@ -7,6 +7,8 @@
 #include <metin2/log/log.h>
 #include "mesh.h"
 
+#include <cmath>
+
 namespace metin2::inline models {
 
     graphic_image_instance material::sphere_map_instance_[SPHEREMAP_NUM];
@@ -17,23 +19,11 @@ namespace metin2::inline models {
     math::color specular_color = math::color(0.0f, 0.0f, 0.0f, 0.0f);
 
     void material::translate_specular_matrix(float add_x, float add_y, float add_z) {
-        static float specular_translate_max = 1000000.0f;
-
-        specular_trans_.x += add_x;
-        specular_trans_.y += add_y;
-        specular_trans_.z += add_z;
-
-        if (specular_trans_.x >= specular_translate_max) {
-            specular_trans_.x = 0.0f;
-        }
-
-        if (specular_trans_.y >= specular_translate_max) {
-            specular_trans_.y = 0.0f;
-        }
-
-        if (specular_trans_.z >= specular_translate_max) {
-            specular_trans_.z = 0.0f;
-        }
+        // The sphere map repeats every 1.0, so the offset wraps there; letting it grow lost float
+        // precision and made the shine step after a few hours.
+        specular_trans_.x = std::fmod(specular_trans_.x + add_x, 1.0f);
+        specular_trans_.y = std::fmod(specular_trans_.y + add_y, 1.0f);
+        specular_trans_.z = std::fmod(specular_trans_.z + add_z, 1.0f);
 
         specular_value_ = math::matrix_translation(specular_trans_.x, specular_trans_.y, specular_trans_.z);
     }

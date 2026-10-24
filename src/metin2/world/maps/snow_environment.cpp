@@ -40,10 +40,9 @@ namespace metin2::inline world::inline maps {
 
         const math::vector3 &pos = center_;
 
-        static int32_t last_time = get_timer().current_millisecond();
-        int32_t lcur_time = get_timer().current_millisecond();
-        float elapsed_time = float(lcur_time - last_time) / 1000.0f;
-        last_time = lcur_time;
+        // The frame step, not a static clock: that one was not advanced while snow was off and
+        // gave the first frame after it came back a huge step.
+        const float elapsed_time = get_timer().elapsed_second();
 
         camera *camera = get_camera_manager().current_camera();
         if (!camera)

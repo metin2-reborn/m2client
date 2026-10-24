@@ -13,6 +13,8 @@
 #include "flying_instance.h"
 #include "flying_object_manager.h"
 
+#include <algorithm>
+
 namespace metin2::inline world::inline flying {
 
     dynamic_pool<flying_instance> flying_instance::pool_value;
@@ -145,8 +147,10 @@ namespace metin2::inline world::inline flying {
             return;
         }
 
-        float c = cosf(math::to_radian(data_value_->homing_max_angle_));
-        float s = sinf(math::to_radian(data_value_->homing_max_angle_));
+        // homing_max_angle_ is the turn limit per frame at 60 fps.
+        const float max_angle = std::min(data_value_->homing_max_angle_ * get_timer().elapsed_second() * 60.0f, 180.0f);
+        float c = cosf(math::to_radian(max_angle));
+        float s = sinf(math::to_radian(max_angle));
 
         if (q.w <= -1.0f + 0.0001f) {
             q.x = 0;

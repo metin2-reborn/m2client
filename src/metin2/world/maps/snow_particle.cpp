@@ -20,8 +20,10 @@ namespace metin2::inline world::inline maps {
     void snow_particle::update(float elapsed_time, const math::vector3 &pos) {
         position_value_ += velocity_ * elapsed_time;
 
-        position_value_.x += cross_.x * sin(fcur_radian_) / 10.0f;
-        position_value_.y += cross_.y * sin(fcur_radian_) / 10.0f;
+        // The sideways drift was a tenth of the flake's width per frame at 60 fps.
+        const float drift = sin(fcur_radian_) / 10.0f * elapsed_time * 60.0f;
+        position_value_.x += cross_.x * drift;
+        position_value_.y += cross_.y * drift;
         fcur_radian_ += period_ * elapsed_time;
 
         if (position_value_.z < pos.z - 500.0f)

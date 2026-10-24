@@ -42,6 +42,8 @@ namespace metin2::inline effects {
         position_value_ += velocity_ * elapsed_time;
 
         if (angle) {
+            // The emitter's angular velocity is in degrees per frame at 60 fps.
+            angle *= elapsed_time * 60.0f;
             if (particle_property_value_->attach_flag) {
                 float cos_value, sin_value;
                 angle = math::to_radian(angle);

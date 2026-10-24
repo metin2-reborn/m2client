@@ -10,6 +10,9 @@
 #include "python_slot_window.h"
 #include "python_window_manager.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace metin2::inline ui {
 
     namespace widgets {
@@ -1180,10 +1183,13 @@ namespace metin2::inline ui {
 
         void ani_image_box::on_update() {
             frame_time_ += get_timer().elapsed_second();
-            if (frame_time_ < static_cast<float>(delay_) / 60.0f)
+            const float frame_delay = static_cast<float>(delay_) / 60.0f;
+            if (frame_time_ < frame_delay) {
                 return;
+            }
 
-            frame_time_ = 0.0f;
+            // Keep the remainder so the animation runs at its rate whatever the frame time.
+            frame_time_ = std::fmod(frame_time_ - frame_delay, std::max(frame_delay, 1e-3f));
 
             ++bycur_index_;
             if (bycur_index_ >= image_vector_.size()) {

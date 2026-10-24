@@ -6,6 +6,7 @@
 #include <metin2/log/log.h>
 #include "instance_base.h"
 
+#include <algorithm>
 #include <format>
 #include <metin2/core/timer.h>
 #include <metin2/effects/effect_manager.h>
@@ -73,8 +74,17 @@ namespace metin2::inline client::inline characters {
     }
 
     void instance_base::process_damage() {
-        if (damage_queue_.empty())
+        if (damage_queue_.empty()) {
+            damage_pop_time_ = 0.0f;
             return;
+        }
+
+        constexpr float POP_INTERVAL = 1.0f / 60.0f;
+        damage_pop_time_ += get_timer().elapsed_second();
+        if (damage_pop_time_ < POP_INTERVAL) {
+            return;
+        }
+        damage_pop_time_ = std::min(damage_pop_time_ - POP_INTERVAL, POP_INTERVAL);
 
         effect_damage s_damage = damage_queue_.front();
 
@@ -86,6 +96,9 @@ namespace metin2::inline client::inline characters {
         bool target = s_damage.target;
 
         camera *camera = get_camera_manager().current_camera();
+        if (!camera) {
+            return;
+        }
         float camera_angle = get_degree_from_position2(camera->target().x, camera->target().y, camera->eye().x, camera->eye().y);
 
         uint32_t font_width = 30;

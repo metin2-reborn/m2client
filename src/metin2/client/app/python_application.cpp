@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <format>
 #include <thread>
 
@@ -538,9 +539,10 @@ namespace metin2::inline client::inline app {
                         face_spd_ = (face_acc_count_ / face_acc_time_);
 
                         if (-1 == force_sight_range_) {
+                            // A moving average that moved 0.3% per frame at 60 fps, now per time.
                             static float ave_render_time = 16.0f;
-                            float ratio = 0.3f;
-                            ave_render_time = (ave_render_time * (100.0f - ratio) + std::max(16.0f, float(cur_render_time_)) * ratio) / 100.0f;
+                            const float weight = 1.0f - std::pow(1.0f - 0.003f, static_cast<float>(global_elapsed_time_) * 60.0f);
+                            ave_render_time += (std::max(16.0f, float(cur_render_time_)) - ave_render_time) * weight;
 
                             float far_value = 25600.0f;
                             float near_value = min_fog_distance;

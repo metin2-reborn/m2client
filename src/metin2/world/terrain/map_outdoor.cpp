@@ -10,6 +10,8 @@
 #include <metin2/graphics/camera.h>
 #include <metin2/graphics/state_manager.h>
 
+#include <algorithm>
+
 namespace metin2::inline world::inline terrain {
     struct get_object_height_fn {
         bool height_found;
@@ -540,9 +542,9 @@ namespace metin2::inline world::inline terrain {
             return false;
         }
 
-        uint16_t local_x, local_y;
-        local_x = (x - terrain_coord_x * terrain_impl::TERRAIN_XSIZE) / (terrain_impl::WATERMAP_XSIZE);
-        local_y = (y - terrain_coord_y * terrain_impl::TERRAIN_YSIZE) / (terrain_impl::WATERMAP_YSIZE);
+        // The water map has one entry per terrain cell.
+        const auto local_x = static_cast<uint16_t>(std::min<int>((x - terrain_coord_x * terrain_impl::TERRAIN_XSIZE) / terrain_impl::CELLSCALE, terrain_impl::WATERMAP_XSIZE - 1));
+        const auto local_y = static_cast<uint16_t>(std::min<int>((y - terrain_coord_y * terrain_impl::TERRAIN_YSIZE) / terrain_impl::CELLSCALE, terrain_impl::WATERMAP_YSIZE - 1));
 
         return terrain->water_height(local_x, local_y, pl_water_height);
     }

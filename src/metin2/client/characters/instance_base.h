@@ -954,6 +954,8 @@ namespace metin2::inline client::inline characters {
 
         using command_damage_queue = std::list<effect_damage>;
         command_damage_queue damage_queue_;
+        // Damage numbers leave the queue at most one per 1/60 s, as they did at 60 fps.
+        float damage_pop_time_ = 0.0f;
 
         void process_damage();
 

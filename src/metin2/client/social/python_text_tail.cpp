@@ -802,7 +802,19 @@ namespace metin2::inline client::inline social {
         text_tail_pool_.clear();
     }
 
+    // Called on every teleport: the text, mark and title instances of each tail come from their own
+    // pools and must be returned, not just forgotten.
     void python_text_tail::clear() {
+        for (auto &[vid, tail] : character_text_tail_map_) {
+            delete_text_tail(tail);
+        }
+        for (auto &[vid, tail] : item_text_tail_map_) {
+            delete_text_tail(tail);
+        }
+        for (auto &[vid, tail] : chat_tail_map_value_) {
+            delete_text_tail(tail);
+        }
+
         character_text_tail_map_.clear();
         character_text_tail_list_.clear();
         item_text_tail_map_.clear();

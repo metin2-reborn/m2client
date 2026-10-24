@@ -193,6 +193,16 @@ namespace metin2::inline client::inline characters {
             if (instance->update_deleting()) {
                 ++itor;
             } else {
+                // A fading instance may still be the one a script selected or the mouse picked.
+                if (instance == inst_bind_) {
+                    inst_bind_ = nullptr;
+                }
+                if (instance == inst_pick_) {
+                    inst_pick_ = nullptr;
+                }
+                if (instance == inst_main_) {
+                    inst_main_ = nullptr;
+                }
                 instance_base::delete_value(instance);
                 itor = dead_inst_list_.erase(itor);
             }
