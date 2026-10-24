@@ -16,6 +16,9 @@
 #include <metin2/world/actors/game_util.h>
 #include <metin2/world/items/item_manager.h>
 
+#include <algorithm>
+#include <cmath>
+
 namespace metin2::inline client::inline characters {
 
     bool hair_color_enable = false;
@@ -1503,6 +1506,11 @@ namespace metin2::inline client::inline characters {
 
     int accumulation_time = 0;
 
+    namespace {
+        constexpr float HEIGHT_SNAP_GAP = 100.0f; // taller than any stair step
+        constexpr float HEIGHT_EASE_RATE = 15.0f; // per second
+    }
+
     void instance_base::update() {
         ++update_counter_;
 
@@ -1519,7 +1527,14 @@ namespace metin2::inline client::inline characters {
             uint32_t cur_time = el_timer_get_frame_m_sec();
             {
                 next_update_height_time_ = cur_time;
-                p_pos_cur.z = background_height(p_pos_cur.x, p_pos_cur.y);
+                // Steps and slopes are eased over about a tenth of a second instead of snapping the
+                // feet; anything taller than a step (a ledge, a warp) is still taken at once.
+                const float ground = background_height(p_pos_cur.x, p_pos_cur.y);
+                const float gap = ground - p_pos_cur.z;
+                if (std::fabs(gap) > HEIGHT_SNAP_GAP)
+                    p_pos_cur.z = ground;
+                else
+                    p_pos_cur.z += gap * std::min(1.0f, get_timer().elapsed_second() * HEIGHT_EASE_RATE);
                 new_set_pixel_position(p_pos_cur);
             }
 

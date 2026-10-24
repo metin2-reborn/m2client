@@ -474,28 +474,40 @@ namespace metin2::inline client::inline characters {
         }
 
         python_background &bg = get_python_background();
-        const math::vector3 &position = graphic_thing_instance_value_.get_position();
-        const math::vector3 &move_direction = graphic_thing_instance_value_.movement_vector_ref();
+        const math::vector3 position = graphic_thing_instance_value_.get_position();
+        const math::vector3 move_direction = graphic_thing_instance_value_.movement_vector_ref();
 
         // Long moves are checked in 10-unit steps so a thin blocking attribute is not skipped.
-        int step = int(math::length(move_direction) / 10.0f);
-        math::vector3 check_step = move_direction / float(step);
-        math::vector3 check_position = position;
-        for (int j = 0; j < step; ++j) {
-            check_position += check_step;
-
-            if (bg.is_attr_on(check_position.x, -check_position.y, terrain_impl::ATTRIBUTE_BLOCK)) {
-                block_movement();
+        auto crosses_block = [&](const math::vector3 &move) -> bool {
+            const int step = std::max(1, int(math::length(move) / 10.0f));
+            const math::vector3 check_step = move / float(step);
+            math::vector3 check_position = position;
+            for (int j = 0; j < step; ++j) {
+                check_position += check_step;
+                if (bg.is_attr_on(check_position.x, -check_position.y, terrain_impl::ATTRIBUTE_BLOCK))
+                    return true;
             }
+            return false;
+        };
+
+        if (!crosses_block(move_direction))
+            return false;
+
+        // Blocked: keep the part of the move along whichever axis is free, so the character slides
+        // along a wall as it already does around objects. The larger component is tried first.
+        const math::vector3 along_x(move_direction.x, 0.0f, 0.0f);
+        const math::vector3 along_y(0.0f, move_direction.y, 0.0f);
+        const bool x_first = std::fabs(move_direction.x) >= std::fabs(move_direction.y);
+        for (const math::vector3 &slide : {x_first ? along_x : along_y, x_first ? along_y : along_x}) {
+            if (math::length_sq(slide) < 1.0f || crosses_block(slide))
+                continue;
+            graphic_thing_instance_value_.block_movement();
+            graphic_thing_instance_value_.add_movement(slide.x, slide.y, 0.0f);
+            return false;
         }
 
-        math::vector3 next_position = position + move_direction;
-        if (bg.is_attr_on(next_position.x, -next_position.y, terrain_impl::ATTRIBUTE_BLOCK)) {
-            block_movement();
-            return true;
-        }
-
-        return false;
+        block_movement();
+        return true;
     }
 
     auto instance_base::check_attacking(instance_base &inst_victim) -> bool {

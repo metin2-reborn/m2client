@@ -1,5 +1,6 @@
 #include <metin2/graphics/state_manager.h>
 
+#include <metin2/core/timer.h>
 #include <metin2/gpu/types.h>
 #include "actor_instance.h"
 
@@ -32,7 +33,16 @@ namespace metin2::inline world::inline actors {
 
         STATEMANAGER.save_render_state(gpu::state::CULL_MODE, gpu::cull::NONE);
 
-        switch (render_mode_value_) {
+        // A hit draws the opaque model through the add path with a warm tint for a few frames.
+        int render_mode = render_mode_value_;
+        const math::color saved_add_color = add_color_;
+        const bool opaque = render_mode == RENDER_MODE_NORMAL || (render_mode == RENDER_MODE_BLEND && alpha_value_ == 1.0f);
+        if (opaque && flash_time_ > el_timer_get_m_sec()) {
+            render_mode = RENDER_MODE_ADD;
+            add_color_ = math::color(0.35f, 0.14f, 0.06f, 1.0f);
+        }
+
+        switch (render_mode) {
         case RENDER_MODE_NORMAL:
             begin_diffuse_render();
             render_with_one_texture();
@@ -70,6 +80,7 @@ namespace metin2::inline world::inline actors {
             break;
         }
 
+        add_color_ = saved_add_color;
         STATEMANAGER.restore_render_state(gpu::state::CULL_MODE);
 
         mtrl.diffuse = math::color(0xffffffff);

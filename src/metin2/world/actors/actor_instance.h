@@ -289,6 +289,7 @@ namespace metin2::inline world::inline actors {
         auto avoid_object(const graphic_object_instance &bg_obj) -> bool;
         auto is_block_object(const graphic_object_instance &bg_obj) -> bool;
         void block_movement();
+        void add_movement(float fx, float fy, float fz);
 
       protected:
         auto test_object_collision(const graphic_object_instance *object_instance) -> bool;
@@ -475,6 +476,10 @@ namespace metin2::inline world::inline actors {
         auto normal_attack_process(actor_instance &victim) -> bool;
         auto can_input_normal_attack_command() -> bool;
 
+        // A short warm tint on being hit; off when damage numbers are off.
+        void flash(uint32_t duration);
+        static void set_hit_flash_enabled(bool enabled) { hit_flash_enabled_ = enabled; }
+
       private:
         void shake(uint32_t duration);
 
@@ -506,8 +511,6 @@ namespace metin2::inline world::inline actors {
         void process_motion_event_sound(const race_motion_data::motion_event_data *data);
         void process_motion_event_fly(const race_motion_data::motion_event_data *data);
         void process_motion_event_warp(const race_motion_data::motion_event_data *data);
-
-        void add_movement(float fx, float fy, float fz);
 
         auto is_left_hand_weapon(uint32_t type_value) -> bool;
         auto is_right_hand_weapon(uint32_t type_value) -> bool;
@@ -666,6 +669,8 @@ namespace metin2::inline world::inline actors {
         bool need_update_collision_;
 
         uint32_t shake_time_;
+        uint32_t flash_time_;
+        static bool hit_flash_enabled_;
 
         float reach_scale_;
         float mov_spd_;

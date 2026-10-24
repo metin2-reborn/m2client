@@ -8,6 +8,7 @@
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/window/main_window.h>
+#include <metin2/world/actors/actor_instance.h>
 
 #include <algorithm>
 #include <cstring>
@@ -217,6 +218,7 @@ namespace metin2::inline client::inline app {
 
     void python_system::set_show_damage_flag(int flag) {
         config_value_.show_damage = flag == 1 ? true : false;
+        actor_instance::set_hit_flash_enabled(config_value_.show_damage);
     }
 
     auto python_system::is_show_sales_text() -> bool {
@@ -335,6 +337,7 @@ namespace metin2::inline client::inline app {
         reader.read("interface", "view_chat", config_value_.view_chat);
         reader.read("interface", "always_show_name", config_value_.always_show_name);
         reader.read("interface", "show_damage", config_value_.show_damage);
+        actor_instance::set_hit_flash_enabled(config_value_.show_damage);
         reader.read("interface", "show_sales_text", config_value_.show_sales_text);
         reader.read("interface", "font_antialias", config_value_.font_antialias);
         reader.read("interface", "font_scale", config_value_.font_scale);

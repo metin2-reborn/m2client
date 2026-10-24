@@ -83,6 +83,7 @@ namespace metin2::inline world::inline actors {
 
     void actor_instance::initialize_position_data() {
         shake_time_ = 0;
+        flash_time_ = 0;
 
         x_ = 0.0f;
         y_ = 0.0f;

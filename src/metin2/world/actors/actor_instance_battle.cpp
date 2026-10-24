@@ -9,6 +9,10 @@
 
 namespace metin2::inline world::inline actors {
 
+    namespace {
+        constexpr uint32_t HIT_FLASH_DURATION_MS = 70;
+    }
+
     void actor_instance::set_battle_hit_effect(uint32_t id) {
         battle_hit_effect_id_ = id;
     }
@@ -496,6 +500,7 @@ namespace metin2::inline world::inline actors {
         }
 
         victim.insert_delay(attack_data.stiffen_time);
+        victim.flash(HIT_FLASH_DURATION_MS);
 
         math::vector3 vec3_effect(victim.x_, victim.y_, victim.z_);
 
@@ -557,6 +562,13 @@ namespace metin2::inline world::inline actors {
     void actor_instance::shake(uint32_t duration) {
         uint32_t cur_time = el_timer_get_m_sec();
         shake_time_ = cur_time + duration;
+    }
+
+    bool actor_instance::hit_flash_enabled_ = true;
+
+    void actor_instance::flash(uint32_t duration) {
+        if (hit_flash_enabled_)
+            flash_time_ = el_timer_get_m_sec() + duration;
     }
 
     void actor_instance::shake_process() {
