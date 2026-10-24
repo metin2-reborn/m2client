@@ -39,7 +39,8 @@ namespace metin2::inline world::inline maps {
 
         auto get_normal(int ix, int iy, math::vector3 *normal) -> bool;
 
-        // Gradual blending into the next environment is not implemented yet.
+        // A change of environment fades the lights, material, fog and filter over a moment; the
+        // sky textures and the flare switch at once.
         void set_environment_data_ptr(const environment_data *environment_data);
         void reset_environment_data_ptr(const environment_data *environment_data);
         void set_environment_data(int env_data_index);
@@ -74,6 +75,14 @@ namespace metin2::inline world::inline maps {
       protected:
         environment_data_map environment_data_map_value_;
         const environment_data *mc_pcur_environment_data_;
+
+        // While blending, mc_pcur_environment_data_ points at blended_environment_, which moves from
+        // blend_from_ to *blend_target_; afterwards it points at the target itself again.
+        environment_data blend_from_;
+        environment_data blended_environment_;
+        const environment_data *blend_target_ = nullptr;
+        float blend_start_time_ = 0.0f;
+        void update_environment_blend();
 
         map_outdoor *map_;
 

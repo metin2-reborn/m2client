@@ -80,6 +80,9 @@ namespace metin2::inline world::inline terrain {
 
       public:
         void set_inverse_view_and_dynamic_shaodw_matrices();
+        // Where the shadow-casting light stands for the character shadow map: along the
+        // environment's sun, at least 30 degrees up so the blobs do not stretch across the ground.
+        auto shadow_light_eye(const math::vector3 &target) const -> math::vector3;
         auto load(float x, float y, float z) -> bool override;
         auto height(float x, float y) -> float override;
 
@@ -287,9 +290,13 @@ namespace metin2::inline world::inline terrain {
         graphic_image_instance alpha_fog_image_instance_;
         math::matrix alpha_fog_texture_;
 
+        // The characters are drawn into the raw target; a 2x2 tent blur of it in
+        // character_shadow_target_ is what the ground and the receivers project.
+        render_target character_shadow_raw_target_;
         render_target character_shadow_target_;
         gpu::viewport shadow_map_viewport_;
         uint16_t shadow_map_size_;
+        void blur_character_shadow_texture();
 
         math::plane plane_[6];
 

@@ -207,13 +207,24 @@ namespace metin2::inline world::inline terrain {
 
         math::vector3 target = camera->target();
 
-        math::vector3 light_eye(target.x - 1.732f * 1250.0f,
-            target.y - 1250.0f,
-            target.z + 2.0f * 1.732f * 1250.0f);
-
         const auto vv = math::vector3(0.0f, 0.0f, 1.0f);
-        light_view_ = math::matrix_look_at_rh(light_eye, target, vv);
+        light_view_ = math::matrix_look_at_rh(shadow_light_eye(target), target, vv);
         dynamic_shadow_ = view_inverse_ * light_view_ * dynamic_shadow_scale_;
+    }
+
+    auto map_outdoor::shadow_light_eye(const math::vector3 &target) const -> math::vector3 {
+        // The old fixed offset, kept as the fallback: 60 degrees up from the south-west.
+        math::vector3 to_light(-0.433f, -0.25f, 0.866f);
+        if (mc_environment_data_ && mc_environment_data_->dir_lights_enable[ENV_DIRLIGHT_BACKGROUND]) {
+            const math::vector3 &direction = mc_environment_data_->dir_lights[ENV_DIRLIGHT_BACKGROUND].direction;
+            if (math::length_sq(direction) > 0.0f)
+                to_light = math::normalize(-direction);
+        }
+        if (to_light.z < 0.5f) {
+            to_light.z = 0.5f;
+            to_light = math::normalize(to_light);
+        }
+        return target + to_light * 5000.0f;
     }
 
     void map_outdoor::on_render() {

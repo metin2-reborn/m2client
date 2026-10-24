@@ -6,7 +6,10 @@
 #include "map_manager.h"
 
 #include <metin2/core/file_loader.h>
+#include <metin2/core/timer.h>
 #include <metin2/gpu/types.h>
+
+#include <algorithm>
 
 namespace metin2::inline world::inline maps {
 
@@ -41,6 +44,7 @@ namespace metin2::inline world::inline maps {
 
     void map_manager::initialize() {
         mc_pcur_environment_data_ = nullptr;
+        blend_target_ = nullptr;
         load_map_info_vector();
     }
 
@@ -156,12 +160,69 @@ namespace metin2::inline world::inline maps {
         return map.water_height(x, y, pl_water_height);
     }
 
+    namespace {
+        constexpr float ENVIRONMENT_BLEND_SECONDS = 1.5f;
+
+        auto lerp(float a, float b, float t) -> float {
+            return a + (b - a) * t;
+        }
+
+        auto lerp(const math::color &a, const math::color &b, float t) -> math::color {
+            return a + (b - a) * t;
+        }
+
+        void blend_light(const gpu::light &from, const gpu::light &to, float t, gpu::light &out) {
+            out = to;
+            out.diffuse = lerp(from.diffuse, to.diffuse, t);
+            out.ambient = lerp(from.ambient, to.ambient, t);
+            out.specular = lerp(from.specular, to.specular, t);
+            const math::vector3 direction = from.direction + (to.direction - from.direction) * t;
+            if (math::length_sq(direction) > 0.0f)
+                out.direction = math::normalize(direction);
+        }
+    }
+
+    void map_manager::update_environment_blend() {
+        if (!blend_target_)
+            return;
+
+        const float t = std::clamp((get_timer().current_second() - blend_start_time_) / ENVIRONMENT_BLEND_SECONDS, 0.0f, 1.0f);
+        const environment_data &to = *blend_target_;
+
+        if (t >= 1.0f) {
+            mc_pcur_environment_data_ = blend_target_;
+            blend_target_ = nullptr;
+            map_outdoor_ref().set_environment_data_ptr(mc_pcur_environment_data_);
+            return;
+        }
+
+        environment_data &out = blended_environment_;
+        for (int i = 0; i < ENV_DIRLIGHT_NUM; ++i)
+            blend_light(blend_from_.dir_lights[i], to.dir_lights[i], t, out.dir_lights[i]);
+        out.material_value.diffuse = lerp(blend_from_.material_value.diffuse, to.material_value.diffuse, t);
+        out.material_value.ambient = lerp(blend_from_.material_value.ambient, to.material_value.ambient, t);
+        out.material_value.specular = lerp(blend_from_.material_value.specular, to.material_value.specular, t);
+        out.material_value.emissive = lerp(blend_from_.material_value.emissive, to.material_value.emissive, t);
+        out.fog_color = lerp(blend_from_.fog_color, to.fog_color, t);
+        // A reserved environment gets its fog distances from the view distance setting, which
+        // writes them into the current environment itself.
+        if (!to.reserve) {
+            out.fog_near_distance = lerp(blend_from_.fog_near_distance, to.fog_near_distance, t);
+            out.fog_far_distance = lerp(blend_from_.fog_far_distance, to.fog_far_distance, t);
+        }
+        out.filtering_color = lerp(blend_from_.filtering_color, to.filtering_color, t);
+        // The filter copied its colour when the environment was set.
+        map_outdoor_ref().set_environment_screen_filter();
+    }
+
     void map_manager::begin_environment() {
         if (!map_)
             return;
 
         if (!mc_pcur_environment_data_)
             return;
+
+        update_environment_blend();
 
         map_outdoor &map = map_outdoor_ref();
 
@@ -231,6 +292,22 @@ namespace metin2::inline world::inline maps {
 
         map_outdoor &map = map_outdoor_ref();
 
+        if (environment_data == mc_pcur_environment_data_ || environment_data == blend_target_)
+            return;
+
+        // The first environment of a map is applied at once; a later change fades from what is on
+        // screen now (which may itself be mid-blend).
+        if (mc_pcur_environment_data_) {
+            blend_from_ = *mc_pcur_environment_data_;
+            blended_environment_ = *environment_data;
+            blend_target_ = environment_data;
+            blend_start_time_ = get_timer().current_second();
+            mc_pcur_environment_data_ = &blended_environment_;
+            map.set_environment_data_ptr(mc_pcur_environment_data_);
+            update_environment_blend();
+            return;
+        }
+
         mc_pcur_environment_data_ = environment_data;
 
         map.set_environment_data_ptr(mc_pcur_environment_data_);
@@ -248,6 +325,7 @@ namespace metin2::inline world::inline maps {
 
         map_outdoor &map = map_outdoor_ref();
 
+        blend_target_ = nullptr;
         mc_pcur_environment_data_ = environment_data;
         map.reset_environment_data_ptr(mc_pcur_environment_data_);
     }

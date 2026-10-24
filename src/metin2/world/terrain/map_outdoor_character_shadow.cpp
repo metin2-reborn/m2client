@@ -28,11 +28,13 @@ namespace metin2::inline world::inline terrain {
 
         shadow_map_viewport_ = {1, 1, static_cast<uint32_t>(shadow_map_size_ - 2), static_cast<uint32_t>(shadow_map_size_ - 2), 0.0f, 1.0f};
 
-        if (!character_shadow_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::R5G6B5, gpu::format::D16))
+        if (!character_shadow_raw_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::R5G6B5, gpu::format::D16) ||
+            !character_shadow_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::R5G6B5, gpu::format::UNKNOWN))
             metin2::log::error("Cannot create the character shadow render target");
     }
 
     void map_outdoor::release_character_shadow_texture() {
+        character_shadow_raw_target_.destroy();
         character_shadow_target_.destroy();
     }
 
@@ -53,12 +55,8 @@ namespace metin2::inline world::inline terrain {
 
         math::vector3 target = current_camera->target();
 
-        math::vector3 eye(target.x - 1.732f * 1250.0f,
-            target.y - 1250.0f,
-            target.z + 2.0f * 1.732f * 1250.0f);
-
         const auto vv = math::vector3(0.0f, 0.0f, 1.0f);
-        light_view = math::matrix_look_at_rh(eye, target, vv);
+        light_view = math::matrix_look_at_rh(shadow_light_eye(target), target, vv);
 
         light_proj = math::matrix_ortho_rh(2550.0f, 2550.0f, 1.0f, 15000.0f);
 
@@ -74,7 +72,7 @@ namespace metin2::inline world::inline terrain {
         STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::ALPHA_OP, gpu::texture_op::DISABLE);
         STATEMANAGER.set_texture_stage_state(1, gpu::stage_state::COLOR_OP, gpu::texture_op::DISABLE);
 
-        if (!character_shadow_target_.begin()) {
+        if (!character_shadow_raw_target_.begin()) {
             metin2::log::error("Cannot set the shadow map render target");
             return false;
         }
@@ -85,12 +83,92 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::end_render_character_shadow_to_texture() {
-        character_shadow_target_.end();
+        character_shadow_raw_target_.end();
 
         STATEMANAGER.restore_transform(gpu::transform::VIEW);
         STATEMANAGER.restore_transform(gpu::transform::PROJECTION);
 
         STATEMANAGER.set_render_state(gpu::state::LIGHTING, light_enable);
         STATEMANAGER.restore_render_state(gpu::state::TEXTURE_FACTOR);
+
+        blur_character_shadow_texture();
+    }
+
+    // Four quarter-weight copies of the raw map, each shifted by a texel diagonally, sum to a tent
+    // filter that softens the shadow edges by about a texel.
+    void map_outdoor::blur_character_shadow_texture() {
+        if (!character_shadow_target_.is_created() || !character_shadow_target_.begin())
+            return;
+
+        const float size = static_cast<float>(shadow_map_size_);
+        const float texel = 1.0f / size;
+        const math::matrix proj = math::matrix_ortho_off_center_rh(0.0f, size, size, 0.0f, -1.0f, 1.0f);
+        const math::matrix identity = math::matrix_identity();
+        STATEMANAGER.save_transform(gpu::transform::PROJECTION, &proj);
+        STATEMANAGER.save_transform(gpu::transform::VIEW, &identity);
+        STATEMANAGER.set_transform(gpu::transform::WORLD, &identity);
+
+        STATEMANAGER.save_render_state(gpu::state::Z_ENABLE, false);
+        STATEMANAGER.save_render_state(gpu::state::Z_WRITE_ENABLE, false);
+        STATEMANAGER.save_render_state(gpu::state::LIGHTING, false);
+        STATEMANAGER.save_render_state(gpu::state::FOG_ENABLE, false);
+        STATEMANAGER.save_render_state(gpu::state::CULL_MODE, gpu::cull::NONE);
+        STATEMANAGER.save_render_state(gpu::state::ALPHA_TEST_ENABLE, false);
+        STATEMANAGER.save_render_state(gpu::state::ALPHA_BLEND_ENABLE, false);
+        STATEMANAGER.save_render_state(gpu::state::SRC_BLEND, gpu::blend::ONE);
+        STATEMANAGER.save_render_state(gpu::state::DEST_BLEND, gpu::blend::ONE);
+        STATEMANAGER.save_render_state(gpu::state::TEXTURE_FACTOR, 0xff404040);
+        STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::ADDRESS_U, gpu::address::CLAMP);
+        STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::ADDRESS_V, gpu::address::CLAMP);
+        STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::TEXCOORD_INDEX, 0);
+        STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::TEXTURE_TRANSFORM_FLAGS, gpu::texture_transform_flags::DISABLE);
+        STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::COLOR_ARG1, gpu::texture_arg::TEXTURE);
+        STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::COLOR_ARG2, gpu::texture_arg::TFACTOR);
+        STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::COLOR_OP, gpu::texture_op::MODULATE);
+        STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::ALPHA_OP, gpu::texture_op::DISABLE);
+        STATEMANAGER.set_texture_stage_state(1, gpu::stage_state::COLOR_OP, gpu::texture_op::DISABLE);
+        STATEMANAGER.set_texture(0, character_shadow_raw_target_.texture());
+        STATEMANAGER.set_texture(1, nullptr);
+        STATEMANAGER.set_vertex_shader(gpu::fvf::XYZ | gpu::fvf::DIFFUSE | gpu::fvf::TEX1);
+
+        const float offsets[4][2] = {
+            {-texel, -texel},
+            {texel,  -texel},
+            {-texel, texel },
+            {texel,  texel }
+        };
+        for (int pass = 0; pass < 4; ++pass) {
+            const float u = offsets[pass][0];
+            const float v = offsets[pass][1];
+            const vertex vertices[4] = {
+                {0.0f, 0.0f, 0.0f, 0xffffffff, u,        v       },
+                {0.0f, size, 0.0f, 0xffffffff, u,        1.0f + v},
+                {size, 0.0f, 0.0f, 0xffffffff, 1.0f + u, v       },
+                {size, size, 0.0f, 0xffffffff, 1.0f + u, 1.0f + v},
+            };
+            if (pass == 1)
+                STATEMANAGER.set_render_state(gpu::state::ALPHA_BLEND_ENABLE, true);
+            STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, vertices, sizeof(vertex));
+        }
+
+        STATEMANAGER.set_texture(0, nullptr);
+        STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::TEXTURE_TRANSFORM_FLAGS);
+        STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::TEXCOORD_INDEX);
+        STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::ADDRESS_U);
+        STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::ADDRESS_V);
+        STATEMANAGER.restore_render_state(gpu::state::TEXTURE_FACTOR);
+        STATEMANAGER.restore_render_state(gpu::state::DEST_BLEND);
+        STATEMANAGER.restore_render_state(gpu::state::SRC_BLEND);
+        STATEMANAGER.restore_render_state(gpu::state::ALPHA_BLEND_ENABLE);
+        STATEMANAGER.restore_render_state(gpu::state::ALPHA_TEST_ENABLE);
+        STATEMANAGER.restore_render_state(gpu::state::CULL_MODE);
+        STATEMANAGER.restore_render_state(gpu::state::FOG_ENABLE);
+        STATEMANAGER.restore_render_state(gpu::state::LIGHTING);
+        STATEMANAGER.restore_render_state(gpu::state::Z_WRITE_ENABLE);
+        STATEMANAGER.restore_render_state(gpu::state::Z_ENABLE);
+        STATEMANAGER.restore_transform(gpu::transform::VIEW);
+        STATEMANAGER.restore_transform(gpu::transform::PROJECTION);
+
+        character_shadow_target_.end();
     }
 }
