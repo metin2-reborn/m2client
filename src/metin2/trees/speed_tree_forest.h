@@ -47,6 +47,9 @@ namespace metin2::inline trees {
 
         void set_light(const float *direction, const float *ambient, const float *diffuse);
         void set_fog(float fog_near, float fog_far);
+        // The environment's wind strength; the leaves sway with it.
+        void set_wind(float strength) { wind_strength_ = strength; }
+        auto wind_strength() const -> float { return wind_strength_; }
 
         virtual void render(uint32_t render_bit_vector) = 0;
 
@@ -55,5 +58,6 @@ namespace metin2::inline trees {
 
         float lighting_[12];
         float fog_[4];
+        float wind_strength_ = 0.2f;
     };
 }

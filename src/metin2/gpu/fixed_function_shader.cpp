@@ -32,6 +32,7 @@ layout(std140) uniform FFP {
     ivec4 uStageA[2];
     ivec4 uStageB[2];
     ivec4 uStageC[2];
+    vec4 uEffect;
     Light uLights[8];
 };
 
@@ -41,6 +42,11 @@ out vec4 vTex0;
 out vec4 vTex1;
 out float vFog;
 out float vDepth;
+out vec3 vPosView;
+out vec3 vNormView;
+out vec3 vPosWorld;
+out vec4 vDiffuseIn;
+out vec4 vSpecularIn;
 
 vec4 texInput(int idx, int dim) {
     vec4 t = idx == 0 ? aTex0 : (idx == 1 ? aTex1 : aTex2);
@@ -63,18 +69,102 @@ vec4 stageTexcoord(int s, vec3 P, vec3 N) {
     return tc;
 }
 
+void main() {
+    bool rhw = uMisc.y != 0.0;
+    bool hasD = uMisc.z != 0.0;
+    bool hasS = uMisc.w != 0.0;
+    vec3 P, N = vec3(0.0, 0.0, 1.0);
+    vec4 clip;
+    if (rhw) {
+        float w = aPos.w > 0.0 ? 1.0 / aPos.w : 1.0;
+        float px = aPos.x - float(uAlpha.z) + uViewport.w * 0.5;
+        float py = aPos.y - float(uAlpha.w) + uViewport.w * 0.5;
+        vec2 ndc = vec2(px / uViewport.x * 2.0 - 1.0, 1.0 - py / uViewport.y * 2.0);
+        clip = vec4(ndc * w, aPos.z * w, w);
+        P = aPos.xyz;
+        vColor = hasD ? aDiffuse : vec4(1.0);
+        vSpec = hasS ? aSpecular : vec4(0.0);
+        vFog = (uFogI.x != 0 && hasS) ? aSpecular.a : 1.0;
+        vDepth = uFogI.z != 0 ? aPos.z : -1.0;
+        vPosWorld = aPos.xyz;
+    } else {
+        vec4 wp = uWorld * vec4(aPos.xyz, 1.0);
+        vec4 vp = uView * wp;
+        P = vp.xyz;
+        N = normalize(mat3(uNormal) * aNormal);
+        clip = uProj * vp;
+        clip.xy += vec2(uViewport.w / uViewport.x, -uViewport.w / uViewport.y) * clip.w;
+        // Lighting is evaluated per pixel from the interpolated position and normal.
+        vColor = hasD ? aDiffuse : vec4(1.0);
+        vSpec = hasS ? aSpecular : vec4(0.0);
+        // Fog is evaluated per pixel from this distance; only pre-transformed vertices carry it.
+        vDepth = uFogI.w != 0 ? length(P) : abs(P.z);
+        vFog = 1.0;
+        vPosWorld = wp.xyz;
+    }
+    vPosView = P;
+    vNormView = N;
+    vDiffuseIn = hasD ? aDiffuse : vec4(1.0);
+    vSpecularIn = hasS ? aSpecular : vec4(0.0);
+    clip.z = clip.z * 2.0 - clip.w;
+    if (uViewport.z < 0.0) clip.y = -clip.y;
+    gl_Position = clip;
+    vTex0 = stageTexcoord(0, P, N);
+    vTex1 = stageTexcoord(1, P, N);
+}
+)GLSL";
+
+    const char *const FIXED_FUNCTION_FRAGMENT_SHADER = R"GLSL(
+#version 330 core
+struct Light { vec4 diffuse; vec4 specular; vec4 ambient; vec4 pos; vec4 dir; vec4 att; vec4 spot; };
+layout(std140) uniform FFP {
+    mat4 uWorld; mat4 uView; mat4 uProj; mat4 uNormal; mat4 uTexM[2];
+    vec4 uViewport;
+    vec4 uMatDiffuse; vec4 uMatAmbient; vec4 uMatSpecular; vec4 uMatEmissive;
+    vec4 uGlobalAmbient;
+    ivec4 uLightFlags;
+    ivec4 uMatSrc;
+    ivec4 uFogI;
+    vec4 uFogP;
+    vec4 uFogColor;
+    vec4 uTFactor;
+    vec4 uMisc;
+    ivec4 uAlpha;
+    ivec4 uStageA[2];
+    ivec4 uStageB[2];
+    ivec4 uStageC[2];
+    vec4 uEffect;
+    Light uLights[8];
+};
+uniform sampler2D uSampler0;
+uniform sampler2D uSampler1;
+
+in vec4 vColor;
+in vec4 vSpec;
+in vec4 vTex0;
+in vec4 vTex1;
+in float vFog;
+in float vDepth;
+in vec3 vPosView;
+in vec3 vNormView;
+in vec3 vPosWorld;
+in vec4 vDiffuseIn;
+in vec4 vSpecularIn;
+out vec4 fragColor;
+
 vec3 pick3(int src, vec3 mat, bool hasD, bool hasS) {
-    if (src == 1 && hasD) return aDiffuse.rgb;
-    if (src == 2 && hasS) return aSpecular.rgb;
+    if (src == 1 && hasD) return vDiffuseIn.rgb;
+    if (src == 2 && hasS) return vSpecularIn.rgb;
     return mat;
 }
 
+// The Direct3D lighting model (Blinn-Phong, up to 8 lights), per pixel.
 void lighting(vec3 P, vec3 N, bool hasD, bool hasS, out vec4 outDiffuse, out vec4 outSpec) {
     vec3 matD = pick3(uMatSrc.x, uMatDiffuse.rgb, hasD, hasS);
     vec3 matA = pick3(uMatSrc.y, uMatAmbient.rgb, hasD, hasS);
     vec3 matS = pick3(uMatSrc.z, uMatSpecular.rgb, hasD, hasS);
     vec3 matE = pick3(uMatSrc.w, uMatEmissive.rgb, hasD, hasS);
-    float alpha = (uMatSrc.x == 1 && hasD) ? aDiffuse.a : ((uMatSrc.x == 2 && hasS) ? aSpecular.a : uMatDiffuse.a);
+    float alpha = (uMatSrc.x == 1 && hasD) ? vDiffuseIn.a : ((uMatSrc.x == 2 && hasS) ? vSpecularIn.a : uMatDiffuse.a);
     vec3 amb = uGlobalAmbient.rgb * matA;
     vec3 dif = vec3(0.0);
     vec3 spec = vec3(0.0);
@@ -112,90 +202,26 @@ void lighting(vec3 P, vec3 N, bool hasD, bool hasS, out vec4 outDiffuse, out vec
     outSpec = vec4(clamp(spec, 0.0, 1.0), 0.0);
 }
 
-float fogFactor(float d) {
-    int mode = uFogI.y;
-    if (mode == 3) return clamp((uFogP.y - d) / max(uFogP.y - uFogP.x, 1e-6), 0.0, 1.0);
-    if (mode == 1) return exp(-uFogP.z * d);
-    if (mode == 2) { float e = uFogP.z * d; return exp(-e * e); }
-    return 1.0;
+// Water: the texture ripples, the surface reflects the horizon (the fog colour) at grazing angles
+// and shows the sun's glint.
+vec2 waterRipple(vec2 uv) {
+    float t = uEffect.y;
+    return uv + 0.006 * vec2(sin(vPosWorld.x * 0.004 + vPosWorld.y * 0.0017 + t * 1.1), cos(vPosWorld.y * 0.0037 - vPosWorld.x * 0.0012 + t * 0.9));
 }
 
-void main() {
-    bool rhw = uMisc.y != 0.0;
-    bool hasD = uMisc.z != 0.0;
-    bool hasS = uMisc.w != 0.0;
-    vec3 P, N = vec3(0.0, 0.0, 1.0);
-    vec4 clip;
-    if (rhw) {
-        float w = aPos.w > 0.0 ? 1.0 / aPos.w : 1.0;
-        float px = aPos.x - float(uAlpha.z) + uViewport.w * 0.5;
-        float py = aPos.y - float(uAlpha.w) + uViewport.w * 0.5;
-        vec2 ndc = vec2(px / uViewport.x * 2.0 - 1.0, 1.0 - py / uViewport.y * 2.0);
-        clip = vec4(ndc * w, aPos.z * w, w);
-        P = aPos.xyz;
-        vColor = hasD ? aDiffuse : vec4(1.0);
-        vSpec = hasS ? aSpecular : vec4(0.0);
-        vFog = (uFogI.x != 0 && hasS) ? aSpecular.a : 1.0;
-        vDepth = uFogI.z != 0 ? aPos.z : -1.0;
-    } else {
-        vec4 wp = uWorld * vec4(aPos.xyz, 1.0);
-        vec4 vp = uView * wp;
-        P = vp.xyz;
-        N = normalize(mat3(uNormal) * aNormal);
-        clip = uProj * vp;
-        clip.xy += vec2(uViewport.w / uViewport.x, -uViewport.w / uViewport.y) * clip.w;
-        if (uLightFlags.x != 0) {
-            vec4 d, s;
-            lighting(P, N, hasD, hasS, d, s);
-            vColor = d;
-            vSpec = s;
-        } else {
-            vColor = hasD ? aDiffuse : vec4(1.0);
-            vSpec = hasS ? aSpecular : vec4(0.0);
-        }
-        // Fog is evaluated per pixel from this distance; only pre-transformed vertices carry it.
-        vDepth = uFogI.w != 0 ? length(P) : abs(P.z);
-        vFog = 1.0;
+vec3 waterSurface(vec3 base) {
+    vec3 N = normalize(mat3(uView) * vec3(0.0, 0.0, 1.0));
+    vec3 V = normalize(-vPosView);
+    float facing = clamp(dot(N, V), 0.0, 1.0);
+    float fresnel = pow(1.0 - facing, 4.0);
+    vec3 color = mix(base, uFogColor.rgb, fresnel * 0.5);
+    if (int(uLights[0].pos.w) == 3) {
+        vec3 L = -normalize(uLights[0].dir.xyz);
+        vec3 H = normalize(L + V);
+        color += uLights[0].diffuse.rgb * pow(max(dot(N, H), 0.0), 160.0) * 0.6;
     }
-    clip.z = clip.z * 2.0 - clip.w;
-    if (uViewport.z < 0.0) clip.y = -clip.y;
-    gl_Position = clip;
-    vTex0 = stageTexcoord(0, P, N);
-    vTex1 = stageTexcoord(1, P, N);
+    return color;
 }
-)GLSL";
-
-    const char *const FIXED_FUNCTION_FRAGMENT_SHADER = R"GLSL(
-#version 330 core
-struct Light { vec4 diffuse; vec4 specular; vec4 ambient; vec4 pos; vec4 dir; vec4 att; vec4 spot; };
-layout(std140) uniform FFP {
-    mat4 uWorld; mat4 uView; mat4 uProj; mat4 uNormal; mat4 uTexM[2];
-    vec4 uViewport;
-    vec4 uMatDiffuse; vec4 uMatAmbient; vec4 uMatSpecular; vec4 uMatEmissive;
-    vec4 uGlobalAmbient;
-    ivec4 uLightFlags;
-    ivec4 uMatSrc;
-    ivec4 uFogI;
-    vec4 uFogP;
-    vec4 uFogColor;
-    vec4 uTFactor;
-    vec4 uMisc;
-    ivec4 uAlpha;
-    ivec4 uStageA[2];
-    ivec4 uStageB[2];
-    ivec4 uStageC[2];
-    Light uLights[8];
-};
-uniform sampler2D uSampler0;
-uniform sampler2D uSampler1;
-
-in vec4 vColor;
-in vec4 vSpec;
-in vec4 vTex0;
-in vec4 vTex1;
-in float vFog;
-in float vDepth;
-out vec4 fragColor;
 
 vec4 arg(int a, vec4 cur, vec4 tex, vec4 dif, vec4 spec) {
     int sel = a & 15;
@@ -236,30 +262,37 @@ vec4 sampleStage(int s) {
     vec4 tc = s == 0 ? vTex0 : vTex1;
     vec2 uv = tc.xy;
     if (uStageC[s].w != 0) uv /= (uStageC[s].x == 3 ? tc.z : tc.w);
+    if (uEffect.x == 1.0) uv = waterRipple(uv);
     return s == 0 ? texture(uSampler0, uv) : texture(uSampler1, uv);
 }
 
 void main() {
     vec4 dif = vColor;
+    vec4 specIn = vSpec;
+    if (uLightFlags.x != 0 && uMisc.y == 0.0) {
+        vec3 N = normalize(vNormView);
+        lighting(vPosView, N, uMisc.z != 0.0, uMisc.w != 0.0, dif, specIn);
+    }
     vec4 cur = dif;
     for (int s = 0; s < 2; ++s) {
         int colorOp = uStageA[s].x;
         if (colorOp == 1) break;
         vec4 tex = sampleStage(s);
-        vec4 c1 = arg(uStageA[s].y, cur, tex, dif, vSpec);
-        vec4 c2 = arg(uStageA[s].z, cur, tex, dif, vSpec);
+        vec4 c1 = arg(uStageA[s].y, cur, tex, dif, specIn);
+        vec4 c2 = arg(uStageA[s].z, cur, tex, dif, specIn);
         vec4 res = op(colorOp, c1, c2, cur, tex, dif);
         int alphaOp = uStageA[s].w;
         if (alphaOp == 1) {
             res.a = cur.a;
         } else {
-            vec4 a1 = arg(uStageB[s].x, cur, tex, dif, vSpec);
-            vec4 a2 = arg(uStageB[s].y, cur, tex, dif, vSpec);
+            vec4 a1 = arg(uStageB[s].x, cur, tex, dif, specIn);
+            vec4 a2 = arg(uStageB[s].y, cur, tex, dif, specIn);
             res.a = op(alphaOp, a1, a2, cur, tex, dif).a;
         }
         cur = clamp(res, 0.0, 1.0);
     }
-    if (uLightFlags.z != 0) cur.rgb = clamp(cur.rgb + vSpec.rgb, 0.0, 1.0);
+    if (uLightFlags.z != 0) cur.rgb = clamp(cur.rgb + specIn.rgb, 0.0, 1.0);
+    if (uEffect.x == 1.0) cur.rgb = clamp(waterSurface(cur.rgb), 0.0, 1.0);
     if (uAlpha.x != 0) {
         float ref = uMisc.x;
         float a = cur.a;

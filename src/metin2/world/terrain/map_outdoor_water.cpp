@@ -7,6 +7,8 @@
 #include "map_outdoor.h"
 #include "terrain_patch.h"
 
+#include <cstring>
+
 namespace metin2::inline world::inline terrain {
 
     void map_outdoor::load_water_texture() {
@@ -37,6 +39,11 @@ namespace metin2::inline world::inline terrain {
         STATEMANAGER.save_render_state(gpu::state::CULL_MODE, gpu::cull::NONE);
         STATEMANAGER.save_render_state(gpu::state::DIFFUSE_MATERIAL_SOURCE, gpu::material_source::COLOR1);
         STATEMANAGER.save_render_state(gpu::state::COLOR_VERTEX, true);
+        const float water_time = get_timer().current_second();
+        uint32_t water_time_bits;
+        std::memcpy(&water_time_bits, &water_time, sizeof(water_time_bits));
+        STATEMANAGER.save_render_state(gpu::state::EFFECT_MODE, 1);
+        STATEMANAGER.save_render_state(gpu::state::EFFECT_TIME, water_time_bits);
 
         STATEMANAGER.set_texture(0, water_instances_[((el_timer_get_m_sec() / 70) % 30)].texture_pointer()->gpu_texture());
 
@@ -109,6 +116,8 @@ namespace metin2::inline world::inline terrain {
 
         world_for_common_use_._43 = 0.0f;
 
+        STATEMANAGER.restore_render_state(gpu::state::EFFECT_TIME);
+        STATEMANAGER.restore_render_state(gpu::state::EFFECT_MODE);
         STATEMANAGER.restore_vertex_shader();
         STATEMANAGER.restore_transform(gpu::transform::TEXTURE0);
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::MIN_FILTER);

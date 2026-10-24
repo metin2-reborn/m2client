@@ -225,6 +225,7 @@ namespace metin2::inline world::inline maps {
         update_environment_blend();
 
         map_outdoor &map = map_outdoor_ref();
+        get_speed_tree_forest_direct_x8().set_wind(mc_pcur_environment_data_->wind_strength);
 
         STATEMANAGER.save_render_state(gpu::state::LIGHTING, true);
 

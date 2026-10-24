@@ -68,6 +68,9 @@ namespace metin2::gpu {
         INDEXED_VERTEX_BLEND_ENABLE = 167,
         COLOR_WRITE_ENABLE = 168,
         BLEND_OP = 171,
+        // Beyond Direct3D: shader effects the fixed-function model has no state for.
+        EFFECT_MODE = 240, // 0 none, 1 water (Fresnel towards the fog colour, sun glint, rippling texture)
+        EFFECT_TIME = 241, // float bits, seconds
     };
 
     // Per texture stage: the colour and alpha combiners, texture coordinates and sampling.

@@ -51,7 +51,7 @@ namespace metin2::gpu {
     // Texture stage states that belong to the sampler.
     auto is_sampler_state(stage_state s) -> bool;
 
-    // The uniform block of the fixed-function shader (std140, 1600 bytes).
+    // The uniform block of the fixed-function shader (std140, 1616 bytes).
     struct alignas(16) fixed_function_light {
         float diffuse[4];
         float specular[4];
@@ -85,9 +85,10 @@ namespace metin2::gpu {
         int32_t stage_a[2][4]; // colour op, colour arg 1, colour arg 2, alpha op
         int32_t stage_b[2][4]; // alpha arg 1, alpha arg 2, texture coordinate index, generation mode
         int32_t stage_c[2][4]; // transform count, texture bound, input dimension, projected
+        float effect[4];       // effect mode, time in seconds
         fixed_function_light lights[8];
     };
-    static_assert(sizeof(fixed_function_uniforms) == 1600, "std140 layout of the FFP block");
+    static_assert(sizeof(fixed_function_uniforms) == 1616, "std140 layout of the FFP block");
 
     struct uniform_options {
         bool flip_y = false;    // rendering into a texture: the shader flips y

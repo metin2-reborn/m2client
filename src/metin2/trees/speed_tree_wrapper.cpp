@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <metin2/core/file_name.h>
+#include <metin2/core/timer.h>
 #include <metin2/core/utils.h>
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/camera.h>
@@ -359,11 +360,18 @@ namespace metin2::inline trees {
         const std::vector<spt_tree::leaf> &leaves = tree_->leaves();
         fvf_leaf_vertex *vertex = nullptr;
         if (leaf_vertex_buffer_->lock(0, 0, reinterpret_cast<void **>(&vertex), gpu::lock::DISCARD | gpu::lock::NO_SYSLOCK)) {
+            // The leaves sway with the environment's wind: each leaf drifts a little, out of step with
+            // its neighbours, so the crown moves without the trunk.
+            const float time = get_timer().current_second();
+            const float sway = 40.0f * get_speed_tree_forest_direct_x8().wind_strength();
             const int corner_indices[6] = {0, 1, 2, 0, 2, 3};
             for (const spt_tree::leaf &leaf : leaves) {
                 const spt_tree::leaf_map &map = tree_->leaf_maps()[leaf.map];
+                const float phase = (pos_[0] + leaf.center[0]) * 0.011f + (pos_[1] + leaf.center[1]) * 0.007f;
+                const float dx = sway * std::sin(time * 1.3f + phase);
+                const float dy = sway * 0.5f * std::sin(time * 0.9f + phase * 1.7f);
                 for (int corner : corner_indices) {
-                    vertex->v_position = math::vector3(map.corners[corner][0] + leaf.center[0], map.corners[corner][1] + leaf.center[1], map.corners[corner][2] + leaf.center[2]);
+                    vertex->v_position = math::vector3(map.corners[corner][0] + leaf.center[0] + dx, map.corners[corner][1] + leaf.center[1] + dy, map.corners[corner][2] + leaf.center[2]);
                     ++vertex;
                 }
             }
