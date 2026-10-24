@@ -99,12 +99,23 @@ namespace metin2::inline client::inline app {
         widgets::get_window_manager().resize_screen(client.x / scale, client.y / scale);
     }
 
+    // Before the window exists this is the size it will get: the configured one, or the monitor's
+    // for full screen.
+    auto python_application::interface_size() const -> point {
+        point client = size();
+        if (client.x <= 0 || client.y <= 0) {
+            client = get_python_system().is_windowed() ? point{static_cast<int>(get_python_system().width()), static_cast<int>(get_python_system().height())} : monitor_size();
+        }
+        const int scale = get_python_graphic().interface_scale();
+        return {client.x / scale, client.y / scale};
+    }
+
     auto python_application::interface_width() const -> int {
-        return size().x / get_python_graphic().interface_scale();
+        return interface_size().x;
     }
 
     auto python_application::interface_height() const -> int {
-        return size().y / get_python_graphic().interface_scale();
+        return interface_size().y;
     }
 
     void python_application::on_close_request() {

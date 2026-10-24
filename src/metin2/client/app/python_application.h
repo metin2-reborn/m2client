@@ -306,6 +306,7 @@ namespace metin2::inline client::inline app {
         // The interface magnification from the setting and the window size; the window manager
         // then works in logical pixels (window pixels / scale).
         void apply_interface_scale();
+        auto interface_size() const -> point;
         auto interface_width() const -> int;
         auto interface_height() const -> int;
 
