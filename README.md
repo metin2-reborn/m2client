@@ -90,6 +90,8 @@ gamma = 3                # 1 (darker) to 5 (brighter), 3 is neutral
 [graphics]
 antialias = true         # FXAA on the 3D scene
 shadow_level = 3
+terrain_detail = 1       # relief shading from the terrain textures: 0 off, 1 low, 2 high
+grass_density = 1        # grass on grass and field tiles: 0 off to 3
 
 [interface]
 font_scale = 1.0         # text size factor
