@@ -95,14 +95,20 @@ namespace metin2::inline world::inline terrain {
     }
 
     // Four quarter-weight copies of the raw map, each shifted by a texel diagonally, sum to a tent
-    // filter that softens the shadow edges by about a texel.
+    // filter that softens the shadow edges by about a texel. The one-texel border stays white: the
+    // terrain clamps the map, so anything in the border would be drawn out to the horizon.
     void map_outdoor::blur_character_shadow_texture() {
         if (!character_shadow_target_.is_created() || !character_shadow_target_.begin())
             return;
 
+        device_->clear({}, gpu::clear::TARGET, 0xffffffff, 1.0f, 0);
+        device_->set_viewport(shadow_map_viewport_);
+
         const float size = static_cast<float>(shadow_map_size_);
         const float texel = 1.0f / size;
-        const math::matrix proj = math::matrix_ortho_off_center_rh(0.0f, size, size, 0.0f, -1.0f, 1.0f);
+        const float inset = static_cast<float>(shadow_map_viewport_.x);
+        const float extent = size - inset;
+        const math::matrix proj = math::matrix_ortho_off_center_rh(inset, extent, extent, inset, -1.0f, 1.0f);
         const math::matrix identity = math::matrix_identity();
         STATEMANAGER.save_transform(gpu::transform::PROJECTION, &proj);
         STATEMANAGER.save_transform(gpu::transform::VIEW, &identity);
@@ -137,14 +143,16 @@ namespace metin2::inline world::inline terrain {
             {-texel, texel },
             {texel,  texel }
         };
+        const float uv_lo = inset * texel;
+        const float uv_hi = extent * texel;
         for (int pass = 0; pass < 4; ++pass) {
             const float u = offsets[pass][0];
             const float v = offsets[pass][1];
             const vertex vertices[4] = {
-                {0.0f, 0.0f, 0.0f, 0xffffffff, u,        v       },
-                {0.0f, size, 0.0f, 0xffffffff, u,        1.0f + v},
-                {size, 0.0f, 0.0f, 0xffffffff, 1.0f + u, v       },
-                {size, size, 0.0f, 0xffffffff, 1.0f + u, 1.0f + v},
+                {inset,  inset,  0.0f, 0xffffffff, uv_lo + u, uv_lo + v},
+                {inset,  extent, 0.0f, 0xffffffff, uv_lo + u, uv_hi + v},
+                {extent, inset,  0.0f, 0xffffffff, uv_hi + u, uv_lo + v},
+                {extent, extent, 0.0f, 0xffffffff, uv_hi + u, uv_hi + v},
             };
             if (pass == 1)
                 STATEMANAGER.set_render_state(gpu::state::ALPHA_BLEND_ENABLE, true);

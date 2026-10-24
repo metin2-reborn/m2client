@@ -224,6 +224,12 @@ namespace metin2::inline world::inline terrain {
             to_light.z = 0.5f;
             to_light = math::normalize(to_light);
         }
+        // A sun straight overhead would make the look-at (up is +z) degenerate; keep a little tilt.
+        if (to_light.x * to_light.x + to_light.y * to_light.y < 0.01f) {
+            to_light.x = -0.1f;
+            to_light.y = -0.1f;
+            to_light = math::normalize(to_light);
+        }
         return target + to_light * 5000.0f;
     }
 
