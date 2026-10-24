@@ -136,7 +136,7 @@ void main() {
         vColor = hasD ? aDiffuse : vec4(1.0);
         vSpec = hasS ? aSpecular : vec4(0.0);
         vFog = (uFogI.x != 0 && hasS) ? aSpecular.a : 1.0;
-        vDepth = aPos.z;
+        vDepth = uFogI.z != 0 ? aPos.z : -1.0;
     } else {
         vec4 wp = uWorld * vec4(aPos.xyz, 1.0);
         vec4 vp = uView * wp;
@@ -153,9 +153,9 @@ void main() {
             vColor = hasD ? aDiffuse : vec4(1.0);
             vSpec = hasS ? aSpecular : vec4(0.0);
         }
-        float fd = uFogI.w != 0 ? length(P) : abs(P.z);
-        vDepth = fd;
-        vFog = (uFogI.x != 0 && uFogI.z == 0) ? fogFactor(fd) : 1.0;
+        // Fog is evaluated per pixel from this distance; only pre-transformed vertices carry it.
+        vDepth = uFogI.w != 0 ? length(P) : abs(P.z);
+        vFog = 1.0;
     }
     clip.z = clip.z * 2.0 - clip.w;
     if (uViewport.z < 0.0) clip.y = -clip.y;
@@ -275,9 +275,11 @@ void main() {
         if (!pass) discard;
     }
     if (uFogI.x != 0) {
+        // Vertex fog is evaluated here per pixel as well: the terrain patches are large and the
+        // bands of per-vertex fog showed.
         float f = vFog;
-        if (uFogI.z != 0) {
-            int mode = uFogI.z;
+        int mode = uFogI.z != 0 ? uFogI.z : uFogI.y;
+        if (vDepth >= 0.0 && mode != 0) {
             float d = vDepth;
             if (mode == 3) f = clamp((uFogP.y - d) / max(uFogP.y - uFogP.x, 1e-6), 0.0, 1.0);
             else if (mode == 1) f = exp(-uFogP.z * d);

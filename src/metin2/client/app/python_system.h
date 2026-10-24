@@ -70,6 +70,7 @@ namespace metin2::inline client::inline app {
             bool windowed;
             bool vsync;
             int fps_limit; // 0: as fast as vsync or the machine allows
+            bool antialias;
             bool font_antialias;
             float font_scale;
             bool decompress_dds;
@@ -115,6 +116,8 @@ namespace metin2::inline client::inline app {
         auto renderer() const -> const char * { return config_value_.renderer; }
         auto is_vsync() const -> bool { return config_value_.vsync; }
         auto fps_limit() const -> int { return config_value_.fps_limit; }
+        auto gamma() const -> int { return config_value_.gamma; }
+        auto is_antialias() const -> bool { return config_value_.antialias; }
         auto is_font_antialias() const -> bool { return config_value_.font_antialias; }
         auto font_scale() const -> float { return config_value_.font_scale; }
         void set_software_tiling(bool is_enable);

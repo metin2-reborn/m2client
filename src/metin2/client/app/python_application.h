@@ -28,6 +28,7 @@
 #include <metin2/effects/effect_manager.h>
 #include <metin2/graphics/grp_device.h>
 #include <metin2/graphics/grp_light_manager.h>
+#include <metin2/graphics/render_target.h>
 #include <metin2/input/input.h>
 #include <metin2/script/resource.h>
 #include <metin2/sound/sound_manager.h>
@@ -300,6 +301,13 @@ namespace metin2::inline client::inline app {
 
         // Sleeps the rest of the frame when [display] fps_limit is set (or the window is minimized).
         void limit_frame_rate();
+
+        // The 3D scene is rendered into scene_target_ and then drawn to the back buffer with the
+        // display adjustments (gamma, anti-aliasing); the interface draws on top afterwards.
+        graphics::render_target scene_target_;
+        bool scene_active_ = false;
+        void begin_scene();
+        void end_scene();
 
         std::string ip_;
         int port_;

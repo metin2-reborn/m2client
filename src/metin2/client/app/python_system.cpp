@@ -188,6 +188,7 @@ namespace metin2::inline client::inline app {
         utf8::copy_truncated(config_value_.renderer, sizeof(config_value_.renderer), "opengl");
         config_value_.vsync = true;
         config_value_.fps_limit = 0;
+        config_value_.antialias = true;
         config_value_.font_antialias = false;
         config_value_.font_scale = 1.0f;
     }
@@ -316,6 +317,7 @@ namespace metin2::inline client::inline app {
         reader.read("graphics", "visibility", config_value_.distance);
         reader.read("graphics", "object_culling", config_value_.is_object_culling);
         reader.read("graphics", "shadow_level", config_value_.shadow_level);
+        reader.read("graphics", "antialias", config_value_.antialias);
         reader.read("graphics", "tiling", tiling);
         reader.read("graphics", "decompressed_textures", config_value_.decompress_dds);
         reader.read("graphics", "preloading_delay", loading_delay_time);
@@ -401,6 +403,7 @@ namespace metin2::inline client::inline app {
                     {"visibility", static_cast<int64_t>(config_value_.distance)},
                     {"object_culling", config_value_.is_object_culling},
                     {"shadow_level", static_cast<int64_t>(config_value_.shadow_level)},
+                    {"antialias", config_value_.antialias},
                     {"tiling", std::string(TILING_NAMES[std::min<uint8_t>(config_value_.software_tiling, 2)])},
                     {"decompressed_textures", config_value_.decompress_dds},
                     {"preloading_delay", static_cast<int64_t>(loading_delay_time)},

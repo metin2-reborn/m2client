@@ -148,6 +148,8 @@ namespace metin2::gpu::opengl {
         void end_occlusion_query() override;
         auto occlusion_query_result(uint32_t query, uint32_t &samples) -> bool override;
 
+        void blit(texture *source, const blit_params &params) override;
+
       private:
         struct stream {
             std::shared_ptr<gl_vertex_buffer> buffer;
@@ -155,6 +157,7 @@ namespace metin2::gpu::opengl {
         };
 
         auto create_program() -> bool;
+        auto create_blit_program() -> bool;
         auto current_layout() -> const vertex_layout *;
         void bind_target();
         void apply_viewport();
@@ -196,6 +199,12 @@ namespace metin2::gpu::opengl {
         size_t user_indices_offset_ = 0;
         GLuint samplers_[2] = {0, 0};
         GLuint white_texture_ = 0;
+        GLuint blit_program_ = 0;
+        GLuint blit_sampler_ = 0;
+        GLuint blit_vertex_array_ = 0;
+        GLint blit_gamma_location_ = -1;
+        GLint blit_antialias_location_ = -1;
+        GLint blit_texel_location_ = -1;
 
         bool uniforms_dirty_ = true;
         bool pipeline_dirty_ = true;

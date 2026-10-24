@@ -214,6 +214,14 @@ namespace metin2::gpu {
         virtual void end_occlusion_query() = 0;
         virtual auto occlusion_query_result(uint32_t query, uint32_t &samples) -> bool = 0;
 
+        // Draws a render-target texture over the whole current target: the scene's way to the back
+        // buffer, with the display adjustments that the fixed-function path cannot do.
+        struct blit_params {
+            float gamma = 1.0f;     // exponent applied to the colour, 1 leaves it alone
+            bool antialias = false; // FXAA on the edges
+        };
+        virtual void blit(texture *source, const blit_params &params) = 0;
+
         // Called around the buffer swap in present (the dev tools and window code hook in here).
         void set_present_hooks(std::function<void()> before_swap, std::function<void()> after_swap) {
             before_swap_ = std::move(before_swap);

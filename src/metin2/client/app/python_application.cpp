@@ -17,6 +17,7 @@
 #include <metin2/script/python_utils.h>
 #include <metin2/world/terrain/area_terrain.h>
 
+#include <algorithm>
 #include <chrono>
 #include <format>
 #include <thread>
@@ -169,6 +170,39 @@ namespace metin2::inline client::inline app {
 
     bool perf_checker_render_game = false;
 
+    void python_application::begin_scene() {
+        gpu::device &device = get_python_graphic().device();
+        const uint32_t width = device.back_buffer_width();
+        const uint32_t height = device.back_buffer_height();
+        if (width == 0 || height == 0)
+            return;
+
+        if (!scene_target_.is_created() || scene_target_.texture()->width() != width || scene_target_.texture()->height() != height) {
+            if (!scene_target_.create(width, height, gpu::format::X8R8G8B8, gpu::format::D24X8))
+                return;
+        }
+
+        if (!scene_target_.begin())
+            return;
+        device.clear({}, gpu::clear::TARGET | gpu::clear::Z_BUFFER, 0xff000000, 1.0f, 0);
+        scene_active_ = true;
+    }
+
+    void python_application::end_scene() {
+        if (!scene_active_)
+            return;
+        scene_active_ = false;
+        scene_target_.end();
+
+        const python_system &system = get_python_system();
+        gpu::device::blit_params params;
+        // The 1..5 gamma setting is a brightness step around the neutral 3.
+        const int gamma = std::clamp(system.gamma(), 1, 5);
+        params.gamma = 1.0f / (1.0f + static_cast<float>(gamma - 3) * 0.2f);
+        params.antialias = system.is_antialias();
+        get_python_graphic().device().blit(scene_target_.texture(), params);
+    }
+
     void python_application::render_game() {
         if (!perf_checker_render_game) {
             float aspect = widgets::get_window_manager().aspect();
@@ -192,6 +226,7 @@ namespace metin2::inline client::inline app {
                 get_python_graphic().set_cursor_position(lx, ly);
             }
 
+            begin_scene();
             get_python_background().render_sky();
 
             get_python_background().render_before_lens_flare();
@@ -220,6 +255,7 @@ namespace metin2::inline client::inline app {
             get_python_background().end_environment();
 
             get_python_background().render_after_lens_flare();
+            end_scene();
 
             return;
         }
@@ -252,6 +288,7 @@ namespace metin2::inline client::inline app {
             get_python_graphic().set_cursor_position(lx, ly);
         }
 
+        begin_scene();
         get_python_background().render_sky();
         uint32_t t7 = el_timer_get_m_sec();
         get_python_background().render_before_lens_flare();
@@ -283,6 +320,7 @@ namespace metin2::inline client::inline app {
         get_python_background().end_environment();
         uint32_t t17 = el_timer_get_m_sec();
         get_python_background().render_after_lens_flare();
+        end_scene();
         uint32_t t18 = el_timer_get_m_sec();
         uint32_t end = el_timer_get_m_sec();
 

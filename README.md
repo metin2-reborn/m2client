@@ -85,6 +85,11 @@ height = 768
 windowed = true
 vsync = true
 fps_limit = 0            # 0: no cap beyond vsync; e.g. 144
+gamma = 3                # 1 (darker) to 5 (brighter), 3 is neutral
+
+[graphics]
+antialias = true         # FXAA on the 3D scene
+shadow_level = 3
 
 [interface]
 font_scale = 1.0         # text size factor

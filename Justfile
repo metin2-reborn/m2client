@@ -49,7 +49,7 @@ verify-gamedir:
 seed-config:
     mkdir -p "{{root}}/run/overlay/upper" "{{root}}/run/overlay/work" "{{root}}/run/home/.metin2"
     @if [ ! -f "{{root}}/run/home/.metin2/metin2.toml" ]; then \
-        printf '[display]\nwidth = 1024\nheight = 768\nbpp = 32\nfrequency = 60\nwindowed = true\ngamma = 1\nsoftware_cursor = true\n\n[graphics]\nvisibility = 3\nobject_culling = true\nshadow_level = 3\ntiling = "auto"\n\n[sound]\nmusic_volume = 0.5\nvoice_volume = 1\n' > "{{root}}/run/home/.metin2/metin2.toml"; \
+        printf '[display]\nwidth = 1024\nheight = 768\nbpp = 32\nfrequency = 60\nwindowed = true\ngamma = 3\nsoftware_cursor = true\n\n[graphics]\nvisibility = 3\nobject_culling = true\nshadow_level = 3\ntiling = "auto"\n\n[sound]\nmusic_volume = 0.5\nvoice_volume = 1\n' > "{{root}}/run/home/.metin2/metin2.toml"; \
         echo "seeded run/home/.metin2/metin2.toml (windowed 1024x768)"; fi
 
 # Build if needed, then run the client in the sandbox. Extra arguments go to the client.

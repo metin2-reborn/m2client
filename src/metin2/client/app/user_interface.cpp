@@ -15,6 +15,11 @@
 #include <metin2/script/python_launcher.h>
 #include <metin2/ui/python_modules.h>
 
+#include <atomic>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+#include <thread>
 #include <unistd.h>
 
 namespace metin2::inline client::inline app {
@@ -141,6 +146,23 @@ namespace metin2::inline client::inline app {
         return true;
     }
 
+    namespace {
+        std::atomic<const char *> shutdown_stage{"running"};
+
+        // The shutdown occasionally never finished (the process stayed alive for hours after the quit,
+        // with the window gone). Until the stalled step is known, the process is ended after a
+        // timeout and the step it reached is logged.
+        void arm_shutdown_watchdog() {
+            std::thread([] {
+                std::this_thread::sleep_for(std::chrono::seconds(20));
+                const char *stage = shutdown_stage.load();
+                metin2::log::error("Shutdown stalled while {}; exiting", stage);
+                fprintf(stderr, "shutdown stalled while %s; exiting\n", stage);
+                std::_Exit(1);
+            }).detach();
+        }
+    }
+
     auto run_client() -> bool {
         if (!setup()) {
             return false;
@@ -166,13 +188,18 @@ namespace metin2::inline client::inline app {
                 ret = run_main_script(py_launcher); // does not return until the game ends
             }
 
+            arm_shutdown_watchdog();
+            shutdown_stage = "clearing the application";
             app.clear();
 
+            shutdown_stage = "finalizing Python";
             py_launcher.clear();
         }
 
+        shutdown_stage = "destroying the application";
         app.destroy();
 
+        shutdown_stage = "static destructors";
         return ret;
     }
 

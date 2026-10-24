@@ -101,6 +101,59 @@ namespace metin2::gpu::opengl {
             }
         }
 
+        // The scene texture to the back buffer: one triangle covering the screen, gamma, and FXAA.
+        // The texture was rendered flipped (row 0 is the top, as in Direct3D), hence 0.5 - y.
+        const char *const BLIT_VERTEX_SHADER = R"GLSL(
+#version 330 core
+out vec2 vUV;
+void main() {
+    vec2 pos = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)) * 2.0 - 1.0;
+    gl_Position = vec4(pos, 0.0, 1.0);
+    vUV = vec2(pos.x * 0.5 + 0.5, 0.5 - pos.y * 0.5);
+}
+)GLSL";
+
+        const char *const BLIT_FRAGMENT_SHADER = R"GLSL(
+#version 330 core
+uniform sampler2D uScene;
+uniform float uGamma;
+uniform int uAntialias;
+uniform vec2 uTexel;
+in vec2 vUV;
+out vec4 fragColor;
+
+float luma(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
+
+vec3 fxaa(vec2 uv) {
+    const float SPAN_MAX = 8.0;
+    const float REDUCE_MUL = 1.0 / 8.0;
+    const float REDUCE_MIN = 1.0 / 128.0;
+    vec3 rgbNW = texture(uScene, uv + vec2(-1.0, -1.0) * uTexel).rgb;
+    vec3 rgbNE = texture(uScene, uv + vec2(1.0, -1.0) * uTexel).rgb;
+    vec3 rgbSW = texture(uScene, uv + vec2(-1.0, 1.0) * uTexel).rgb;
+    vec3 rgbSE = texture(uScene, uv + vec2(1.0, 1.0) * uTexel).rgb;
+    vec3 rgbM = texture(uScene, uv).rgb;
+    float lumaNW = luma(rgbNW), lumaNE = luma(rgbNE), lumaSW = luma(rgbSW), lumaSE = luma(rgbSE), lumaM = luma(rgbM);
+    float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
+    float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
+    vec2 dir = vec2(-((lumaNW + lumaNE) - (lumaSW + lumaSE)), (lumaNW + lumaSW) - (lumaNE + lumaSE));
+    float dirReduce = max((lumaNW + lumaNE + lumaSW + lumaSE) * (0.25 * REDUCE_MUL), REDUCE_MIN);
+    float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+    dir = clamp(dir * rcpDirMin, vec2(-SPAN_MAX), vec2(SPAN_MAX)) * uTexel;
+    vec3 rgbA = 0.5 * (texture(uScene, uv + dir * (1.0 / 3.0 - 0.5)).rgb + texture(uScene, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
+    vec3 rgbB = rgbA * 0.5 + 0.25 * (texture(uScene, uv + dir * -0.5).rgb + texture(uScene, uv + dir * 0.5).rgb);
+    float lumaB = luma(rgbB);
+    return (lumaB < lumaMin || lumaB > lumaMax) ? rgbA : rgbB;
+}
+
+void main() {
+    vec3 c = uAntialias != 0 ? fxaa(vUV) : texture(uScene, vUV).rgb;
+    if (uGamma != 1.0)
+        c = pow(max(c, vec3(0.0)), vec3(uGamma));
+    fragColor = vec4(c, 1.0);
+}
+)GLSL";
+
         auto compile_shader(GLenum type, const char *source) -> GLuint {
             GLuint shader = glCreateShader(type);
             glShaderSource(shader, 1, &source, nullptr);
@@ -147,6 +200,12 @@ namespace metin2::gpu::opengl {
             glDeleteSamplers(2, samplers_);
         if (white_texture_)
             glDeleteTextures(1, &white_texture_);
+        if (blit_program_)
+            glDeleteProgram(blit_program_);
+        if (blit_sampler_)
+            glDeleteSamplers(1, &blit_sampler_);
+        if (blit_vertex_array_)
+            glDeleteVertexArrays(1, &blit_vertex_array_);
     }
 
     auto gl_device::initialize() -> bool {
@@ -154,7 +213,7 @@ namespace metin2::gpu::opengl {
             metin2::log::error("Cannot create the OpenGL device: no window");
             return false;
         }
-        if (!create_program())
+        if (!create_program() || !create_blit_program())
             return false;
         glGenVertexArrays(1, &vertex_array_);
         glBindVertexArray(vertex_array_);
@@ -808,6 +867,74 @@ namespace metin2::gpu::opengl {
         // as in Direct3D, stream 0 is unset afterwards
         streams_[0].buffer.reset();
         return true;
+    }
+
+    auto gl_device::create_blit_program() -> bool {
+        GLuint vs = compile_shader(GL_VERTEX_SHADER, BLIT_VERTEX_SHADER);
+        GLuint fs = compile_shader(GL_FRAGMENT_SHADER, BLIT_FRAGMENT_SHADER);
+        if (!vs || !fs) {
+            if (vs)
+                glDeleteShader(vs);
+            if (fs)
+                glDeleteShader(fs);
+            return false;
+        }
+        blit_program_ = glCreateProgram();
+        glAttachShader(blit_program_, vs);
+        glAttachShader(blit_program_, fs);
+        glLinkProgram(blit_program_);
+        glDeleteShader(vs);
+        glDeleteShader(fs);
+        GLint ok = 0;
+        glGetProgramiv(blit_program_, GL_LINK_STATUS, &ok);
+        if (!ok) {
+            char log[4096];
+            glGetProgramInfoLog(blit_program_, sizeof(log), nullptr, log);
+            fprintf(stderr, "[opengl] blit program link failed:\n%s\n", log);
+            glDeleteProgram(blit_program_);
+            blit_program_ = 0;
+            return false;
+        }
+        glUseProgram(blit_program_);
+        glUniform1i(glGetUniformLocation(blit_program_, "uScene"), 0);
+        blit_gamma_location_ = glGetUniformLocation(blit_program_, "uGamma");
+        blit_antialias_location_ = glGetUniformLocation(blit_program_, "uAntialias");
+        blit_texel_location_ = glGetUniformLocation(blit_program_, "uTexel");
+        glGenSamplers(1, &blit_sampler_);
+        glSamplerParameteri(blit_sampler_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glSamplerParameteri(blit_sampler_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glSamplerParameteri(blit_sampler_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glSamplerParameteri(blit_sampler_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glGenVertexArrays(1, &blit_vertex_array_);
+        return true;
+    }
+
+    void gl_device::blit(texture *source, const blit_params &params) {
+        auto *gl_source = static_cast<gl_texture *>(source);
+        if (!gl_source || !blit_program_)
+            return;
+
+        bind_target();
+        if (viewport_dirty_)
+            apply_viewport();
+        glUseProgram(blit_program_);
+        glBindVertexArray(blit_vertex_array_);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        glDisable(GL_CULL_FACE);
+        glDepthMask(GL_FALSE);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, gl_source->name);
+        glBindSampler(0, blit_sampler_);
+        glUniform1f(blit_gamma_location_, params.gamma);
+        glUniform1i(blit_antialias_location_, params.antialias ? 1 : 0);
+        glUniform2f(blit_texel_location_, 1.0f / static_cast<float>(gl_source->width()), 1.0f / static_cast<float>(gl_source->height()));
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        // The fixed-function path puts its own state back on its next draw.
+        pipeline_dirty_ = true;
+        sampler_dirty_[0] = true;
     }
 
     auto gl_device::create_occlusion_query() -> uint32_t {
