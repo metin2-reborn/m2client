@@ -68,6 +68,25 @@ namespace metin2::inline models {
 
         bool can_deform_pnt_vertex_;
 
+        // Where the deformer's inputs sit in this mesh's vertices, for the common layout (float
+        // position and normal, 8-bit normalised weights, 8/16-bit bone indices, float texture
+        // coordinates); `valid` is false for any other layout, which Granny's generic deformer handles.
+        struct fast_deform_layout {
+            bool valid = false;
+            int stride = 0;
+            int position = -1;
+            int normal = -1;
+            int weights = -1;
+            int weight_count = 0;
+            int indices = -1;
+            int index_count = 0;
+            int index_size = 1;
+            int uv = -1;
+        };
+        fast_deform_layout fast_deform_;
+        void prepare_fast_deform();
+        void fast_deform(const uint8_t *source, pnt_vertex *dst, const float *bone_matrices, const int *bone_indices, int vertex_count) const;
+
       private:
         bool have_blend_thing_;
 

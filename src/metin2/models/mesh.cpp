@@ -2,6 +2,11 @@
 #include "material.h"
 #include "model.h"
 
+#include <cmath>
+#include <cstring>
+#include <string_view>
+#include <vector>
+
 namespace metin2::inline models {
 
     granny_data_type_definition granny_pnt3322_vertex_type[5] =
@@ -34,6 +39,143 @@ namespace metin2::inline models {
         GrannyCopyMeshVertices(pgrn_mesh, pgrn_mesh_type_, dst_vertices);
     }
 
+    namespace {
+        auto scalar_size(granny_member_type type) -> int {
+            switch (type) {
+            case GrannyReal32Member:
+            case GrannyInt32Member:
+            case GrannyUInt32Member:
+                return 4;
+            case GrannyInt8Member:
+            case GrannyUInt8Member:
+            case GrannyBinormalInt8Member:
+            case GrannyNormalUInt8Member:
+                return 1;
+            case GrannyInt16Member:
+            case GrannyUInt16Member:
+            case GrannyBinormalInt16Member:
+            case GrannyNormalUInt16Member:
+            case GrannyReal16Member:
+                return 2;
+            default:
+                return 0;
+            }
+        }
+    }
+
+    void mesh::prepare_fast_deform() {
+        fast_deform_ = {};
+        const granny_data_type_definition *type = GrannyGetMeshVertexType(pgrn_mesh_);
+        if (!type) {
+            return;
+        }
+        fast_deform_layout layout;
+        int offset = 0;
+        for (const granny_data_type_definition *m = type; m->Type != GrannyEndMember; ++m) {
+            const int size = scalar_size(m->Type);
+            if (size == 0) {
+                return; // a reference or inline member: leave it to Granny
+            }
+            const int width = m->ArrayWidth > 0 ? m->ArrayWidth : 1;
+            const std::string_view name = m->Name ? m->Name : "";
+            if (name == GrannyVertexPositionName) {
+                if (m->Type != GrannyReal32Member || width != 3) {
+                    return;
+                }
+                layout.position = offset;
+            } else if (name == GrannyVertexNormalName) {
+                if (m->Type != GrannyReal32Member || width != 3) {
+                    return;
+                }
+                layout.normal = offset;
+            } else if (name == GrannyVertexBoneWeightsName) {
+                if (m->Type != GrannyNormalUInt8Member || width > 4) {
+                    return;
+                }
+                layout.weights = offset;
+                layout.weight_count = width;
+            } else if (name == GrannyVertexBoneIndicesName) {
+                if ((m->Type != GrannyUInt8Member && m->Type != GrannyUInt16Member) || width > 4) {
+                    return;
+                }
+                layout.indices = offset;
+                layout.index_count = width;
+                layout.index_size = size;
+            } else if (name == GrannyVertexTextureCoordinatesName "0") {
+                if (m->Type != GrannyReal32Member || width != 2) {
+                    return;
+                }
+                layout.uv = offset;
+            }
+            offset += size * width;
+        }
+        if (layout.position < 0 || layout.indices < 0) {
+            return;
+        }
+        layout.stride = offset;
+        layout.valid = true;
+        fast_deform_ = layout;
+    }
+
+    // Granny's generic deformer decodes every member through a type switch in double precision. This
+    // is the same arithmetic in the same order for the layout the game's characters use.
+    void mesh::fast_deform(const uint8_t *source, pnt_vertex *dst, const float *bone_matrices, const int *bone_indices, int vertex_count) const {
+        const fast_deform_layout &l = fast_deform_;
+        for (int v = 0; v < vertex_count; ++v) {
+            const uint8_t *s = source + static_cast<size_t>(l.stride) * v;
+            float p[3];
+            float n[3] = {0.0f, 0.0f, 0.0f};
+            float rp[3] = {0.0f, 0.0f, 0.0f};
+            float rn[3] = {0.0f, 0.0f, 0.0f};
+            memcpy(p, s + l.position, 12);
+            if (l.normal >= 0) {
+                memcpy(n, s + l.normal, 12);
+            }
+            float total = 0.0f;
+            for (int k = 0; k < l.index_count; ++k) {
+                float w;
+                if (l.weights >= 0 && k < l.weight_count) {
+                    w = static_cast<float>(s[l.weights + k] / 255.0);
+                } else {
+                    w = k == 0 ? 1.0f : 0.0f;
+                }
+                if (w <= 0.0f) {
+                    continue;
+                }
+                int bone;
+                if (l.index_size == 1) {
+                    bone = s[l.indices + k];
+                } else {
+                    uint16_t wide;
+                    memcpy(&wide, s + l.indices + 2 * k, 2);
+                    bone = wide;
+                }
+                const float *m = bone_matrices + 16 * bone_indices[bone];
+                for (int j = 0; j < 3; ++j) {
+                    rp[j] += w * (p[0] * m[0 * 4 + j] + p[1] * m[1 * 4 + j] + p[2] * m[2 * 4 + j] + m[12 + j]);
+                    rn[j] += w * (n[0] * m[0 * 4 + j] + n[1] * m[1 * 4 + j] + n[2] * m[2 * 4 + j]);
+                }
+                total += w;
+            }
+            if (total > 0.0f && fabsf(total - 1.0f) > 1e-3f) {
+                for (int j = 0; j < 3; ++j) {
+                    rp[j] /= total;
+                    rn[j] /= total;
+                }
+            }
+            if (total <= 0.0f) {
+                memcpy(rp, p, 12);
+                memcpy(rn, n, 12);
+            }
+            pnt_vertex &o = dst[v];
+            memcpy(&o.position_value, rp, 12);
+            memcpy(&o.normal_value, rn, 12);
+            if (l.uv >= 0) {
+                memcpy(&o.tex_coord, s + l.uv, 8);
+            }
+        }
+    }
+
     void mesh::deform_pnt_vertices(void *dst_base_vertices, math::matrix *bone_matrices, granny_mesh_binding *pgrn_mesh_binding) const {
         assert(dst_base_vertices != nullptr);
         assert(bone_matrices != nullptr);
@@ -47,6 +189,11 @@ namespace metin2::inline models {
         int vtx_count = GrannyGetMeshVertexCount(pgrn_mesh);
 
         int *bone_indices = (int *)GrannyGetMeshBindingToBoneIndices(pgrn_mesh_binding);
+
+        if (fast_deform_.valid) {
+            fast_deform(reinterpret_cast<const uint8_t *>(src_vertices), dst_vertices, reinterpret_cast<const float *>(bone_matrices), bone_indices, vtx_count);
+            return;
+        }
 
         GrannyDeformVertices(
             pgrn_mesh_deformer_,
@@ -101,6 +248,9 @@ namespace metin2::inline models {
 
             pgrn_mesh_deformer_ = GrannyNewMeshDeformer(pgrn_input_type, pgrn_output_type, GrannyDeformPositionNormal, GrannyAllowUncopiedTail);
             assert(pgrn_mesh_deformer_ != nullptr && "Cannot create mesh deformer");
+            if (pgrn_output_type == GrannyPNT332VertexType) {
+                prepare_fast_deform();
+            }
         }
 
         if (!load_materials(mtrl_pal)) {
@@ -197,6 +347,7 @@ namespace metin2::inline models {
         for (int r = 0; r < material::TYPE_MAX_NUM; ++r) {
             tri_group_node_lists_[r] = nullptr;
         }
+        fast_deform_ = {};
 
         pgrn_mesh_type_ = GrannyPNT332VertexType;
         pgrn_mesh_ = nullptr;
