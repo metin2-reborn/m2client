@@ -536,7 +536,10 @@ namespace metin2::inline client::inline app {
                         face_acc_count_ += cur_face_count;
                         face_acc_time_ += cur_render_time_;
 
-                        face_spd_ = (face_acc_count_ / face_acc_time_);
+                        // Render times are whole milliseconds, so fast frames add nothing to the time.
+                        if (face_acc_time_ > 0) {
+                            face_spd_ = static_cast<float>(face_acc_count_ / face_acc_time_);
+                        }
 
                         if (-1 == force_sight_range_) {
                             // A moving average that moved 0.3% per frame at 60 fps, now per time.
