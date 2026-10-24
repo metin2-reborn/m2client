@@ -18,9 +18,29 @@ namespace metin2::gpu::opengl {
                 size = buffer_size - offset;
             return true;
         }
+
+        // Gives a buffer its CPU copy back before a lock: read from the GPU when it was uploaded and
+        // the lock may keep what is not written (not a full DISCARD lock).
+        void restore_shadow(GLenum target, GLuint name, uint32_t size, std::vector<uint8_t> &shadow, bool uploaded, bool &keep_shadow, bool discard) {
+            if (shadow.size() == size) {
+                return;
+            }
+            shadow.assign(size, 0);
+            if (uploaded) {
+                keep_shadow = true;
+                if (!discard) {
+                    glBindBuffer(target, name);
+                    glGetBufferSubData(target, 0, size, shadow.data());
+                }
+            }
+        }
+
+        void release_shadow(std::vector<uint8_t> &shadow) {
+            std::vector<uint8_t>().swap(shadow);
+        }
     }
 
-    gl_vertex_buffer::gl_vertex_buffer(uint32_t size, uint32_t usage) : vertex_buffer(size, usage), shadow_(size, 0) {
+    gl_vertex_buffer::gl_vertex_buffer(uint32_t size, uint32_t usage) : vertex_buffer(size, usage) {
         glGenBuffers(1, &name);
         glBindBuffer(GL_ARRAY_BUFFER, name);
         glBufferData(GL_ARRAY_BUFFER, size, nullptr, buffer_usage(usage));
@@ -34,6 +54,8 @@ namespace metin2::gpu::opengl {
     auto gl_vertex_buffer::lock(uint32_t offset, uint32_t size, void **data, uint32_t flags) -> bool {
         if (!data || locked_ || !lock_range(size_, offset, size))
             return false;
+        const bool full = offset == 0 && size == size_;
+        restore_shadow(GL_ARRAY_BUFFER, name, size_, shadow_, uploaded_, keep_shadow_, full && (flags & lock::DISCARD) != 0);
         locked_ = true;
         lock_offset_ = offset;
         lock_size_ = size;
@@ -53,9 +75,13 @@ namespace metin2::gpu::opengl {
             glBufferData(GL_ARRAY_BUFFER, size_, shadow_.data(), buffer_usage(usage_));
         else
             glBufferSubData(GL_ARRAY_BUFFER, lock_offset_, lock_size_, shadow_.data() + lock_offset_);
+        uploaded_ = true;
+        if (!keep_shadow_ && !(usage_ & usage::DYNAMIC)) {
+            release_shadow(shadow_);
+        }
     }
 
-    gl_index_buffer::gl_index_buffer(uint32_t size, uint32_t usage, format fmt) : index_buffer(size, usage, fmt), shadow_(size, 0) {
+    gl_index_buffer::gl_index_buffer(uint32_t size, uint32_t usage, format fmt) : index_buffer(size, usage, fmt) {
         glGenBuffers(1, &name);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, name);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, nullptr, buffer_usage(usage));
@@ -69,6 +95,8 @@ namespace metin2::gpu::opengl {
     auto gl_index_buffer::lock(uint32_t offset, uint32_t size, void **data, uint32_t flags) -> bool {
         if (!data || locked_ || !lock_range(size_, offset, size))
             return false;
+        const bool full = offset == 0 && size == size_;
+        restore_shadow(GL_ELEMENT_ARRAY_BUFFER, name, size_, shadow_, uploaded_, keep_shadow_, full && (flags & lock::DISCARD) != 0);
         locked_ = true;
         lock_offset_ = offset;
         lock_size_ = size;
@@ -90,6 +118,10 @@ namespace metin2::gpu::opengl {
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_, shadow_.data(), buffer_usage(usage_));
         else
             glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, lock_offset_, lock_size_, shadow_.data() + lock_offset_);
+        uploaded_ = true;
+        if (!keep_shadow_ && !(usage_ & usage::DYNAMIC)) {
+            release_shadow(shadow_);
+        }
     }
 
     gl_texture::gl_texture(uint32_t width, uint32_t height, uint32_t levels, uint32_t usage, format fmt)
@@ -136,10 +168,14 @@ namespace metin2::gpu::opengl {
         const uint32_t pitch = format_pitch(*info_, w);
         const size_t size = format_level_size(*info_, w, h);
         const bool read_only = (flags & lock::READ_ONLY) != 0;
-        // The CPU copy is made on the first lock; render targets read what the GPU drew.
+        // The CPU copy is made on the first lock; render targets read what the GPU drew, and a level
+        // whose copy was dropped after its upload gets it back from the GPU.
         if (l.shadow.size() != size) {
             l.shadow.assign(size, 0);
-            if (read_only || (usage_ & usage::RENDER_TARGET))
+            if (l.uploaded) {
+                l.keep_shadow = true;
+            }
+            if (read_only || (usage_ & usage::RENDER_TARGET) || l.uploaded)
                 read_back(level);
         } else if (read_only && (usage_ & usage::RENDER_TARGET)) {
             read_back(level);
@@ -160,9 +196,13 @@ namespace metin2::gpu::opengl {
     void gl_texture::unlock(uint32_t level) {
         if (level >= levels_ || !level_data_[level].locked)
             return;
-        level_data_[level].locked = false;
-        if (!level_data_[level].read_only)
+        level_data &l = level_data_[level];
+        l.locked = false;
+        if (!l.read_only)
             upload(level, nullptr);
+        if (!l.keep_shadow && !(usage_ & (usage::DYNAMIC | usage::RENDER_TARGET))) {
+            std::vector<uint8_t>().swap(l.shadow);
+        }
     }
 
     void gl_texture::upload(uint32_t level, const void *data) {
@@ -181,6 +221,7 @@ namespace metin2::gpu::opengl {
             glCompressedTexImage2D(GL_TEXTURE_2D, static_cast<GLint>(level), gl_->internal_format, w, h, 0, static_cast<GLsizei>(format_level_size(*info_, level_width(level), level_height(level))), source);
         else
             glTexSubImage2D(GL_TEXTURE_2D, static_cast<GLint>(level), 0, 0, w, h, gl_->pixel_format, gl_->pixel_type, source);
+        l.uploaded = true;
     }
 
     void gl_texture::upload_rgba8(uint32_t level, const uint8_t *rgba) {
@@ -192,6 +233,9 @@ namespace metin2::gpu::opengl {
         l.shadow.assign(format_level_size(*info_, w, h), 0);
         convert_from_rgba8(*info_, rgba, w, h, l.shadow.data(), format_pitch(*info_, w));
         upload(level, nullptr);
+        if (!l.keep_shadow && !(usage_ & (usage::DYNAMIC | usage::RENDER_TARGET))) {
+            std::vector<uint8_t>().swap(l.shadow);
+        }
     }
 
     void gl_texture::generate_mipmaps() {

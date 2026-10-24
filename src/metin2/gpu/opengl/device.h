@@ -30,6 +30,10 @@ namespace metin2::gpu::opengl {
         bool read_only_ = false;
         uint32_t lock_offset_ = 0;
         uint32_t lock_size_ = 0;
+        // As for textures: a static buffer drops its CPU copy after the upload and reads it back if it
+        // is ever locked again (then keeps it).
+        bool uploaded_ = false;
+        bool keep_shadow_ = false;
     };
 
     class gl_index_buffer final : public index_buffer {
@@ -48,6 +52,10 @@ namespace metin2::gpu::opengl {
         bool read_only_ = false;
         uint32_t lock_offset_ = 0;
         uint32_t lock_size_ = 0;
+        // As for textures: a static buffer drops its CPU copy after the upload and reads it back if it
+        // is ever locked again (then keeps it).
+        bool uploaded_ = false;
+        bool keep_shadow_ = false;
     };
 
     class gl_texture final : public texture {
@@ -67,10 +75,14 @@ namespace metin2::gpu::opengl {
         GLuint name = 0;
 
       private:
+        // The CPU copy of a level exists while it is locked. A static texture drops it after the
+        // upload; one locked again gets its contents read back and keeps the copy from then on.
         struct level_data {
             std::vector<uint8_t> shadow;
             bool locked = false;
             bool read_only = false;
+            bool uploaded = false;
+            bool keep_shadow = false;
         };
 
         void read_back(uint32_t level);
