@@ -517,6 +517,9 @@ namespace metin2::inline ui {
 
           protected:
             rectangle restrict_area_;
+            // Without an explicit area the button is kept on the screen as it is now, not as it was
+            // when the button was made (the window can be resized).
+            bool restrict_to_screen_ = true;
         };
     };
 }

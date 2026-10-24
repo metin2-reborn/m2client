@@ -1495,6 +1495,7 @@ namespace metin2::inline ui {
         drag_button::~drag_button() = default;
 
         void drag_button::set_restrict_movement_area(int ix, int iy, int iwidth, int iheight) {
+            restrict_to_screen_ = false;
             restrict_area_.left = ix;
             restrict_area_.top = iy;
             restrict_area_.right = ix + iwidth;
@@ -1502,6 +1503,10 @@ namespace metin2::inline ui {
         }
 
         void drag_button::on_change_position() {
+            if (restrict_to_screen_) {
+                restrict_area_.right = get_window_manager().screen_width();
+                restrict_area_.bottom = get_window_manager().screen_height();
+            }
             x_ = std::max(x_, restrict_area_.left);
             y_ = std::max(y_, restrict_area_.top);
             x_ = std::min(x_, std::max(0, restrict_area_.right - width_));
