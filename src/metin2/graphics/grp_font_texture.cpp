@@ -74,7 +74,7 @@ namespace metin2::inline graphics {
     auto graphic_font_texture::append_texture() -> bool {
         auto *new_texture = new graphic_image_texture;
 
-        if (!new_texture->create(dib_.width(), dib_.height(), gpu::format::A4R4G4B4)) {
+        if (!new_texture->create(dib_.width(), dib_.height(), gpu::format::A8R8G8B8)) {
             delete new_texture;
             return false;
         }
@@ -94,13 +94,13 @@ namespace metin2::inline graphics {
         if (!font_texture)
             return false;
 
-        uint16_t *dst;
+        uint32_t *dst;
         int pitch;
 
         if (!font_texture->lock(&pitch, (void **)&dst))
             return false;
 
-        pitch /= 2;
+        pitch /= 4;
 
         int width_value = dib_.width();
         int height = dib_.height();
@@ -188,12 +188,12 @@ namespace metin2::inline graphics {
         uint32_t *dib_row;
 
         // The glyph was drawn white on black, so each channel holds its coverage. The atlas is
-        // A4R4G4B4: white with the coverage as alpha (1-bit glyphs give 0 or 0xffff).
+        // A8R8G8B8: white with the coverage as alpha (1-bit glyphs give 0 or 0xffffffff).
         dib_row = dib_base;
         for (chr_y = 0; chr_y < chr_height; ++chr_y, dib_row += dib_width) {
             for (chr_x = 0; chr_x < chr_width; ++chr_x) {
                 const uint32_t coverage = dib_row[chr_x] & 0xff;
-                dib_row[chr_x] = coverage ? (((coverage + 8) / 17) << 12) | 0x0fff : 0;
+                dib_row[chr_x] = coverage ? (coverage << 24) | 0x00ffffff : 0;
             }
         }
 

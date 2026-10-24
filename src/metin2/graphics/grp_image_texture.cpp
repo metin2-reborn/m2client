@@ -1,6 +1,8 @@
 #include "grp_image_texture.h"
 #include <algorithm>
+#include <array>
 #include <cassert>
+#include <cmath>
 #include <metin2/core/mapped_file.h>
 #include <metin2/log/log.h>
 #include "image_file.h"
@@ -19,19 +21,55 @@ namespace metin2::inline graphics {
             return count;
         }
 
-        // 2x2 box filter.
+        // sRGB <-> linear through tables: the mips are averaged in linear light so they do not darken.
+        auto srgb_to_linear_table() -> const std::array<float, 256> & {
+            static const std::array<float, 256> table = [] {
+                std::array<float, 256> t{};
+                for (int i = 0; i < 256; ++i) {
+                    const float c = static_cast<float>(i) / 255.0f;
+                    t[i] = c <= 0.04045f ? c / 12.92f : std::pow((c + 0.055f) / 1.055f, 2.4f);
+                }
+                return t;
+            }();
+            return table;
+        }
+
+        auto linear_to_srgb_byte(float linear) -> uint8_t {
+            static const std::array<uint8_t, 4096> table = [] {
+                std::array<uint8_t, 4096> t{};
+                for (int i = 0; i < 4096; ++i) {
+                    const float c = static_cast<float>(i) / 4095.0f;
+                    const float s = c <= 0.0031308f ? c * 12.92f : 1.055f * std::pow(c, 1.0f / 2.4f) - 0.055f;
+                    t[i] = static_cast<uint8_t>(std::lround(std::clamp(s, 0.0f, 1.0f) * 255.0f));
+                }
+                return t;
+            }();
+            return table[static_cast<size_t>(std::clamp(linear, 0.0f, 1.0f) * 4095.0f + 0.5f)];
+        }
+
+        // 2x2 box filter in linear light, the colour weighted by alpha so transparent texels (the
+        // colour key leaves them black) do not darken the edges of the next level.
         void downsample(const std::vector<uint8_t> &src, uint32_t sw, uint32_t sh, std::vector<uint8_t> &dst, uint32_t dw, uint32_t dh) {
+            const std::array<float, 256> &to_linear = srgb_to_linear_table();
             dst.assign(static_cast<size_t>(dw) * dh * 4, 0);
             for (uint32_t y = 0; y < dh; ++y)
                 for (uint32_t x = 0; x < dw; ++x) {
-                    const uint32_t x0 = std::min(x * 2, sw - 1);
-                    const uint32_t x1 = std::min(x * 2 + 1, sw - 1);
-                    const uint32_t y0 = std::min(y * 2, sh - 1);
-                    const uint32_t y1 = std::min(y * 2 + 1, sh - 1);
-                    for (int c = 0; c < 4; ++c) {
-                        const uint32_t sum = src[(static_cast<size_t>(y0) * sw + x0) * 4 + c] + src[(static_cast<size_t>(y0) * sw + x1) * 4 + c] + src[(static_cast<size_t>(y1) * sw + x0) * 4 + c] + src[(static_cast<size_t>(y1) * sw + x1) * 4 + c];
-                        dst[(static_cast<size_t>(y) * dw + x) * 4 + c] = static_cast<uint8_t>((sum + 2) / 4);
-                    }
+                    const uint32_t xs[2] = {std::min(x * 2, sw - 1), std::min(x * 2 + 1, sw - 1)};
+                    const uint32_t ys[2] = {std::min(y * 2, sh - 1), std::min(y * 2 + 1, sh - 1)};
+                    float color[3] = {0.0f, 0.0f, 0.0f};
+                    float alpha_sum = 0.0f;
+                    for (uint32_t sy : ys)
+                        for (uint32_t sx : xs) {
+                            const uint8_t *p = &src[(static_cast<size_t>(sy) * sw + sx) * 4];
+                            const float a = static_cast<float>(p[3]);
+                            alpha_sum += a;
+                            for (int c = 0; c < 3; ++c)
+                                color[c] += to_linear[p[c]] * a;
+                        }
+                    uint8_t *out = &dst[(static_cast<size_t>(y) * dw + x) * 4];
+                    for (int c = 0; c < 3; ++c)
+                        out[c] = alpha_sum > 0.0f ? linear_to_srgb_byte(color[c] / alpha_sum) : 0;
+                    out[3] = static_cast<uint8_t>((alpha_sum + 2.0f) / 4.0f);
                 }
         }
     }

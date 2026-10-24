@@ -93,7 +93,7 @@ shadow_level = 3
 
 [interface]
 font_scale = 1.0         # text size factor
-font_antialias = false   # grayscale glyphs instead of 1-bit
+font_antialias = true    # false gives the original 1-bit glyphs
 
 [sound]
 music_volume = 0.5

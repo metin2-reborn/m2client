@@ -189,7 +189,7 @@ namespace metin2::inline client::inline app {
         config_value_.vsync = true;
         config_value_.fps_limit = 0;
         config_value_.antialias = true;
-        config_value_.font_antialias = false;
+        config_value_.font_antialias = true;
         config_value_.font_scale = 1.0f;
     }
 

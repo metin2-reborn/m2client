@@ -669,16 +669,25 @@ namespace metin2::inline client::inline app {
 
         font_face::configure(get_python_system().is_font_antialias(), get_python_system().font_scale());
 
-        if (!main_window::create(name, get_python_system().width(), get_python_system().height(), get_python_system().is_vsync())) {
+        is_windowed_ = windowed != 0;
+        if (!main_window::create(name, get_python_system().width(), get_python_system().height(), get_python_system().is_vsync(), !is_windowed_)) {
             metin2::log::error("Cannot create the main window");
             PyErr_SetString(PyExc_RuntimeError, "Cannot create the main window");
             return false;
         }
 
-        // Full screen is a window of the configured size in the top left corner; the display mode is
-        // not changed.
-        is_windowed_ = windowed != 0;
-        set_size(get_python_system().width(), get_python_system().height());
+        // Full screen is a borderless window covering the monitor; the display mode is not changed
+        // and the configured size applies to the windowed mode only.
+        int window_width = get_python_system().width();
+        int window_height = get_python_system().height();
+        if (!is_windowed_) {
+            const point monitor = monitor_size();
+            window_width = monitor.x;
+            window_height = monitor.y;
+        }
+        width_ = window_width;
+        height_ = window_height;
+        set_size(window_width, window_height);
         set_position(0, 0);
 
         if (!create_cursors()) {
@@ -696,7 +705,7 @@ namespace metin2::inline client::inline app {
         if (!get_python_system().is_auto_tiling())
             graphics_caps_software_tiling = get_python_system().is_software_tiling();
 
-        if (!create_device(get_python_system().width(), get_python_system().height()))
+        if (!create_device(window_width, window_height))
             return false;
 
         // Window events are also collected after every frame, so the harness and the window state

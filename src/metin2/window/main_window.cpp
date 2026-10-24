@@ -81,13 +81,13 @@ namespace metin2::inline window {
 
     main_window::~main_window() = default;
 
-    auto main_window::create(const char *title, int width, int height, bool vsync) -> bool {
+    auto main_window::create(const char *title, int width, int height, bool vsync, bool borderless) -> bool {
         if (created)
             return true;
 
         SetTraceLogCallback(filter_raylib_log);
         SetTraceLogLevel(LOG_WARNING);
-        unsigned flags = FLAG_WINDOW_HIDDEN | FLAG_WINDOW_RESIZABLE;
+        unsigned flags = FLAG_WINDOW_HIDDEN | (borderless ? FLAG_WINDOW_UNDECORATED : FLAG_WINDOW_RESIZABLE);
         if (vsync)
             flags |= FLAG_VSYNC_HINT;
         SetConfigFlags(flags);

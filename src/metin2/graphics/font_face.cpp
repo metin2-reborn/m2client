@@ -167,7 +167,8 @@ namespace metin2::inline graphics {
             glyph_index = 0;
         }
 
-        const FT_Int32 flags = FT_LOAD_RENDER | (get_library().antialias ? FT_LOAD_TARGET_NORMAL : FT_LOAD_TARGET_MONO);
+        // Light hinting snaps only vertically, so antialiased glyphs keep their designed widths.
+        const FT_Int32 flags = FT_LOAD_RENDER | (get_library().antialias ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_MONO);
         if (FT_Load_Glyph(use->ft, glyph_index, flags) != 0)
             return g;
 
