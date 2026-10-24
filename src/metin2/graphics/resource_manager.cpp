@@ -11,8 +11,6 @@
 
 namespace metin2::inline graphics {
 
-    int loading_delay_time = 20;
-
     const uint32_t c_Deleting_Wait_Time = 30000;           // delay before deletion (30 s)
     const int c_DeletingCountPerFrame = 30;                // resources checked per frame
     const uint32_t c_Reference_Decrease_Wait_Time = 30000; // delay before releasing a preloaded resource (30 s)

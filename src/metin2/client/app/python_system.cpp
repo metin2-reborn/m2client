@@ -302,7 +302,6 @@ namespace metin2::inline client::inline app {
         reader.read("graphics", "shadow_level", config_value_.shadow_level);
         reader.read("graphics", "antialias", config_value_.antialias);
         reader.read("graphics", "decompressed_textures", config_value_.decompress_dds);
-        reader.read("graphics", "preloading_delay", loading_delay_time);
         std::string renderer = config_value_.renderer;
         reader.read("graphics", "renderer", renderer);
         utf8::copy_truncated(config_value_.renderer, sizeof(config_value_.renderer), renderer);
@@ -409,7 +408,6 @@ namespace metin2::inline client::inline app {
                     {"shadow_level", static_cast<int64_t>(config_value_.shadow_level)},
                     {"antialias", config_value_.antialias},
                     {"decompressed_textures", config_value_.decompress_dds},
-                    {"preloading_delay", static_cast<int64_t>(loading_delay_time)},
                     {"renderer", std::string(config_value_.renderer)},
                 }             },
             {"sound",

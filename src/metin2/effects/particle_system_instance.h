@@ -12,6 +12,10 @@
 #include "particle_system_data.h"
 
 namespace metin2::inline effects {
+    namespace particle_batch {
+        void add(const pt_vertex *quad);
+        void flush();
+    }
 
     class particle_system_instance : public effect_element_base_instance {
       public:
@@ -34,6 +38,7 @@ namespace metin2::inline effects {
                         continue;
                     fun_obj(*itor);
                 }
+                particle_batch::flush();
             }
         }
 

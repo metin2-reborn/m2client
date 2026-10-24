@@ -1,7 +1,9 @@
 #include "particle_system_instance.h"
+
 #include <metin2/core/random.h>
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/state_manager.h>
+#include <vector>
 #include "particle_instance.h"
 #include "particle_system_data.h"
 
@@ -279,6 +281,31 @@ namespace metin2::inline effects {
         return true;
     }
 
+    // Quads of one texture frame go up as one triangle list: a draw per particle (two or three for the
+    // multi-sided billboards) was the cost of a skill effect.
+    namespace particle_batch {
+        namespace {
+            std::vector<pt_vertex> vertices;
+        }
+
+        void add(const pt_vertex *quad) {
+            // The quad is the strip 0 1 2 3 the single draws used.
+            vertices.push_back(quad[0]);
+            vertices.push_back(quad[1]);
+            vertices.push_back(quad[2]);
+            vertices.push_back(quad[2]);
+            vertices.push_back(quad[1]);
+            vertices.push_back(quad[3]);
+        }
+
+        void flush() {
+            if (!vertices.empty()) {
+                STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_LIST, static_cast<uint32_t>(vertices.size() / 3), vertices.data(), sizeof(pt_vertex));
+                vertices.clear();
+            }
+        }
+    }
+
     namespace particle_renderers {
         struct two_side_renderer {
             const math::matrix *pmat;
@@ -288,10 +315,10 @@ namespace metin2::inline effects {
 
             inline void operator()(particle_instance *instance) {
                 instance->transform(pmat, math::to_radian(-30.0f));
-                STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, instance->particle_mesh_pointer(), sizeof(pt_vertex));
+                particle_batch::add(instance->particle_mesh_pointer());
 
                 instance->transform(pmat, math::to_radian(+30.0f));
-                STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, instance->particle_mesh_pointer(), sizeof(pt_vertex));
+                particle_batch::add(instance->particle_mesh_pointer());
             }
         };
 
@@ -303,18 +330,18 @@ namespace metin2::inline effects {
 
             inline void operator()(particle_instance *instance) {
                 instance->transform(pmat);
-                STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, instance->particle_mesh_pointer(), sizeof(pt_vertex));
+                particle_batch::add(instance->particle_mesh_pointer());
                 instance->transform(pmat, math::to_radian(-60.0f));
-                STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, instance->particle_mesh_pointer(), sizeof(pt_vertex));
+                particle_batch::add(instance->particle_mesh_pointer());
                 instance->transform(pmat, math::to_radian(+60.0f));
-                STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, instance->particle_mesh_pointer(), sizeof(pt_vertex));
+                particle_batch::add(instance->particle_mesh_pointer());
             }
         };
 
         struct normal_renderer {
             inline void operator()(particle_instance *instance) {
                 instance->transform();
-                STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, instance->particle_mesh_pointer(), sizeof(pt_vertex));
+                particle_batch::add(instance->particle_mesh_pointer());
             }
         };
         struct attach_renderer {
@@ -325,7 +352,7 @@ namespace metin2::inline effects {
 
             inline void operator()(particle_instance *instance) {
                 instance->transform(pmat);
-                STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_STRIP, 2, instance->particle_mesh_pointer(), sizeof(pt_vertex));
+                particle_batch::add(instance->particle_mesh_pointer());
             }
         };
     }

@@ -74,5 +74,4 @@ namespace metin2::inline graphics {
         return instance;
     }
 
-    extern int loading_delay_time;
 }

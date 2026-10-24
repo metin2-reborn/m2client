@@ -4,8 +4,6 @@
 
 #include <cstring>
 
-#include <chrono>
-
 namespace metin2::inline graphics {
 
     file_loader_thread::file_loader_thread() = default;
@@ -115,7 +113,5 @@ namespace metin2::inline graphics {
         complete_mutex_.lock();
         complete_deque_.push_back(data_value);
         complete_mutex_.unlock();
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(loading_delay_time));
     }
 }
