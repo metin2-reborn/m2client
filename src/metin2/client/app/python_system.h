@@ -1,6 +1,8 @@
 #pragma once
 #include <metin2/script/python_header.h>
 
+#include <map>
+#include <string>
 #include <string_view>
 
 namespace metin2::inline client::inline app {
@@ -74,6 +76,7 @@ namespace metin2::inline client::inline app {
             bool font_antialias;
             float font_scale;
             int ui_scale; // 0 picks a factor from the window height
+            bool chat_timestamps;
             bool decompress_dds;
             bool no_sound_card;
             uint8_t software_tiling;
@@ -126,6 +129,9 @@ namespace metin2::inline client::inline app {
         void set_ui_scale(int scale) { config_value_.ui_scale = scale; }
         auto is_font_antialias() const -> bool { return config_value_.font_antialias; }
         auto font_scale() const -> float { return config_value_.font_scale; }
+        auto is_chat_timestamps() const -> bool { return config_value_.chat_timestamps; }
+        // The DirectInput key bound to a game action in [keys], or the action's original key.
+        auto key_binding(std::string_view action, int default_dik) const -> int;
         void set_software_tiling(bool is_enable);
         void set_view_chat_flag(int flag);
         void set_always_show_name_flag(int flag);
@@ -151,6 +157,8 @@ namespace metin2::inline client::inline app {
         int resolution_count_;
         config config_value_;
         config old_config_;
+        std::map<std::string, std::string, std::less<>> key_names_; // [keys] as written, saved back
+        std::map<std::string, int, std::less<>> key_bindings_;
         bool is_interface_config_;
         PyObject *interface_handler_;
         window_status window_status_value_[WINDOW_MAX_NUM];

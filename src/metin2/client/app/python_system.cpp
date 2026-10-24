@@ -5,6 +5,7 @@
 #include <metin2/config/state_dir.h>
 #include <metin2/core/utf8.h>
 #include <metin2/core/utils.h>
+#include <metin2/input/keymap.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/window/main_window.h>
@@ -192,6 +193,7 @@ namespace metin2::inline client::inline app {
         config_value_.font_antialias = true;
         config_value_.font_scale = 1.0f;
         config_value_.ui_scale = 0;
+        config_value_.chat_timestamps = false;
     }
 
     auto python_system::is_windowed() -> bool {
@@ -345,6 +347,25 @@ namespace metin2::inline client::inline app {
         reader.read("interface", "font_antialias", config_value_.font_antialias);
         reader.read("interface", "font_scale", config_value_.font_scale);
         reader.read("interface", "ui_scale", config_value_.ui_scale);
+        reader.read("interface", "chat_timestamps", config_value_.chat_timestamps);
+
+        key_names_.clear();
+        key_bindings_.clear();
+        if (const toml::table *keys = parsed.table()["keys"].as_table()) {
+            for (const auto &[action, node] : *keys) {
+                std::string name;
+                reader.read("keys", action.str(), name);
+                if (name.empty())
+                    continue;
+                const int dik = input::dik_from_name(name);
+                if (dik == 0) {
+                    metin2::log::warn("{}:{}: keys.{} names no key: \"{}\"; the default is used", path, node.source().begin.line, action.str(), name);
+                    continue;
+                }
+                key_names_[std::string(action.str())] = name;
+                key_bindings_[std::string(action.str())] = dik;
+            }
+        }
         if (config_value_.font_scale <= 0.1f) {
             metin2::log::error("{}: interface.font_scale must be above 0.1; the default is used", path);
             config_value_.font_scale = 1.0f;
@@ -386,7 +407,16 @@ namespace metin2::inline client::inline app {
         return true;
     }
 
+    auto python_system::key_binding(std::string_view action, int default_dik) const -> int {
+        const auto found = key_bindings_.find(action);
+        return found == key_bindings_.end() ? default_dik : found->second;
+    }
+
     auto python_system::save_config() -> bool {
+        toml::table keys;
+        for (const auto &[action, name] : key_names_)
+            keys.insert(action, name);
+
         const toml::table root{
             {"display",
              toml::table{
@@ -399,7 +429,7 @@ namespace metin2::inline client::inline app {
                     {"software_cursor", config_value_.is_software_cursor},
                     {"vsync", config_value_.vsync},
                     {"fps_limit", static_cast<int64_t>(config_value_.fps_limit)},
-                }},
+                }             },
             {"graphics",
              toml::table{
                     {"visibility", static_cast<int64_t>(config_value_.distance)},
@@ -410,13 +440,13 @@ namespace metin2::inline client::inline app {
                     {"decompressed_textures", config_value_.decompress_dds},
                     {"preloading_delay", static_cast<int64_t>(loading_delay_time)},
                     {"renderer", std::string(config_value_.renderer)},
-                }},
+                }             },
             {"sound",
              toml::table{
                     {"music_volume", static_cast<double>(config_value_.music_volume)},
                     {"voice_volume", static_cast<int64_t>(config_value_.voice_volume)},
                     {"no_sound_card", config_value_.no_sound_card},
-                }},
+                }             },
             {"interface",
              toml::table{
                     {"view_chat", config_value_.view_chat},
@@ -426,18 +456,20 @@ namespace metin2::inline client::inline app {
                     {"font_antialias", config_value_.font_antialias},
                     {"font_scale", static_cast<double>(config_value_.font_scale)},
                     {"ui_scale", static_cast<int64_t>(config_value_.ui_scale)},
-                }},
+                    {"chat_timestamps", config_value_.chat_timestamps},
+                }             },
+            {"keys",      keys},
             {"login",
              toml::table{
                     {"save_id", static_cast<int64_t>(config_value_.is_save_id)},
                     {"id", std::string(config_value_.save_id, strnlen(config_value_.save_id, sizeof(config_value_.save_id)))},
-                }},
+                }             },
             {"log",
              toml::table{
                     {"level", std::string(metin2::log::enabled(metin2::log::level::debug) ? "debug" : metin2::log::enabled(metin2::log::level::info) ? "info"
                                                                                                   : metin2::log::enabled(metin2::log::level::warn)   ? "warn"
                                                                                                                                                      : "error")},
-                }},
+                }             },
         };
 
         std::ostringstream text;

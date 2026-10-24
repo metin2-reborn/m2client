@@ -195,8 +195,19 @@ namespace metin2::inline client::inline app {
         Py_RETURN_NONE;
     }
 
+    auto system_get_key(PyObject *self, PyObject *args) -> PyObject * {
+        char *action;
+        int default_dik;
+        if (!PyArg_ParseTuple(args, "si", &action, &default_dik)) {
+            return nullptr;
+        }
+
+        return Py_BuildValue("i", get_python_system().key_binding(action, default_dik));
+    }
+
     void init_settings_module() {
         static PyMethodDef methods[] = {
+            {"get_key", system_get_key, METH_VARARGS},
             {"get_width", system_get_width, METH_VARARGS},
             {"get_height", system_get_height, METH_VARARGS},
             {"get_gamma", system_get_gamma, METH_VARARGS},

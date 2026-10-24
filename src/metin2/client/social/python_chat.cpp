@@ -2,12 +2,15 @@
 #include <metin2/log/log.h>
 
 #include <metin2/client/app/abstract_application.h>
+#include <metin2/client/app/python_system.h>
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/core/timer.h>
 #include <metin2/core/utils.h>
 #include <metin2/script/python_utils.h>
 
 #include <cmath>
+#include <ctime>
+#include <string>
 
 namespace metin2::inline client::inline social {
 
@@ -383,6 +386,19 @@ namespace metin2::inline client::inline social {
         abstract_application &app = get_abstract_application();
         chat_line *chat_line_value = chat_line::new_value();
         chat_line_value->type_value = type;
+
+        std::string stamped;
+        const bool spoken = type == CHAT_TYPE_TALKING || type == CHAT_TYPE_PARTY || type == CHAT_TYPE_GUILD || type == CHAT_TYPE_SHOUT || type == CHAT_TYPE_WHISPER;
+        if (spoken && get_python_system().is_chat_timestamps()) {
+            const std::time_t now = std::time(nullptr);
+            std::tm local{};
+            localtime_r(&now, &local);
+            char stamp[16];
+            std::strftime(stamp, sizeof(stamp), "[%H:%M] ", &local);
+            stamped = stamp;
+            stamped += chat;
+            chat = stamped.c_str();
+        }
         chat_line_value->instance.set_value(chat);
 
         chat_line_value->instance.set_text_pointer(default_font_value);
