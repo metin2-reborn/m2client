@@ -94,6 +94,7 @@ shadow_level = 3
 [interface]
 font_scale = 1.0         # text size factor
 font_antialias = true    # false gives the original 1-bit glyphs
+ui_scale = 0             # interface magnification 1-3; 0 picks it from the window height
 
 [sound]
 music_volume = 0.5

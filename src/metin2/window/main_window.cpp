@@ -124,6 +124,15 @@ namespace metin2::inline window {
         SetWindowPosition(x, y);
     }
 
+    void main_window::set_vsync(bool on) {
+        if (!created)
+            return;
+        if (on)
+            SetWindowState(FLAG_VSYNC_HINT);
+        else
+            ClearWindowState(FLAG_VSYNC_HINT);
+    }
+
     void main_window::set_size(int width, int height) {
         if (width > 0 && height > 0)
             SetWindowSize(width, height);

@@ -502,7 +502,7 @@ namespace metin2::inline client::inline characters {
         python_graphic &rpy_graphic = get_python_graphic();
 
         float fx, fy, fz;
-        rpy_graphic.project_position(pixel_position.x,
+        rpy_graphic.project_position_to_interface(pixel_position.x,
             -pixel_position.y,
             pixel_position.z + float(height),
             &fx, &fy, &fz);

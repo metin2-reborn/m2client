@@ -1,15 +1,20 @@
+#include "python_application.h"
 #include "python_system.h"
 
 #include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
+#include <metin2/window/main_window.h>
+
+#include <algorithm>
 
 namespace metin2::inline client::inline app {
+    // The interface size in logical pixels (the window size over the interface scale).
     auto system_get_width(PyObject *self, PyObject *args) -> PyObject * {
-        return Py_BuildValue("i", get_python_system().width());
+        return Py_BuildValue("i", get_python_application().interface_width());
     }
 
     auto system_get_height(PyObject *self, PyObject *args) -> PyObject * {
-        return Py_BuildValue("i", get_python_system().height());
+        return Py_BuildValue("i", get_python_application().interface_height());
     }
 
     auto system_set_interface_handler(PyObject *self, PyObject *args) -> PyObject * {
@@ -125,10 +130,68 @@ namespace metin2::inline client::inline app {
             return nullptr;
         }
 
-        if (level > 0) {
+        if (level >= 0) {
             get_python_system().set_shadow_level(level);
         }
 
+        Py_RETURN_NONE;
+    }
+
+    auto system_get_gamma(PyObject *self, PyObject *args) -> PyObject * {
+        return Py_BuildValue("i", get_python_system().gamma());
+    }
+
+    auto system_set_gamma(PyObject *self, PyObject *args) -> PyObject * {
+        int gamma;
+        if (!PyArg_ParseTuple(args, "i", &gamma)) {
+            return nullptr;
+        }
+
+        get_python_system().set_gamma(std::clamp(gamma, 1, 5));
+        Py_RETURN_NONE;
+    }
+
+    auto system_is_antialias(PyObject *self, PyObject *args) -> PyObject * {
+        return Py_BuildValue("i", get_python_system().is_antialias() ? 1 : 0);
+    }
+
+    auto system_set_antialias(PyObject *self, PyObject *args) -> PyObject * {
+        int flag;
+        if (!PyArg_ParseTuple(args, "i", &flag)) {
+            return nullptr;
+        }
+
+        get_python_system().set_antialias(flag != 0);
+        Py_RETURN_NONE;
+    }
+
+    auto system_is_vsync(PyObject *self, PyObject *args) -> PyObject * {
+        return Py_BuildValue("i", get_python_system().is_vsync() ? 1 : 0);
+    }
+
+    auto system_set_vsync(PyObject *self, PyObject *args) -> PyObject * {
+        int flag;
+        if (!PyArg_ParseTuple(args, "i", &flag)) {
+            return nullptr;
+        }
+
+        get_python_system().set_vsync(flag != 0);
+        main_window::set_vsync(flag != 0);
+        Py_RETURN_NONE;
+    }
+
+    auto system_get_ui_scale(PyObject *self, PyObject *args) -> PyObject * {
+        return Py_BuildValue("i", get_python_system().ui_scale());
+    }
+
+    auto system_set_ui_scale(PyObject *self, PyObject *args) -> PyObject * {
+        int scale;
+        if (!PyArg_ParseTuple(args, "i", &scale)) {
+            return nullptr;
+        }
+
+        get_python_system().set_ui_scale(std::clamp(scale, 0, 3));
+        get_python_application().apply_interface_scale();
         Py_RETURN_NONE;
     }
 
@@ -136,6 +199,14 @@ namespace metin2::inline client::inline app {
         static PyMethodDef methods[] = {
             {"get_width", system_get_width, METH_VARARGS},
             {"get_height", system_get_height, METH_VARARGS},
+            {"get_gamma", system_get_gamma, METH_VARARGS},
+            {"set_gamma", system_set_gamma, METH_VARARGS},
+            {"is_antialias", system_is_antialias, METH_VARARGS},
+            {"set_antialias", system_set_antialias, METH_VARARGS},
+            {"is_vsync", system_is_vsync, METH_VARARGS},
+            {"set_vsync", system_set_vsync, METH_VARARGS},
+            {"get_ui_scale", system_get_ui_scale, METH_VARARGS},
+            {"set_ui_scale", system_set_ui_scale, METH_VARARGS},
 
             {"set_interface_handler", system_set_interface_handler, METH_VARARGS},
             {"destroy_interface_handler", system_destroy_interface_handler, METH_VARARGS},

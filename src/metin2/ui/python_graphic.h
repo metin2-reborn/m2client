@@ -24,6 +24,14 @@ namespace metin2::inline ui {
         void set_interface_render_state();
         void set_game_render_state();
 
+        // The interface is laid out in logical pixels and drawn magnified by an integer factor, so it
+        // stays legible on large displays. Window pixels = interface pixels * scale.
+        void set_interface_scale(int scale) { interface_scale_ = scale < 1 ? 1 : scale; }
+        auto interface_scale() const -> int { return interface_scale_; }
+        // A world position in interface pixels (project_position gives window pixels).
+        void project_position_to_interface(float x, float y, float z, float *px, float *py, float *pz = nullptr);
+
+        // In interface pixels.
         void set_cursor_position(int x, int y);
 
         void set_omni_light();
@@ -54,6 +62,7 @@ namespace metin2::inline ui {
         gpu::viewport backup_viewport_;
 
         float ortho_depth_;
+        int interface_scale_ = 1;
     };
 
     inline auto get_python_graphic() -> python_graphic & {

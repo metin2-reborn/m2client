@@ -3,6 +3,7 @@
 #include <metin2/client/app/python_application.h>
 #include <metin2/client/background/python_background.h>
 #include <metin2/graphics/camera.h>
+#include <metin2/ui/python_graphic.h>
 
 namespace metin2::inline world::inline actors {
     extern auto is_huge_race(unsigned int vnum) -> bool;
@@ -52,7 +53,9 @@ namespace metin2::inline client::inline player {
                 int32_t mouse_y;
                 wnd_mgr.mouse_position(mouse_x, mouse_y);
 
-                cmr_cur->begin_drag(mouse_x, mouse_y);
+                // The camera drags in window pixels; the interface reports logical ones.
+                const int scale = get_python_graphic().interface_scale();
+                cmr_cur->begin_drag(mouse_x * scale, mouse_y * scale);
 
                 if (!bg.is_map_ready())
                     return;

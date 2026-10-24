@@ -315,7 +315,7 @@ namespace metin2::inline client::inline characters {
         instance_base *picked_inst = old_get_picked_instance_ptr();
         if (picked_inst) {
             const math::vector3 &position = picked_inst->graphic_thing_instance_ref().get_position();
-            get_python_graphic().project_position(position.x, position.y, position.z, &picked_inst_proj_pos_.x, &picked_inst_proj_pos_.y);
+            get_python_graphic().project_position_to_interface(position.x, position.y, position.z, &picked_inst_proj_pos_.x, &picked_inst_proj_pos_.y);
         }
     }
 

@@ -73,6 +73,7 @@ namespace metin2::inline client::inline app {
             bool antialias;
             bool font_antialias;
             float font_scale;
+            int ui_scale; // 0 picks a factor from the window height
             bool decompress_dds;
             bool no_sound_card;
             uint8_t software_tiling;
@@ -117,7 +118,12 @@ namespace metin2::inline client::inline app {
         auto is_vsync() const -> bool { return config_value_.vsync; }
         auto fps_limit() const -> int { return config_value_.fps_limit; }
         auto gamma() const -> int { return config_value_.gamma; }
+        void set_gamma(int gamma) { config_value_.gamma = gamma; }
         auto is_antialias() const -> bool { return config_value_.antialias; }
+        void set_antialias(bool on) { config_value_.antialias = on; }
+        void set_vsync(bool on) { config_value_.vsync = on; }
+        auto ui_scale() const -> int { return config_value_.ui_scale; }
+        void set_ui_scale(int scale) { config_value_.ui_scale = scale; }
         auto is_font_antialias() const -> bool { return config_value_.font_antialias; }
         auto font_scale() const -> float { return config_value_.font_scale; }
         void set_software_tiling(bool is_enable);

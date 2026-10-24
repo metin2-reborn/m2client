@@ -29,6 +29,7 @@ namespace metin2::inline window {
         void set_position(int x, int y);
         void set_size(int width, int height);
         auto size() const -> point;
+        static void set_vsync(bool on);
 
         auto is_active() const -> bool { return is_active_; }
         auto is_visible() const -> bool { return is_visible_; }

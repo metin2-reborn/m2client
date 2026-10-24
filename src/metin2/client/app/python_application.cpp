@@ -336,8 +336,9 @@ namespace metin2::inline client::inline app {
     void python_application::update_game() {
         uint32_t t1 = el_timer_get_m_sec();
         const point mouse = window::mouse_position();
+        const int scale = get_python_graphic().interface_scale();
 
-        graphic_text_instance::hyperlink_update_mouse_pos(mouse.x, mouse.y);
+        graphic_text_instance::hyperlink_update_mouse_pos(mouse.x / scale, mouse.y / scale);
 
         uint32_t t2 = el_timer_get_m_sec();
 

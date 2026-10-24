@@ -3,6 +3,7 @@
 #include <metin2/client/background/python_background.h>
 #include <metin2/graphics/camera.h>
 #include <metin2/script/python_utils.h>
+#include <metin2/ui/python_graphic.h>
 
 namespace metin2::inline client::inline app {
     void python_application::on_camera_update() {
@@ -61,6 +62,7 @@ namespace metin2::inline client::inline app {
         }
     }
 
+    // x and y are window pixels: the camera drags in them, the interface gets logical pixels.
     void python_application::on_mouse_move(int x, int y) {
         auto *camera = get_camera_manager().current_camera();
         if (camera) {
@@ -75,12 +77,13 @@ namespace metin2::inline client::inline app {
             }
         }
 
+        const int scale = get_python_graphic().interface_scale();
         const auto client = size();
 
         auto &window_manager = widgets::get_window_manager();
 
-        window_manager.set_resolution(client.x, client.y);
-        window_manager.run_mouse_move(x, y);
+        window_manager.set_resolution(client.x / scale, client.y / scale);
+        window_manager.run_mouse_move(x / scale, y / scale);
     }
 
     void python_application::on_mouse_left_button_down(int x, int y) {

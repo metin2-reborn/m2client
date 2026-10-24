@@ -107,7 +107,7 @@ namespace metin2::inline client::inline social {
         rpy_graphic.identity();
 
         const math::vector3 &position = text_tail_value->owner->get_position();
-        rpy_graphic.project_position(position.x,
+        rpy_graphic.project_position_to_interface(position.x,
             position.y,
             position.z + text_tail_value->height,
             &text_tail_value->x,

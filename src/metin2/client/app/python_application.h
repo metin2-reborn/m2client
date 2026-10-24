@@ -302,6 +302,14 @@ namespace metin2::inline client::inline app {
         // Sleeps the rest of the frame when [display] fps_limit is set (or the window is minimized).
         void limit_frame_rate();
 
+      public:
+        // The interface magnification from the setting and the window size; the window manager
+        // then works in logical pixels (window pixels / scale).
+        void apply_interface_scale();
+        auto interface_width() const -> int;
+        auto interface_height() const -> int;
+
+      protected:
         // The 3D scene is rendered into scene_target_ and then drawn to the back buffer with the
         // display adjustments (gamma, anti-aliasing); the interface draws on top afterwards.
         graphics::render_target scene_target_;

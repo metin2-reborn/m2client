@@ -191,6 +191,7 @@ namespace metin2::inline client::inline app {
         config_value_.antialias = true;
         config_value_.font_antialias = true;
         config_value_.font_scale = 1.0f;
+        config_value_.ui_scale = 0;
     }
 
     auto python_system::is_windowed() -> bool {
@@ -343,6 +344,7 @@ namespace metin2::inline client::inline app {
         reader.read("interface", "show_sales_text", config_value_.show_sales_text);
         reader.read("interface", "font_antialias", config_value_.font_antialias);
         reader.read("interface", "font_scale", config_value_.font_scale);
+        reader.read("interface", "ui_scale", config_value_.ui_scale);
         if (config_value_.font_scale <= 0.1f) {
             metin2::log::error("{}: interface.font_scale must be above 0.1; the default is used", path);
             config_value_.font_scale = 1.0f;
@@ -423,6 +425,7 @@ namespace metin2::inline client::inline app {
                     {"show_sales_text", config_value_.show_sales_text},
                     {"font_antialias", config_value_.font_antialias},
                     {"font_scale", static_cast<double>(config_value_.font_scale)},
+                    {"ui_scale", static_cast<int64_t>(config_value_.ui_scale)},
                 }},
             {"login",
              toml::table{

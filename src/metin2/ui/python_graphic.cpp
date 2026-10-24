@@ -28,9 +28,20 @@ namespace metin2::inline ui {
         STATEMANAGER.set_render_state(gpu::state::DEST_BLEND, gpu::blend::INV_SRC_ALPHA);
 
         get_python_graphic().set_blend_operation();
-        get_python_graphic().set_ortho2d(width_, height_, ortho_depth());
+        // The interface's logical size over the whole window; point sampling keeps the magnified
+        // pixels crisp.
+        get_python_graphic().set_ortho2d(static_cast<float>(width_ / interface_scale_), static_cast<float>(height_ / interface_scale_), ortho_depth());
 
         STATEMANAGER.set_render_state(gpu::state::LIGHTING, false);
+    }
+
+    void python_graphic::project_position_to_interface(float x, float y, float z, float *px, float *py, float *pz) {
+        float depth = 0.0f;
+        project_position(x, y, z, px, py, &depth);
+        *px /= static_cast<float>(interface_scale_);
+        *py /= static_cast<float>(interface_scale_);
+        if (pz)
+            *pz = depth;
     }
 
     void python_graphic::set_game_render_state() {
@@ -41,7 +52,7 @@ namespace metin2::inline ui {
     }
 
     void python_graphic::set_cursor_position(int x, int y) {
-        screen::set_cursor_position(x, y, width_, height_);
+        screen::set_cursor_position(x * interface_scale_, y * interface_scale_, width_, height_);
     }
 
     void python_graphic::set_omni_light() {

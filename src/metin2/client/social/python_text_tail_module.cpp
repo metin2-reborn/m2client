@@ -42,7 +42,7 @@ namespace metin2::inline client::inline social {
             instance_base *inst_main = chr_mgr.main_instance_ptr();
             if (inst_main) {
                 const math::vector3 &position = inst_main->graphic_thing_instance_ref().get_position();
-                get_python_graphic().project_position(position.x, position.y, position.z, &x, &y);
+                get_python_graphic().project_position_to_interface(position.x, position.y, position.z, &x, &y);
             }
         }
 
