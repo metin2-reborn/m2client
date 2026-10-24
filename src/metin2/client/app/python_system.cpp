@@ -180,7 +180,6 @@ namespace metin2::inline client::inline app {
         config_value_.voice_volume = 5;
 
         config_value_.decompress_dds = 0;
-        config_value_.software_tiling = 0;
         config_value_.shadow_level = 3;
         config_value_.view_chat = true;
         config_value_.always_show_name = true;
@@ -233,22 +232,6 @@ namespace metin2::inline client::inline app {
         config_value_.show_sales_text = flag == 1 ? true : false;
     }
 
-    auto python_system::is_auto_tiling() -> bool {
-        return config_value_.software_tiling == 0;
-    }
-
-    void python_system::set_software_tiling(bool is_enable) {
-        if (is_enable) {
-            config_value_.software_tiling = 1;
-        } else {
-            config_value_.software_tiling = 2;
-        }
-    }
-
-    auto python_system::is_software_tiling() -> bool {
-        return config_value_.software_tiling == 1;
-    }
-
     namespace {
         constexpr const char *CONFIG_FILE = "metin2.toml";
         constexpr const char *INTERFACE_FILE = "interface.dat";
@@ -287,8 +270,6 @@ namespace metin2::inline client::inline app {
 
             return false;
         }
-
-        constexpr std::string_view TILING_NAMES[] = {"auto", "software", "hardware"};
     }
 
     auto python_system::load_config() -> bool {
@@ -316,24 +297,15 @@ namespace metin2::inline client::inline app {
         reader.read("display", "vsync", config_value_.vsync);
         reader.read("display", "fps_limit", config_value_.fps_limit);
 
-        std::string tiling = std::string(TILING_NAMES[std::min<uint8_t>(config_value_.software_tiling, 2)]);
         reader.read("graphics", "visibility", config_value_.distance);
         reader.read("graphics", "object_culling", config_value_.is_object_culling);
         reader.read("graphics", "shadow_level", config_value_.shadow_level);
         reader.read("graphics", "antialias", config_value_.antialias);
-        reader.read("graphics", "tiling", tiling);
         reader.read("graphics", "decompressed_textures", config_value_.decompress_dds);
         reader.read("graphics", "preloading_delay", loading_delay_time);
         std::string renderer = config_value_.renderer;
         reader.read("graphics", "renderer", renderer);
         utf8::copy_truncated(config_value_.renderer, sizeof(config_value_.renderer), renderer);
-
-        const auto tiling_it = std::ranges::find(TILING_NAMES, tiling);
-        if (tiling_it != std::end(TILING_NAMES)) {
-            config_value_.software_tiling = static_cast<uint8_t>(tiling_it - std::begin(TILING_NAMES));
-        } else {
-            metin2::log::error("{}: graphics.tiling must be \"auto\", \"software\" or \"hardware\"; the default is used", path);
-        }
 
         reader.read("sound", "music_volume", config_value_.music_volume);
         reader.read("sound", "voice_volume", config_value_.voice_volume);
@@ -436,7 +408,6 @@ namespace metin2::inline client::inline app {
                     {"object_culling", config_value_.is_object_culling},
                     {"shadow_level", static_cast<int64_t>(config_value_.shadow_level)},
                     {"antialias", config_value_.antialias},
-                    {"tiling", std::string(TILING_NAMES[std::min<uint8_t>(config_value_.software_tiling, 2)])},
                     {"decompressed_textures", config_value_.decompress_dds},
                     {"preloading_delay", static_cast<int64_t>(loading_delay_time)},
                     {"renderer", std::string(config_value_.renderer)},

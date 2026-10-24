@@ -23,7 +23,6 @@
 #include <thread>
 
 namespace metin2::inline graphics {
-    extern bool graphics_caps_software_tiling;
 }
 
 namespace metin2::inline client::inline app {
@@ -703,9 +702,6 @@ namespace metin2::inline client::inline app {
             }
         }
 
-        if (!get_python_system().is_auto_tiling())
-            graphics_caps_software_tiling = get_python_system().is_software_tiling();
-
         if (!create_device(window_width, window_height))
             return false;
 
@@ -714,11 +710,6 @@ namespace metin2::inline client::inline app {
         graphic_base::device().set_present_hooks([] { dev::on_present(); }, [] { window::on_frame_presented(); });
 
         granny_create_shared_deform_buffer();
-
-        if (get_python_system().is_auto_tiling())
-            get_python_background().reserve_software_tiling_enable(false);
-        else
-            get_python_background().reserve_software_tiling_enable(get_python_system().is_software_tiling());
 
         show();
 

@@ -63,14 +63,9 @@ namespace metin2::inline world::inline terrain {
         building_transparent_image_instance_.set_image_pointer(build_transparent_image);
 
         initialize();
-
-        software_transform_patch_initialize();
-        software_transform_patch_create();
     }
 
     map_outdoor::~map_outdoor() {
-        software_transform_patch_destroy();
-
         destroy();
     }
 

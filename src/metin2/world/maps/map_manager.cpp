@@ -27,19 +27,10 @@ namespace metin2::inline world::inline maps {
 
     map_manager::map_manager() : mc_pcur_environment_data_(nullptr) {
         map_ = nullptr;
-        is_software_tiling_enable_reserved_ = false;
     }
 
     map_manager::~map_manager() {
         destroy();
-    }
-
-    auto map_manager::is_software_tiling_enable() -> bool {
-        return terrain_patch::SOFTWARE_TRANSFORM_PATCH_ENABLE;
-    }
-
-    void map_manager::reserve_software_tiling_enable(bool is_enable) {
-        is_software_tiling_enable_reserved_ = is_enable;
     }
 
     void map_manager::initialize() {
@@ -55,14 +46,14 @@ namespace metin2::inline world::inline maps {
             return;
         }
 
-        terrain_patch::SOFTWARE_TRANSFORM_PATCH_ENABLE = is_software_tiling_enable_reserved_;
-
         map_ = (map_outdoor *)alloc_map();
 
         assert(nullptr != map_ && "CMapManager::Create MAP is NULL");
     }
 
     void map_manager::destroy() {
+        mc_pcur_environment_data_ = nullptr;
+        blend_target_ = nullptr;
         stl_wipe_second(environment_data_map_value_);
 
         if (map_) {
@@ -85,6 +76,10 @@ namespace metin2::inline world::inline maps {
         map_outdoor &map = map_outdoor_ref();
 
         map.leave();
+        // register_environment_data below replaces (frees) the previous map's environment, so
+        // nothing may still point at it; the new map's first environment then applies at once.
+        mc_pcur_environment_data_ = nullptr;
+        blend_target_ = nullptr;
         map.set_name(map_name);
         map.load_property();
 

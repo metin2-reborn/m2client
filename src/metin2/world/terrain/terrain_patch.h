@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/grp_vertex_buffer.h>
 #include "terrain.h"
@@ -14,12 +12,6 @@ namespace metin2::inline world::inline terrain {
     struct hardware_transform_patch_source_vertex {
         math::vector3 position_value;
         math::vector3 normal_value;
-    };
-
-    struct software_transform_patch_source_vertex {
-        math::vector3 position_value;
-        math::vector3 normal_value;
-        uint32_t diffuse_value;
     };
 
     struct water_vertex {
@@ -39,8 +31,6 @@ namespace metin2::inline world::inline terrain {
         enum {
             TERRAIN_VERTEX_COUNT = (terrain_impl::PATCH_XSIZE + 1) * (terrain_impl::PATCH_YSIZE + 1)
         };
-
-        static bool SOFTWARE_TRANSFORM_PATCH_ENABLE;
 
       public:
         terrain_patch() { clear(); }
@@ -77,14 +67,8 @@ namespace metin2::inline world::inline terrain {
 
         auto water_face_count() -> uint32_t;
 
-        void software_transform_patch_update_terrain_lighting(uintptr_t version, const gpu::light &light, const gpu::material &mtrl);
-
         void build_terrain_vertex_buffer(hardware_transform_patch_source_vertex *src_vertex);
         void build_water_vertex_buffer(water_vertex *src_vertex, uint32_t water_vertex_count);
-
-      protected:
-        void build_hardware_terrain_vertex_buffer(hardware_transform_patch_source_vertex *src_vertex);
-        void build_software_terrain_vertex_buffer(hardware_transform_patch_source_vertex *src_vertex);
 
       private:
         float min_x_;
@@ -100,7 +84,6 @@ namespace metin2::inline world::inline terrain {
         uint8_t type_value_;
 
         bool need_update_;
-        uintptr_t version_;
 
       public:
         auto water_vertex_buffer_pointer() -> graphic_vertex_buffer * { return &water_vertex_buffer_; }
@@ -112,22 +95,6 @@ namespace metin2::inline world::inline terrain {
         struct hardware_transform_patch {
             graphic_vertex_buffer vb;
         } ht_;
-
-      public:
-        auto software_transform_patch_get_terrain_vertex_data_ptr() -> software_transform_patch_source_vertex * { return st_.terrain_vertex.get(); }
-
-      protected:
-        struct software_transform_patch {
-            std::unique_ptr<software_transform_patch_source_vertex[]> terrain_vertex;
-
-            software_transform_patch();
-            ~software_transform_patch();
-
-            void create();
-            void destroy();
-
-            void initialize_impl();
-        } st_;
     };
 
     class terrain_patch_proxy {
@@ -164,10 +131,7 @@ namespace metin2::inline world::inline terrain {
         auto max_z() -> float;
 
         auto water_vertex_buffer_pointer() -> graphic_vertex_buffer *;
-        auto software_transform_patch_get_terrain_vertex_data_ptr() -> software_transform_patch_source_vertex *;
         auto hardware_transform_patch_get_vertex_buffer_ptr() -> graphic_vertex_buffer *;
-
-        void software_transform_patch_update_terrain_lighting(uintptr_t version, const gpu::light &light, const gpu::material &mtrl);
 
       protected:
         bool used_;

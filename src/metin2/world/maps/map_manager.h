@@ -16,9 +16,6 @@ namespace metin2::inline world::inline maps {
         auto is_map_outdoor() -> bool;
         auto map_outdoor_ref() -> map_outdoor &;
 
-        auto is_software_tiling_enable() -> bool;
-        void reserve_software_tiling_enable(bool is_enable);
-
         void initialize();
         void destroy();
 
@@ -110,8 +107,6 @@ namespace metin2::inline world::inline maps {
 
       protected:
         map_info_vector vct_map_info_;
-
-        bool is_software_tiling_enable_reserved_;
 
       protected:
         void load_map_info_vector();

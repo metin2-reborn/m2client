@@ -420,80 +420,11 @@ namespace metin2::inline world::inline terrain {
 
         void render_terrain_append_patch(const math::vector3 &center, float distance, int32_t patch_num);
 
-        void render_terrain_render_software_transform_patch();
         void render_terrain_render_hardware_transform_patch();
 
       protected:
         void hardware_transform_patch_render_patch_splat(int32_t patchnum, uint16_t primitive_count, gpu::primitive primitive_type);
         void hardware_transform_patch_render_patch_none(int32_t patchnum, uint16_t primitive_count, gpu::primitive primitive_type);
-
-      protected:
-        struct software_transform_patch_data {
-            enum {
-                SPLAT_VB_NUM = 8,
-                NONE_VB_NUM = 8,
-            };
-
-            std::shared_ptr<gpu::vertex_buffer> vb_splat[SPLAT_VB_NUM];
-            std::shared_ptr<gpu::vertex_buffer> vb_none[NONE_VB_NUM];
-            uint32_t splat_pos;
-            uint32_t none_pos;
-            uintptr_t light_version;
-        } stpd_;
-
-        struct software_transform_patch_render_state {
-            math::matrix m4_proj;
-            math::matrix m4_frustum;
-            math::matrix m4_dynamic_shadow;
-            gpu::light light_value;
-            gpu::material mtrl;
-            math::vector3 player;
-            uint32_t fog_color;
-            float screen_half_width;
-            float screen_half_height;
-
-            float fog_near_distance;
-            float fog_far_distance;
-            float fog_near_trans_z;
-            float fog_far_trans_z;
-            float fog_len_inv;
-        };
-
-        struct software_transform_patch_t_vertex {
-            math::vector4 position_value;
-        };
-
-        struct software_transform_patch_tl_vertex {
-            math::vector4 position_value;
-            uint32_t diffuse_value;
-            uint32_t fog;
-            math::vector2 tex_tile;
-            math::vector2 tex_alpha;
-            math::vector2 tex_static_shadow;
-            math::vector2 tex_dynamic_shadow;
-        };
-
-        void software_transform_patch_apply_render_state();
-        void software_transform_patch_restore_render_state(uint32_t fog_enable);
-
-        void software_transform_patch_initialize();
-        auto software_transform_patch_create() -> bool;
-        void software_transform_patch_destroy();
-        void software_transform_patch_build_pipeline(software_transform_patch_render_state &tprs);
-        auto software_transform_patch_set_transform(software_transform_patch_render_state &tprs, software_transform_patch_tl_vertex *trans_vertex, terrain_patch_proxy &terrain_patch_proxy, uint32_t terrain_x, uint32_t terrain_y, bool is_fog_enable, bool is_dynamic_shadow) -> bool;
-
-        auto software_transform_patch_set_splat_stream(software_transform_patch_tl_vertex *trans_vertex) -> bool;
-        auto software_transform_patch_set_shadow_stream(software_transform_patch_tl_vertex *trans_vertex) -> bool;
-
-        void software_transform_patch_apply_static_shadow_render_state();
-        void software_transform_patch_restore_static_shadow_render_state();
-
-        void software_transform_patch_apply_fog_shadow_render_state();
-        void software_transform_patch_restore_fog_shadow_render_state();
-        void software_transform_patch_apply_dynamic_shadow_render_state();
-        void software_transform_patch_restore_dynamic_shadow_render_state();
-        void software_transform_patch_render_patch_splat(software_transform_patch_render_state &tprs, int32_t patchnum, uint16_t primitive_count, gpu::primitive primitive_type, bool is_fog_enable);
-        void software_transform_patch_render_patch_none(software_transform_patch_render_state &tprs, int32_t patchnum, uint16_t primitive_count, gpu::primitive primitive_type);
 
       protected:
         std::vector<graphic_object_instance *> shadow_receiver_vector_;

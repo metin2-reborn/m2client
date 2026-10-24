@@ -15,8 +15,6 @@ namespace metin2::inline graphics {
         return *state_manager_instance;
     }
 
-    bool graphics_caps_software_tiling = false;
-
     graphic_device::graphic_device() {
         initialize_impl();
     }

@@ -43,10 +43,7 @@ namespace metin2::inline world::inline terrain {
 
         std::sort(patch_vector_.begin(), patch_vector_.end());
 
-        if (terrain_patch::SOFTWARE_TRANSFORM_PATCH_ENABLE)
-            render_terrain_render_software_transform_patch();
-        else
-            render_terrain_render_hardware_transform_patch();
+        render_terrain_render_hardware_transform_patch();
     }
 
     void map_outdoor::render_terrain_recurse_render_quad_tree(terrain_quadtree_node *node, bool cull_check_need) {
@@ -112,7 +109,6 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::apply_light(uintptr_t version, const gpu::light &light) {
-        stpd_.light_version = version;
         STATEMANAGER.set_light(0, &light);
     }
 

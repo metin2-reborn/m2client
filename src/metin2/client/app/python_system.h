@@ -79,7 +79,6 @@ namespace metin2::inline client::inline app {
             bool chat_timestamps;
             bool decompress_dds;
             bool no_sound_card;
-            uint8_t software_tiling;
             bool view_chat;
             bool always_show_name;
             bool show_damage;
@@ -115,8 +114,6 @@ namespace metin2::inline client::inline app {
         auto is_show_damage() -> bool;
         auto is_show_sales_text() -> bool;
         auto is_no_sound_card() -> bool;
-        auto is_auto_tiling() -> bool;
-        auto is_software_tiling() -> bool;
         auto renderer() const -> const char * { return config_value_.renderer; }
         auto is_vsync() const -> bool { return config_value_.vsync; }
         auto fps_limit() const -> int { return config_value_.fps_limit; }
@@ -132,7 +129,6 @@ namespace metin2::inline client::inline app {
         auto is_chat_timestamps() const -> bool { return config_value_.chat_timestamps; }
         // The DirectInput key bound to a game action in [keys], or the action's original key.
         auto key_binding(std::string_view action, int default_dik) const -> int;
-        void set_software_tiling(bool is_enable);
         void set_view_chat_flag(int flag);
         void set_always_show_name_flag(int flag);
         void set_show_damage_flag(int flag);

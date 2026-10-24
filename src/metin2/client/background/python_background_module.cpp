@@ -11,21 +11,6 @@
 #include <string>
 
 namespace metin2::inline client::inline background {
-    auto background_is_software_tiling(PyObject *self, PyObject *args) -> PyObject * {
-        return Py_BuildValue("i", get_python_background().is_software_tiling_enable());
-    }
-
-    auto background_enable_software_tiling(PyObject *self, PyObject *args) -> PyObject * {
-        int enable;
-        if (!PyArg_ParseTuple(args, "i", &enable)) {
-            return nullptr;
-        }
-
-        get_python_background().reserve_software_tiling_enable(enable);
-        get_python_system().set_software_tiling(enable);
-        Py_RETURN_NONE;
-    }
-
     auto background_enable_snow(PyObject *self, PyObject *args) -> PyObject * {
         int enable;
         if (!PyArg_ParseTuple(args, "i", &enable)) {
@@ -309,8 +294,6 @@ namespace metin2::inline client::inline background {
 
     void init_world_module() {
         static PyMethodDef methods[] = {
-            {"is_software_tiling", background_is_software_tiling, METH_VARARGS},
-            {"enable_software_tiling", background_enable_software_tiling, METH_VARARGS},
             {"enable_snow", background_enable_snow, METH_VARARGS},
             {"global_position_to_map_info", background_global_position_to_map_info, METH_VARARGS},
             {"get_render_shadow_time", background_get_render_shadow_time, METH_VARARGS},
