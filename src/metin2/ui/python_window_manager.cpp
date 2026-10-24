@@ -333,6 +333,31 @@ namespace metin2::inline ui {
             }
         }
 
+        auto window_manager::run_mouse_wheel(int32_t delta) -> bool {
+            int32_t x;
+            int32_t y;
+            mouse_position(x, y);
+            ui_window *window = pick_window_impl(x, y);
+            if (!window) {
+                return false;
+            }
+            const auto game_layer = layer_window_map_.find("GAME");
+            ui_window *game = game_layer == layer_window_map_.end() ? nullptr : game_layer->second;
+            for (ui_window *w = window; w && w != root_window_; w = w->parent()) {
+                if (w == game || w->parent() == game) {
+                    return false; // over the world: the camera zooms
+                }
+                if (w->parent() == root_window_) {
+                    break; // a layer
+                }
+                if (w->on_mouse_wheel(delta)) {
+                    return true;
+                }
+            }
+            // Over an interface window that does not scroll: still no zoom.
+            return true;
+        }
+
         void window_manager::clear_reserve_delete_window_list() {
             for (auto itor = reserve_delete_window_list_.begin(); itor != reserve_delete_window_list_.end(); ++itor) {
                 ui_window *win = *itor;

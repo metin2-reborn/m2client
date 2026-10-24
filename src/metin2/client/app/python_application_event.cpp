@@ -56,6 +56,9 @@ namespace metin2::inline client::inline app {
     }
 
     void python_application::on_mouse_wheel(int len) {
+        if (widgets::get_window_manager().run_mouse_wheel(len)) {
+            return;
+        }
         auto *camera = get_camera_manager().current_camera();
         if (camera) {
             camera->wheel(len);

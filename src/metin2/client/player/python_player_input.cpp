@@ -356,7 +356,9 @@ namespace metin2::inline client::inline player {
         if (cmr_cur) {
             float cmr_cur_rot = camera_rotation_to_character_rotation(cmr_cur->get_roll());
 
-            if (is_cmr_rot_) {
+            // The camera follows a sideways walk, but not while the player is turning it by hand
+            // (right mouse button held).
+            if (is_cmr_rot_ && !cmr_cur->is_draging()) {
                 float sig_dir_rot = dir_rot;
                 if (sig_dir_rot > 180.0f)
                     sig_dir_rot = sig_dir_rot - 360.0f;

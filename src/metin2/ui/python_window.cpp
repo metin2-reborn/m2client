@@ -318,6 +318,17 @@ namespace metin2::inline ui {
             py_call_class_member_func(handler_, "on_mouse_over_in", build_empty_tuple());
         }
 
+        auto ui_window::on_mouse_wheel(int32_t delta) -> bool {
+            if (!handler_ || !PyObject_HasAttrString(handler_, "on_mouse_wheel")) {
+                return false;
+            }
+            bool taken = false;
+            if (!py_call_class_member_func(handler_, "on_mouse_wheel", Py_BuildValue("(i)", delta), &taken)) {
+                return false;
+            }
+            return taken;
+        }
+
         void ui_window::on_mouse_over_out() {
             py_call_class_member_func(handler_, "on_mouse_over_out", build_empty_tuple());
         }

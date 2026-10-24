@@ -83,6 +83,9 @@ namespace metin2::inline ui {
             void run_mouse_right_button_up(int32_t x, int32_t y);
             void run_mouse_middle_button_down(int32_t x, int32_t y);
             void run_mouse_middle_button_up(int32_t x, int32_t y);
+            // The wheel over an interface window (anything outside the GAME layer) goes to that window
+            // and its parents (on_mouse_wheel); true means the camera must not zoom.
+            auto run_mouse_wheel(int32_t delta) -> bool;
 
             // The window that receives typed text: the active window while it renders and, under a
             // lock window, lies inside it; nullptr otherwise.

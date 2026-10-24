@@ -114,6 +114,8 @@ namespace metin2::inline ui {
 
             virtual void on_mouse_drag(int32_t lx, int32_t ly);
             virtual void on_mouse_over_in();
+            // The script's on_mouse_wheel(delta); true when it took the wheel.
+            auto on_mouse_wheel(int32_t delta) -> bool;
             virtual void on_mouse_over_out();
             virtual void on_mouse_over();
             virtual void on_drop();
