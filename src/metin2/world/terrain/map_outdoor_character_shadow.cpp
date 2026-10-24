@@ -28,8 +28,9 @@ namespace metin2::inline world::inline terrain {
 
         shadow_map_viewport_ = {1, 1, static_cast<uint32_t>(shadow_map_size_ - 2), static_cast<uint32_t>(shadow_map_size_ - 2), 0.0f, 1.0f};
 
-        if (!character_shadow_raw_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::R5G6B5, gpu::format::D16) ||
-            !character_shadow_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::R5G6B5, gpu::format::UNKNOWN)) {
+        // 8 bits per channel: the blurred edge of a shadow banded visibly in R5G6B5.
+        if (!character_shadow_raw_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::X8R8G8B8, gpu::format::D16) ||
+            !character_shadow_target_.create(shadow_map_size_, shadow_map_size_, gpu::format::X8R8G8B8, gpu::format::UNKNOWN)) {
             metin2::log::error("Cannot create the character shadow render target");
         }
     }

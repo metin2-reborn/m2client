@@ -8,6 +8,7 @@
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/graphics/state_manager.h>
 
+#include <algorithm>
 #include <cstring>
 
 namespace metin2::inline world::inline terrain {
@@ -95,7 +96,10 @@ namespace metin2::inline world::inline terrain {
             last_height_change_time = get_timer().current_millisecond();
         }
 
-        water_height_current = water_height_begin + (water_height_end - water_height_begin) * (float)((get_timer().current_millisecond() - last_height_change_time) / (float)blendtime);
+        // Eased in and out, so the surface does not reverse with a jolt.
+        const float progress = std::clamp(static_cast<float>(get_timer().current_millisecond() - last_height_change_time) / static_cast<float>(blendtime), 0.0f, 1.0f);
+        const float eased = progress * progress * (3.0f - 2.0f * progress);
+        water_height_current = water_height_begin + (water_height_end - water_height_begin) * eased;
         world_for_common_use_._43 = water_height_current;
 
         world_for_common_use_._41 = 0.0f;

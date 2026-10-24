@@ -5,6 +5,7 @@
 #include <cmath>
 #include <metin2/core/mapped_file.h>
 #include <metin2/log/log.h>
+#include <vector>
 #include "image_file.h"
 #include "resource_manager.h"
 
@@ -225,6 +226,49 @@ namespace metin2::inline graphics {
             if (p[0] == 0xff && p[1] == 0x00 && p[2] == 0xff && (p[3] == 0xff || !decoded.has_alpha)) {
                 p[3] = 0;
                 keyed = true;
+            }
+        }
+
+        // The keyed texels are invisible but still filtered into their neighbours, which gave sprites
+        // a magenta fringe: give them the colour of the opaque texels around them.
+        if (keyed) {
+            const int w = decoded.width;
+            const int h = decoded.height;
+            std::vector<uint8_t> &px = decoded.pixels;
+            const std::vector<uint8_t> source = px;
+            for (int y = 0; y < h; ++y) {
+                for (int x = 0; x < w; ++x) {
+                    uint8_t *p = &px[(static_cast<size_t>(y) * w + x) * 4];
+                    if (p[3] != 0) {
+                        continue;
+                    }
+                    int sum[3] = {0, 0, 0};
+                    int count = 0;
+                    for (int dy = -1; dy <= 1; ++dy) {
+                        for (int dx = -1; dx <= 1; ++dx) {
+                            const int nx = x + dx;
+                            const int ny = y + dy;
+                            if (nx < 0 || ny < 0 || nx >= w || ny >= h) {
+                                continue;
+                            }
+                            const uint8_t *n = &source[(static_cast<size_t>(ny) * w + nx) * 4];
+                            if (n[3] == 0) {
+                                continue;
+                            }
+                            sum[0] += n[0];
+                            sum[1] += n[1];
+                            sum[2] += n[2];
+                            ++count;
+                        }
+                    }
+                    if (count > 0) {
+                        p[0] = static_cast<uint8_t>(sum[0] / count);
+                        p[1] = static_cast<uint8_t>(sum[1] / count);
+                        p[2] = static_cast<uint8_t>(sum[2] / count);
+                    } else {
+                        p[0] = p[1] = p[2] = 0;
+                    }
+                }
             }
         }
 

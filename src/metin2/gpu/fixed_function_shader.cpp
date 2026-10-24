@@ -321,6 +321,13 @@ void main() {
         if (colorOp == 1) break;
         vec4 tex = sampleStage(s);
         if (s == 0 && uEffect.x == 2.0) tex.rgb *= terrainRelief();
+        if (s == 0 && uAlpha.x != 0 && uMisc.x > 0.0) {
+            // Alpha-tested leaves and grass thin out in the smaller mip levels, whose alpha is an
+            // average: the alpha is raised with the level so the coverage stays about the same.
+            vec2 texel = vTex0.xy * vec2(textureSize(uSampler0, 0));
+            float lod = 0.5 * log2(max(max(dot(dFdx(texel), dFdx(texel)), dot(dFdy(texel), dFdy(texel))), 1e-8));
+            tex.a *= 1.0 + clamp(lod, 0.0, 3.0) * 0.25;
+        }
         vec4 c1 = arg(uStageA[s].y, cur, tex, dif, specIn);
         vec4 c2 = arg(uStageA[s].z, cur, tex, dif, specIn);
         vec4 res = op(colorOp, c1, c2, cur, tex, dif);
