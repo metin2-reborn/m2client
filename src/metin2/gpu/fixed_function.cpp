@@ -231,8 +231,8 @@ namespace metin2::gpu {
         u.alpha[3] = static_cast<int32_t>(st.view_port.y);
         u.effect[0] = static_cast<float>(st.render_state(state::EFFECT_MODE));
         u.effect[1] = st.render_state_float(state::EFFECT_TIME);
-        u.effect[2] = 0.0f;
-        u.effect[3] = 0.0f;
+        u.effect[2] = st.render_state_float(state::EFFECT_PARAM0);
+        u.effect[3] = st.render_state_float(state::EFFECT_PARAM1);
         for (int s = 0; s < 2; ++s) {
             u.stage_a[s][0] = static_cast<int32_t>(st.stage_state(s, stage_state::COLOR_OP));
             u.stage_a[s][1] = static_cast<int32_t>(st.stage_state(s, stage_state::COLOR_ARG1));

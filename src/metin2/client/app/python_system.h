@@ -75,7 +75,9 @@ namespace metin2::inline client::inline app {
             bool antialias;
             bool font_antialias;
             float font_scale;
-            int ui_scale; // 0 picks a factor from the window height
+            int ui_scale;       // 0 picks a factor from the window height
+            int terrain_detail; // 0 off, 1 low, 2 high
+            int grass_density;  // 0 off to 3
             bool chat_timestamps;
             bool decompress_dds;
             bool no_sound_card;
@@ -123,6 +125,10 @@ namespace metin2::inline client::inline app {
         void set_antialias(bool on) { config_value_.antialias = on; }
         void set_vsync(bool on) { config_value_.vsync = on; }
         auto ui_scale() const -> int { return config_value_.ui_scale; }
+        auto terrain_detail() const -> int { return config_value_.terrain_detail; }
+        void set_terrain_detail(int level);
+        auto grass_density() const -> int { return config_value_.grass_density; }
+        void set_grass_density(int density);
         void set_ui_scale(int scale) { config_value_.ui_scale = scale; }
         auto is_font_antialias() const -> bool { return config_value_.font_antialias; }
         auto font_scale() const -> float { return config_value_.font_scale; }

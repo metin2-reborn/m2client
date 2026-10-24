@@ -223,6 +223,36 @@ vec3 waterSurface(vec3 base) {
     return color;
 }
 
+// Terrain detail: the tile texture's own brightness is read as relief and shades the tile slightly
+// under the sun. Only each splat's colour is scaled, so the blend between tiles stays exact; past the
+// fade distance the ratio is exactly 1 and the terrain looks as before.
+float terrainRelief() {
+    float k = uEffect.z * (1.0 - smoothstep(1200.0, 3000.0, vDepth));
+    if (k <= 0.0 || int(uLights[0].pos.w) != 3) return 1.0;
+    const vec3 LUMA = vec3(0.299, 0.587, 0.114);
+    vec2 uv = vTex0.xy;
+    vec2 e = max(vec2(1.0) / vec2(textureSize(uSampler0, 0)), fwidth(uv));
+    float h = dot(texture(uSampler0, uv).rgb, LUMA);
+    float du = clamp(dot(texture(uSampler0, uv + vec2(e.x, 0.0)).rgb, LUMA) - h, -0.25, 0.25);
+    float dv = clamp(dot(texture(uSampler0, uv + vec2(0.0, e.y)).rgb, LUMA) - h, -0.25, 0.25);
+    // The tile is mapped planar onto world x (u) and -y (v).
+    vec3 N = normalize(vNormView);
+    mat3 toView = mat3(uView * uWorld);
+    vec3 T = toView * vec3(1.0, 0.0, 0.0);
+    vec3 B = toView * vec3(0.0, -1.0, 0.0);
+    T = normalize(T - N * dot(N, T));
+    B = normalize(B - N * dot(N, B) - T * dot(T, B));
+    // The first-order change of N.L for the bent normal: it averages to zero over the texture, so
+    // the relief adds light and shade without darkening or brightening the ground.
+    vec3 L = -normalize(uLights[0].dir.xyz);
+    float ndl = dot(N, L);
+    float change = -k * (du * dot(T, L) + dv * dot(B, L)) * smoothstep(0.0, 0.2, ndl);
+    float A = dot(uLights[0].ambient.rgb + uGlobalAmbient.rgb, LUMA);
+    float D = dot(uLights[0].diffuse.rgb, LUMA);
+    float r = 1.0 + D * change / max(A + D * max(ndl, 0.0), 1e-3);
+    return clamp(r, 0.8, 1.2);
+}
+
 vec4 arg(int a, vec4 cur, vec4 tex, vec4 dif, vec4 spec) {
     int sel = a & 15;
     vec4 c = sel == 0 ? dif : (sel == 1 ? cur : (sel == 2 ? tex : (sel == 3 ? uTFactor : spec)));
@@ -278,6 +308,7 @@ void main() {
         int colorOp = uStageA[s].x;
         if (colorOp == 1) break;
         vec4 tex = sampleStage(s);
+        if (s == 0 && uEffect.x == 2.0) tex.rgb *= terrainRelief();
         vec4 c1 = arg(uStageA[s].y, cur, tex, dif, specIn);
         vec4 c2 = arg(uStageA[s].z, cur, tex, dif, specIn);
         vec4 res = op(colorOp, c1, c2, cur, tex, dif);

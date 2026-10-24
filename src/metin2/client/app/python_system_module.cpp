@@ -205,8 +205,38 @@ namespace metin2::inline client::inline app {
         return Py_BuildValue("i", get_python_system().key_binding(action, default_dik));
     }
 
+    auto system_get_terrain_detail(PyObject *self, PyObject *args) -> PyObject * {
+        return Py_BuildValue("i", get_python_system().terrain_detail());
+    }
+
+    auto system_set_terrain_detail(PyObject *self, PyObject *args) -> PyObject * {
+        int level;
+        if (!PyArg_ParseTuple(args, "i", &level)) {
+            return nullptr;
+        }
+        get_python_system().set_terrain_detail(level);
+        Py_RETURN_NONE;
+    }
+
+    auto system_get_grass_density(PyObject *self, PyObject *args) -> PyObject * {
+        return Py_BuildValue("i", get_python_system().grass_density());
+    }
+
+    auto system_set_grass_density(PyObject *self, PyObject *args) -> PyObject * {
+        int density;
+        if (!PyArg_ParseTuple(args, "i", &density)) {
+            return nullptr;
+        }
+        get_python_system().set_grass_density(density);
+        Py_RETURN_NONE;
+    }
+
     void init_settings_module() {
         static PyMethodDef methods[] = {
+            {"get_terrain_detail", system_get_terrain_detail, METH_VARARGS},
+            {"set_terrain_detail", system_set_terrain_detail, METH_VARARGS},
+            {"get_grass_density", system_get_grass_density, METH_VARARGS},
+            {"set_grass_density", system_set_grass_density, METH_VARARGS},
             {"get_key", system_get_key, METH_VARARGS},
             {"get_width", system_get_width, METH_VARARGS},
             {"get_height", system_get_height, METH_VARARGS},

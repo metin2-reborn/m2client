@@ -135,6 +135,8 @@ namespace metin2::inline world::inline terrain {
 
         void set_draw_shadow(bool draw_shadow);
         void set_draw_character_shadow(bool draw_chr_shadow);
+        // Relief shading from the tile textures ([graphics] terrain_detail); 0 is off.
+        void set_terrain_detail(float strength) { terrain_detail_strength_ = strength; }
 
         auto shadow_map_color(float fx, float fy) -> uint32_t;
 
@@ -278,6 +280,7 @@ namespace metin2::inline world::inline terrain {
 
         bool draw_shadow_;
         bool draw_chr_shadow_;
+        float terrain_detail_strength_ = 1.5f;
 
         math::matrix bump_;
         void load_water_texture();

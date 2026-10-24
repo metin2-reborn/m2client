@@ -157,6 +157,16 @@ namespace metin2::inline client::inline app {
         return config_value_.shadow_level;
     }
 
+    void python_system::set_terrain_detail(int level) {
+        config_value_.terrain_detail = std::clamp(level, 0, 2);
+        get_python_background().refresh_terrain_options();
+    }
+
+    void python_system::set_grass_density(int density) {
+        config_value_.grass_density = std::clamp(density, 0, 3);
+        get_python_background().refresh_terrain_options();
+    }
+
     void python_system::set_shadow_level(unsigned int level) {
         config_value_.shadow_level = static_cast<int>(std::min(level, 5u));
         get_python_background().refresh_shadow_level();
@@ -192,6 +202,8 @@ namespace metin2::inline client::inline app {
         config_value_.font_antialias = true;
         config_value_.font_scale = 1.0f;
         config_value_.ui_scale = 0;
+        config_value_.terrain_detail = 1;
+        config_value_.grass_density = 1;
         config_value_.chat_timestamps = false;
     }
 
@@ -301,6 +313,10 @@ namespace metin2::inline client::inline app {
         reader.read("graphics", "object_culling", config_value_.is_object_culling);
         reader.read("graphics", "shadow_level", config_value_.shadow_level);
         reader.read("graphics", "antialias", config_value_.antialias);
+        reader.read("graphics", "terrain_detail", config_value_.terrain_detail);
+        reader.read("graphics", "grass_density", config_value_.grass_density);
+        config_value_.terrain_detail = std::clamp(config_value_.terrain_detail, 0, 2);
+        config_value_.grass_density = std::clamp(config_value_.grass_density, 0, 3);
         reader.read("graphics", "decompressed_textures", config_value_.decompress_dds);
         std::string renderer = config_value_.renderer;
         reader.read("graphics", "renderer", renderer);
@@ -407,6 +423,8 @@ namespace metin2::inline client::inline app {
                     {"object_culling", config_value_.is_object_culling},
                     {"shadow_level", static_cast<int64_t>(config_value_.shadow_level)},
                     {"antialias", config_value_.antialias},
+                    {"terrain_detail", static_cast<int64_t>(config_value_.terrain_detail)},
+                    {"grass_density", static_cast<int64_t>(config_value_.grass_density)},
                     {"decompressed_textures", config_value_.decompress_dds},
                     {"renderer", std::string(config_value_.renderer)},
                 }             },

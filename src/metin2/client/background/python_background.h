@@ -58,6 +58,8 @@ namespace metin2::inline client::inline background {
         auto set_visible_part(int part, bool is_visible) -> bool;
         auto set_shadow_level(int level) -> bool;
         void refresh_shadow_level();
+        // Terrain detail and grass from the settings.
+        void refresh_terrain_options();
         void select_view_distance_num(int num);
         void set_view_distance_set(int num, float far_clip);
         auto far_clip() -> float;

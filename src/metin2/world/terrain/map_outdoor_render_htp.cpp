@@ -3,6 +3,8 @@
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/state_manager.h>
 
+#include <cstring>
+
 namespace metin2::inline world::inline terrain {
     void map_outdoor::render_terrain_render_hardware_transform_patch() {
         uint32_t fog_color;
@@ -247,6 +249,14 @@ namespace metin2::inline world::inline terrain {
 
         int prev_rendered_splat_num = rendered_splat_num_;
 
+        const bool detail = terrain_detail_strength_ > 0.0f;
+        if (detail) {
+            uint32_t strength_bits;
+            std::memcpy(&strength_bits, &terrain_detail_strength_, sizeof(strength_bits));
+            STATEMANAGER.set_render_state(gpu::state::EFFECT_MODE, 2);
+            STATEMANAGER.set_render_state(gpu::state::EFFECT_PARAM0, strength_bits);
+        }
+
         bool is_first = true;
         for (uint32_t j = 1; j < terrain->num_textures(); ++j) {
             terain_splat &splat = terrain_splat_patch.splats[j];
@@ -285,6 +295,10 @@ namespace metin2::inline world::inline terrain {
             if (rendered_splat_num_ >= splat_limit_) {
                 break;
             }
+        }
+
+        if (detail) {
+            STATEMANAGER.set_render_state(gpu::state::EFFECT_MODE, 0);
         }
 
         // The splats above are unlit: this pass multiplies them by the vertex lighting and, when shadows

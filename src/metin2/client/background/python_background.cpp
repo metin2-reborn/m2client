@@ -13,6 +13,8 @@
 #include <metin2/window/events.h>
 #include <metin2/world/terrain/map_outdoor.h>
 
+#include <algorithm>
+
 #include <format>
 
 namespace metin2::inline client::inline background {
@@ -67,6 +69,15 @@ namespace metin2::inline client::inline background {
 
     void python_background::refresh_shadow_level() {
         set_shadow_level(get_python_system().shadow_level());
+    }
+
+    void python_background::refresh_terrain_options() {
+        if (!map_) {
+            return;
+        }
+        constexpr float DETAIL_STRENGTH[] = {0.0f, 1.5f, 3.0f};
+        map_outdoor &map = map_outdoor_ref();
+        map.set_terrain_detail(DETAIL_STRENGTH[std::clamp(get_python_system().terrain_detail(), 0, 2)]);
     }
 
     auto python_background::set_shadow_level(int level) -> bool {
@@ -602,6 +613,7 @@ namespace metin2::inline client::inline background {
         }
 
         refresh_shadow_level();
+        refresh_terrain_options();
         map_info &r_map_info = *pk_map_info;
         assert((x >= r_map_info.base_x) && (y >= r_map_info.base_y));
 
