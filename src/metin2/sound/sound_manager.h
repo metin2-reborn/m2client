@@ -97,8 +97,10 @@ namespace metin2::inline sound {
         // A free source of the pool with the sound set, or nullptr; the search starts one slot
         // further each time so the sources rotate.
         auto free_source2d(const char *file_name) -> sound_source *;
+        // When every 3D source is busy, the oldest one-shot sound is cut for the new one.
         auto free_source3d(const char *file_name) -> int;
         auto source3d(int index) -> sound_source *;
+        void apply_source_distances();
 
         void open_device();
         void close_device();
@@ -128,6 +130,7 @@ namespace metin2::inline sound {
         std::map<uint32_t, std::unique_ptr<sound_data>> data_;
         std::array<sound_source, SOUND2D_COUNT> sources2d_;
         std::array<sound_source, SOUND3D_COUNT> sources3d_;
+        std::array<float, SOUND3D_COUNT> started3d_ = {};
         uint32_t next2d_ = 0;
         uint32_t next3d_ = 0;
 

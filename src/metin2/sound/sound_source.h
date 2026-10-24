@@ -22,13 +22,19 @@ namespace metin2::inline sound {
         void play(bool loop);
         void stop();
         void set_volume(float volume);
-        // Game coordinates; the world's z axis points the other way in OpenAL.
+        // World position in the manager's scaled units; the world's z axis points the other way in
+        // OpenAL.
         void set_position(float x, float y, float z);
+        // Full volume up to reference_distance, then inverse-distance falloff until max_distance,
+        // in the same units as set_position.
+        void set_distances(float reference_distance, float max_distance);
 
         // A source that is not playing can take a new sound.
         auto is_done() const -> bool;
+        auto is_looping() const -> bool { return looping_; }
 
       private:
         uint32_t source_ = 0; // ALuint
+        bool looping_ = false;
     };
 }

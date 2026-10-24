@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <format>
+#include <limits>
 
 #include <AL/al.h>
 #include <AL/alc.h>
@@ -15,6 +16,14 @@
 #include <metin2/log/log.h>
 
 namespace metin2::inline sound {
+
+    namespace {
+        // In game units: a sound is at full volume within the first, fades with the inverse of the
+        // distance, and is not attenuated further beyond the second (character sounds are not even
+        // started that far away).
+        constexpr float FULL_VOLUME_DISTANCE = 500.0f;
+        constexpr float AUDIBLE_DISTANCE = 5000.0f;
+    }
 
     sound_manager::sound_manager() {
         is_sound_disable_ = false;
@@ -84,6 +93,7 @@ namespace metin2::inline sound {
             source.create(false);
         for (sound_source &source : sources3d_)
             source.create(true);
+        apply_source_distances();
 
         music_thread_ = std::jthread([this](std::stop_token stop) {
             while (!stop.stop_requested()) {
@@ -164,16 +174,27 @@ namespace metin2::inline sound {
     auto sound_manager::free_source3d(const char *file_name) -> int {
         const uint32_t start = next3d_;
         next3d_ = (next3d_ + 1) % SOUND3D_COUNT;
-        for (uint32_t i = 0; i < SOUND3D_COUNT; ++i) {
-            const int index = static_cast<int>((start + i) % SOUND3D_COUNT);
-            sound_source &source = sources3d_[index];
-            if (!source.is_done())
-                continue;
-            if (!source.set_sound(data(file_name)))
-                return -1;
-            return index;
+        int index = -1;
+        for (uint32_t i = 0; i < SOUND3D_COUNT && index < 0; ++i) {
+            const int candidate = static_cast<int>((start + i) % SOUND3D_COUNT);
+            if (sources3d_[candidate].is_done())
+                index = candidate;
         }
-        return -1;
+        if (index < 0) {
+            float oldest = std::numeric_limits<float>::max();
+            for (int i = 0; i < SOUND3D_COUNT; ++i) {
+                if (!sources3d_[i].is_looping() && started3d_[i] < oldest) {
+                    oldest = started3d_[i];
+                    index = i;
+                }
+            }
+            if (index < 0)
+                return -1;
+        }
+        if (!sources3d_[index].set_sound(data(file_name)))
+            return -1;
+        started3d_[index] = get_timer().current_second();
+        return index;
     }
 
     auto sound_manager::source3d(int index) -> sound_source * {
@@ -182,14 +203,22 @@ namespace metin2::inline sound {
         return &sources3d_[index];
     }
 
+    void sound_manager::apply_source_distances() {
+        for (sound_source &source : sources3d_)
+            source.set_distances(FULL_VOLUME_DISTANCE / sound_scale_, AUDIBLE_DISTANCE / sound_scale_);
+    }
+
+    // The listener moves through the world in OpenAL units (game units / sound_scale_), so a sound
+    // stays where it was played while the character walks away from it.
     void sound_manager::set_position(float fx, float fy, float fz) {
         fx_position_ = fx;
         fy_position_ = fy;
         fz_position_ = fz;
+        if (device_)
+            alListener3f(AL_POSITION, fx / sound_scale_, fy / sound_scale_, -fz / sound_scale_);
     }
 
-    // Sound positions are relative to the listener, which stays at the origin; the world's z axis
-    // points the other way in OpenAL.
+    // The world's z axis points the other way in OpenAL.
     void sound_manager::set_direction(float fx_dir, float fy_dir, float fz_dir, float fx_up, float fy_up, float fz_up) {
         if (!device_)
             return;
@@ -274,6 +303,7 @@ namespace metin2::inline sound {
 
     void sound_manager::set_sound_scale(float scale) {
         sound_scale_ = scale;
+        apply_source_distances();
     }
 
     void sound_manager::set_ambience_sound_scale(float scale) {
@@ -376,9 +406,7 @@ namespace metin2::inline sound {
         if (!source)
             return;
 
-        source->set_position((fx - fx_position_) / sound_scale_,
-            (fy - fy_position_) / sound_scale_,
-            (fz - fz_position_) / sound_scale_);
+        source->set_position(fx / sound_scale_, fy / sound_scale_, fz / sound_scale_);
 
         source->set_volume(sound_volume());
         source->play(play_count == 0);
@@ -393,9 +421,10 @@ namespace metin2::inline sound {
         if (!source)
             return -1;
 
-        source->set_position((fx - fx_position_) / ambience_sound_scale_,
-            (fy - fy_position_) / ambience_sound_scale_,
-            (fz - fz_position_) / ambience_sound_scale_);
+        // Ambience is pulled towards the listener by its own scale, from where it is when it starts.
+        source->set_position((fx_position_ + (fx - fx_position_) * sound_scale_ / ambience_sound_scale_) / sound_scale_,
+            (fy_position_ + (fy - fy_position_) * sound_scale_ / ambience_sound_scale_) / sound_scale_,
+            (fz_position_ + (fz - fz_position_) * sound_scale_ / ambience_sound_scale_) / sound_scale_);
 
         source->set_volume(sound_volume());
         source->play(play_count == 0);
@@ -431,9 +460,7 @@ namespace metin2::inline sound {
         if (!source)
             return;
 
-        source->set_position((fx - fx_position_) / sound_scale_,
-            (fy - fy_position_) / sound_scale_,
-            (fz - fz_position_) / sound_scale_);
+        source->set_position(fx / sound_scale_, fy / sound_scale_, fz / sound_scale_);
 
         source->set_volume(sound_volume());
         source->play(false);

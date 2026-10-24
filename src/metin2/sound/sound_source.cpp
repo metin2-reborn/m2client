@@ -18,8 +18,6 @@ namespace metin2::inline sound {
         alSourcef(source_, AL_GAIN, 1.0f);
         if (positional) {
             alSourcei(source_, AL_SOURCE_RELATIVE, AL_FALSE);
-            alSourcef(source_, AL_REFERENCE_DISTANCE, 300.0f);
-            alSourcef(source_, AL_MAX_DISTANCE, 5000.0f);
             alSourcef(source_, AL_ROLLOFF_FACTOR, 1.0f);
             alSource3f(source_, AL_POSITION, 0.0f, 0.0f, 0.0f);
         } else {
@@ -50,12 +48,21 @@ namespace metin2::inline sound {
     void sound_source::play(bool loop) {
         if (!source_)
             return;
+        looping_ = loop;
         alSourcei(source_, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
         alSourceRewind(source_);
         alSourcePlay(source_);
     }
 
+    void sound_source::set_distances(float reference_distance, float max_distance) {
+        if (!source_)
+            return;
+        alSourcef(source_, AL_REFERENCE_DISTANCE, reference_distance);
+        alSourcef(source_, AL_MAX_DISTANCE, max_distance);
+    }
+
     void sound_source::stop() {
+        looping_ = false;
         if (source_)
             alSourceStop(source_);
     }
