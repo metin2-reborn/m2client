@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "terrain.h"
 #include "terrain_patch.h"
 
@@ -120,6 +122,9 @@ namespace metin2::inline world::inline terrain {
         std::shared_ptr<gpu::texture> marked_texture_;
 
       public:
+        // The grass tufts of one patch (see map_outdoor_grass.cpp); density 1 to 3.
+        void build_grass_patch(uint8_t patch_num_x, uint8_t patch_num_y, int density, std::vector<grass_vertex> &out);
+
         auto terrain_patch_ptr(uint8_t patch_num_x, uint8_t patch_num_y) -> terrain_patch *;
 
       protected:

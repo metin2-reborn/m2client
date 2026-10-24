@@ -8,9 +8,81 @@
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/log/log.h>
 
+#include <metin2/gpu/device.h>
+#include <metin2/gpu/format.h>
+
+#include <algorithm>
+#include <cctype>
 #include <cstdio>
+#include <cstring>
 
 namespace metin2::inline world::inline terrain {
+    namespace {
+        auto is_grass_texture(std::string name) -> bool {
+            std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            if (name.find("seagrass") != std::string::npos) {
+                return false;
+            }
+            return name.find("grass") != std::string::npos || name.find("field") != std::string::npos;
+        }
+
+        auto rgb565_to_rgb(uint16_t c, int rgb[3]) {
+            rgb[0] = ((c >> 11) & 31) * 255 / 31;
+            rgb[1] = ((c >> 5) & 63) * 255 / 63;
+            rgb[2] = (c & 31) * 255 / 31;
+        }
+
+        // The average colour of a 4x4 DXT colour block (the second half of a DXT3/5 block).
+        auto dxt_block_average(const uint8_t *block, bool dxt1) -> uint32_t {
+            uint16_t c0, c1;
+            memcpy(&c0, block, 2);
+            memcpy(&c1, block + 2, 2);
+            int p[4][3];
+            rgb565_to_rgb(c0, p[0]);
+            rgb565_to_rgb(c1, p[1]);
+            const bool four = !dxt1 || c0 > c1;
+            for (int i = 0; i < 3; ++i) {
+                p[2][i] = four ? (2 * p[0][i] + p[1][i]) / 3 : (p[0][i] + p[1][i]) / 2;
+                p[3][i] = four ? (p[0][i] + 2 * p[1][i]) / 3 : 0;
+            }
+            uint32_t bits;
+            memcpy(&bits, block + 4, 4);
+            int sum[3] = {0, 0, 0};
+            for (int t = 0; t < 16; ++t) {
+                const int *c = p[(bits >> (2 * t)) & 3];
+                for (int i = 0; i < 3; ++i) {
+                    sum[i] += c[i];
+                }
+            }
+            return 0xff000000u | (static_cast<uint32_t>(sum[0] / 16) << 16) | (static_cast<uint32_t>(sum[1] / 16) << 8) | static_cast<uint32_t>(sum[2] / 16);
+        }
+
+        // From the smallest mip level, read back from the GPU.
+        auto texture_average_color(gpu::texture *texture, uint32_t fallback) -> uint32_t {
+            if (!texture) {
+                return fallback;
+            }
+            const uint32_t level = texture->level_count() - 1;
+            gpu::locked_rect locked;
+            if (!texture->lock(level, locked, nullptr, gpu::lock::READ_ONLY)) {
+                return fallback;
+            }
+            uint32_t color = fallback;
+            const auto fmt = texture->pixel_format();
+            if (fmt == gpu::format::DXT1) {
+                color = dxt_block_average(locked.bits, true);
+            } else if (fmt == gpu::format::DXT3 || fmt == gpu::format::DXT5) {
+                color = dxt_block_average(locked.bits + 8, false);
+            } else if (const gpu::format_info *info = gpu::get_format_info(fmt); info && !info->compressed) {
+                uint8_t rgba[4];
+                gpu::convert_to_rgba8(*info, locked.bits, locked.pitch, 1, 1, rgba);
+                color = 0xff000000u | (static_cast<uint32_t>(rgba[0]) << 16) | (static_cast<uint32_t>(rgba[1]) << 8) | rgba[2];
+            }
+            texture->unlock(level);
+            return color;
+        }
+    }
+
     texture_set::texture_set() = default;
 
     texture_set::~texture_set() {
@@ -160,6 +232,10 @@ namespace metin2::inline world::inline terrain {
         tex.transform = math::matrix_scaling(terrain_tex_coord_base * tex.u_scale, -terrain_tex_coord_base * tex.v_scale, 0.0f);
         tex.transform._41 = tex.u_offset;
         tex.transform._42 = -tex.v_offset;
+        tex.grass = is_grass_texture(tex.filename);
+        if (tex.grass) {
+            tex.average_color = texture_average_color(tex.gpu_texture, tex.average_color);
+        }
 
         return true;
     }

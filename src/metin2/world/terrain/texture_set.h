@@ -24,6 +24,10 @@ namespace metin2::inline world::inline terrain {
         bool splat;
         uint16_t begin, end; // 16-bit height field values, 0 to 65535.
         math::matrix transform;
+        // Grass grows on tiles whose file name says grass or field; it is tinted with the tile's
+        // average colour (0xAARRGGBB).
+        bool grass = false;
+        uint32_t average_color = 0xff708040;
     };
 
     class texture_set {

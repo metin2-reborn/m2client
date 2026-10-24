@@ -3,7 +3,14 @@
 #include <metin2/gpu/types.h>
 
 namespace metin2::inline world::inline terrain {
+    void terrain_patch::release_grass() {
+        grass_vb.destroy();
+        grass_quad_count = 0;
+        grass_generation = 0;
+    }
+
     void terrain_patch::clear() {
+        release_grass();
         ht_.vb.destroy();
 
         water_vertex_buffer_.destroy();

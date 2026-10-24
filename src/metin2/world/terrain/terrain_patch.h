@@ -17,6 +17,15 @@ namespace metin2::inline world::inline terrain {
         float x, y, z;
         uint32_t diffuse_value;
     };
+
+    // Grass: two crossed quads per tuft. Diffuse alpha carries the tuft height / 128 for the
+    // vertex shader's sway and fade; v is 0 at the tip and 1 at the root.
+    struct grass_vertex {
+        math::vector3 position_value;
+        math::vector3 normal_value;
+        uint32_t diffuse_value;
+        float u, v;
+    };
 #pragma pack(pop)
 
     class terrain_patch {
@@ -90,6 +99,13 @@ namespace metin2::inline world::inline terrain {
 
       public:
         auto hardware_transform_patch_get_vertex_buffer_ptr() -> graphic_vertex_buffer * { return &ht_.vb; }
+
+        // Built on demand while the patch is near the camera and released when unused for a while.
+        graphic_vertex_buffer grass_vb;
+        uint32_t grass_quad_count = 0;
+        uint32_t grass_generation = 0; // 0: not built
+        uint32_t grass_last_used_frame = 0;
+        void release_grass();
 
       protected:
         struct hardware_transform_patch {

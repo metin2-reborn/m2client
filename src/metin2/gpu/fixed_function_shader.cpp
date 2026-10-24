@@ -89,6 +89,18 @@ void main() {
         vPosWorld = aPos.xyz;
     } else {
         vec4 wp = uWorld * vec4(aPos.xyz, 1.0);
+        if (uEffect.x == 3.0) {
+            // Grass: the tip sways with the wind, and a tuft sinks into the ground towards the end
+            // of the grass distance instead of popping out. Diffuse alpha is the tuft height / 128.
+            float tip = 1.0 - aTex0.y;
+            float tuftHeight = aDiffuse.a * 128.0;
+            float dist = length((uView * wp).xyz);
+            float keep = 1.0 - smoothstep(0.6 * uEffect.w, uEffect.w, dist);
+            wp.z -= tip * tuftHeight * (1.0 - keep);
+            float sway = tip * tuftHeight * (0.08 + 0.4 * uEffect.z);
+            float t = uEffect.y;
+            wp.xy += sway * vec2(sin(t * 1.7 + dot(wp.xy, vec2(0.004, 0.003))), 0.5 * cos(t * 1.3 + wp.x * 0.003));
+        }
         vec4 vp = uView * wp;
         P = vp.xyz;
         N = normalize(mat3(uNormal) * aNormal);

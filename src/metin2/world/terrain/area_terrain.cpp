@@ -41,6 +41,9 @@ namespace metin2::inline world::inline terrain {
     }
 
     void terrain_area::clear() {
+        for (terrain_patch &patch : terrain_patch_list_) {
+            patch.release_grass();
+        }
         deallocate_marked_splats();
         terrain_impl::clear();
         initialize();

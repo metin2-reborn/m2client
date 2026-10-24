@@ -339,6 +339,7 @@ namespace metin2::inline world::inline terrain {
     }
 
     void map_outdoor::destroy_terrain() {
+        release_all_grass();
         terrain_vector_.clear();
         terrain_delete_vector_.clear();
 

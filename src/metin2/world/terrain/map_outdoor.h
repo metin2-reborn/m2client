@@ -5,6 +5,7 @@
 
 #include <metin2/core/rectangle.h>
 #include <metin2/gpu/types.h>
+#include <metin2/graphics/grp_index_buffer.h>
 #include <metin2/graphics/lens_flare.h>
 #include <metin2/graphics/render_target.h>
 #include <metin2/graphics/screen_filter.h>
@@ -137,6 +138,8 @@ namespace metin2::inline world::inline terrain {
         void set_draw_character_shadow(bool draw_chr_shadow);
         // Relief shading from the tile textures ([graphics] terrain_detail); 0 is off.
         void set_terrain_detail(float strength) { terrain_detail_strength_ = strength; }
+        // Grass tufts on grass and field tiles ([graphics] grass_density); 0 is off.
+        void set_grass_density(int density);
 
         auto shadow_map_color(float fx, float fy) -> uint32_t;
 
@@ -281,6 +284,18 @@ namespace metin2::inline world::inline terrain {
         bool draw_shadow_;
         bool draw_chr_shadow_;
         float terrain_detail_strength_ = 1.5f;
+
+        // Grass (map_outdoor_grass.cpp): built per terrain patch near the camera, drawn after the
+        // terrain, released when a patch has not been drawn for a while.
+        int grass_density_ = 1;
+        uint32_t grass_generation_ = 1;
+        uint32_t grass_frame_ = 0;
+        graphic_index_buffer grass_index_buffer_;
+        graphic_image_instance grass_image_instance_;
+        bool grass_resources_tried_ = false;
+        void render_grass();
+        void release_all_grass();
+        auto grass_texture() -> gpu::texture *;
 
         math::matrix bump_;
         void load_water_texture();

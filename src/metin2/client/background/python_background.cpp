@@ -78,6 +78,7 @@ namespace metin2::inline client::inline background {
         constexpr float DETAIL_STRENGTH[] = {0.0f, 1.5f, 3.0f};
         map_outdoor &map = map_outdoor_ref();
         map.set_terrain_detail(DETAIL_STRENGTH[std::clamp(get_python_system().terrain_detail(), 0, 2)]);
+        map.set_grass_density(get_python_system().grass_density());
     }
 
     auto python_background::set_shadow_level(int level) -> bool {

@@ -262,6 +262,7 @@ namespace metin2::inline world::inline terrain {
 
         if (!enable_terrain_only_for_height_) {
             render_terrain();
+            render_grass();
         }
 
         render_blend_area();
