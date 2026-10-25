@@ -1,59 +1,53 @@
 #include "type.h"
-#include <metin2/core/parse.h>
 
-#include <cstdio>
-#include <cstdlib>
-
-#include <metin2/core/text_file_loader.h>
-#include <metin2/log/log.h>
+#include <metin2/core/mapped_file.h>
+#include <metin2/files/asset_toml.h>
+#include <metin2/files/eter_file_manager.h>
 
 namespace metin2::inline sound {
 
-    auto sound_types::load_sound_information_piece(const char *file_name, sound_types::sound_data_vector &sound_data_vector_value, const char *path_header) -> bool {
-        text_file_loader *pk_text_file_loader = text_file_loader::cache(file_name);
-        if (!pk_text_file_loader)
-            return false;
-
-        text_file_loader &rk_text_file_loader = *pk_text_file_loader;
-        // Most motions have no sound script; a missing or empty one is not an error.
-        if (rk_text_file_loader.is_empty())
-            return false;
-
-        rk_text_file_loader.set_top();
-
-        int count;
-        if (!rk_text_file_loader.token_integer("sounddatacount", &count)) {
-            metin2::log::error("Sound script {}: SoundDataCount not found", file_name);
-            return false;
-        }
-
+    auto sound_types::load_sound_script(std::string_view text, std::string_view file_name, sound_types::sound_data_vector &sound_data_vector_value) -> bool {
         sound_data_vector_value.clear();
-        sound_data_vector_value.resize(count);
-
-        char sound_data_header[32 + 1];
-        for (size_t i = 0; i < sound_data_vector_value.size(); ++i) {
-            snprintf(sound_data_header, sizeof(sound_data_header), "sounddata%02zu", i);
-            token_vector *token_vector;
-            if (!rk_text_file_loader.get_token_vector(sound_data_header, &token_vector)) {
-                metin2::log::error("Sound script {}: {} not found", file_name, sound_data_header);
-                return false;
-            }
-
-            if (2 != token_vector->size()) {
-                metin2::log::error("Sound script {}: {} does not have two values", file_name, sound_data_header);
-                return false;
-            }
-
-            sound_data_vector_value[i].time = (float)metin2::to_number<double>(token_vector->at(0).c_str());
-            if (path_header) {
-                sound_data_vector_value[i].sound_file_name = path_header;
-                sound_data_vector_value[i].sound_file_name += token_vector->at(1).c_str();
-            } else {
-                sound_data_vector_value[i].sound_file_name = token_vector->at(1).c_str();
-            }
+        const auto table = parse_asset_toml(text, file_name, "SoundScript");
+        if (!table) {
+            return false;
         }
 
-        return true;
+        bool ok = true;
+        asset_table root(*table, file_name);
+        root.table("asset");
+        if (const toml::array *sounds = root.array("sound")) {
+            for (const toml::node &node : *sounds) {
+                const toml::table *sound = node.as_table();
+                if (!sound) {
+                    root.error("sound", "must be an array of tables");
+                    continue;
+                }
+                asset_table entry(*sound, file_name);
+                sound_data_entry data{};
+                entry.required("time", data.time);
+                entry.required("file", data.sound_file_name);
+                if (entry.finish()) {
+                    sound_data_vector_value.push_back(std::move(data));
+                } else {
+                    ok = false;
+                }
+            }
+        }
+        return root.finish() && ok;
+    }
+
+    auto sound_types::load_sound_information_piece(const char *file_name, sound_types::sound_data_vector &sound_data_vector_value) -> bool {
+        if (!get_file_manager().is_exist(file_name)) {
+            return false;
+        }
+
+        mapped_file file;
+        const void *data = nullptr;
+        if (!get_file_manager().get(file, file_name, &data)) {
+            return false;
+        }
+        return load_sound_script(std::string_view(static_cast<const char *>(data), file.size()), file_name, sound_data_vector_value);
     }
 
     void sound_types::data_to_instance(const sound_data_vector &sound_data_vector_value, sound_instance_vector *sound_instance_vector_value) {

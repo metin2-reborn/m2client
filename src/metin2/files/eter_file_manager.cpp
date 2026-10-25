@@ -35,7 +35,7 @@ namespace metin2::inline files {
         }
 
         // The disk spelling of data/<name><suffix>. The archive folders are lower case, but a name
-        // may spell the archive in any case ("BGM:..."), like the rest of the path.
+        // may spell the archive in any case ("Sound:..."), like the rest of the path.
         auto disk_name(const std::string &name, std::string_view suffix) -> std::string {
             std::string wanted = name + std::string(suffix);
             std::error_code ec;
@@ -146,12 +146,12 @@ namespace metin2::inline files {
             return {};
         }
 
-        std::string result = "sound/" + folder + path.path;
+        std::string result = "sound:" + folder + path.path;
         const std::size_t dot = result.rfind('.');
         if (dot != std::string::npos && result.find('/', dot) == std::string::npos) {
             result.erase(dot);
         }
-        result += ".mss";
+        result += ".toml";
         for (char &c : result) {
             c = ascii_tolower(c);
         }

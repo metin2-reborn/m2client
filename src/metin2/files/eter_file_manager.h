@@ -63,8 +63,8 @@ namespace metin2::inline files {
         // spelling. Two names of one file give the same canonical name.
         static auto canonical_name(std::string_view name) -> std::string;
 
-        // The sound script (.mss) of a motion or effect script: "character:pc/warrior/wait.toml" has
-        // "sound/pc/warrior/wait.mss", "effect:etc/x.toml" has "sound/effect/etc/x.mss". Empty for
+        // The sound script of a motion or effect script: "character:pc/warrior/wait.toml" has
+        // "sound:pc/warrior/wait.toml", "effect:etc/x.toml" has "sound:effect/etc/x.toml". Empty for
         // scripts outside the split archives, which have no sound scripts.
         static auto sound_script_name(std::string_view name) -> std::string;
 

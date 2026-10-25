@@ -225,7 +225,7 @@ namespace metin2::inline client::inline background {
     }
 
     void python_background::initialize() {
-        set_atlas_info_file_name(std::format("{}/AtlasInfo.txt", LOCALE_DIR).c_str());
+        set_atlas_info_file_name(std::format("{}AtlasInfo.txt", LOCALE_DIR).c_str());
         map_manager::initialize();
     }
 

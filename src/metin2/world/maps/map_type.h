@@ -4,9 +4,10 @@
 #include <metin2/graphics/sky_box.h>
 #include <metin2/sound/sound_manager.h>
 
-namespace metin2::inline world::inline maps {
-    class property;
+#include <string>
+#include <vector>
 
+namespace metin2::inline world::inline maps {
     namespace property_types {
         enum property_type {
             PROPERTY_TYPE_NONE,
@@ -18,26 +19,17 @@ namespace metin2::inline world::inline maps {
             PROPERTY_TYPE_MAX_NUM,
         };
 
-        const char c_szPropertyTypeName[PROPERTY_TYPE_MAX_NUM][32] =
-            {
-                "None",
-                "Tree",
-                "Building",
-                "Effect",
-                "Ambience",
-                "DungeonBlock"};
-
-        auto get_property_type(const char *type_name) -> uint32_t;
+        struct property_tree {
+            std::string file_name;
+        };
 
         struct property_building {
-            std::string name_value;
             std::string file_name;
             std::string attribute_data_file_name;
-            bool is_shadow_flag;
+            bool is_shadow_flag = false;
         };
 
         struct property_effect {
-            std::string name_value;
             std::string file_name;
         };
 
@@ -48,33 +40,18 @@ namespace metin2::inline world::inline maps {
             AMBIENCE_PLAY_TYPE_MAX_NUM,
         };
 
-        const char c_szPlayTypeName[AMBIENCE_PLAY_TYPE_MAX_NUM][8] =
-            {
-                "ONCE",
-                "STEP",
-                "LOOP",
-        };
-
         struct property_ambience {
-            std::string name_value;
-            std::string play_type;
-
-            float play_interval;
-            float play_interval_variation;
-            float max_volume_area_percentage;
+            ambience_play_type play_type = AMBIENCE_PLAY_TYPE_ONCE;
+            float play_interval = 0.0f;
+            float play_interval_variation = 0.0f;
+            float max_volume_area_percentage = 0.0f;
             std::vector<std::string> ambience_sound_vector;
         };
 
         struct property_dungeon_block {
-            std::string name_value;
             std::string file_name;
             std::string attribute_data_file_name;
         };
-
-        auto property_building_string_to_data(property *property, property_building *data) -> bool;
-        auto property_effect_string_to_data(property *property, property_effect *data) -> bool;
-        auto property_ambience_string_to_data(property *property, property_ambience *data) -> bool;
-        auto property_dungeon_block_string_to_data(property *property, property_dungeon_block *data) -> bool;
     };
 
     enum {

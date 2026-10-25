@@ -618,7 +618,7 @@ namespace metin2::inline client::inline app {
         python_skill &skill_mgr = get_python_skill();
         python_network_stream &net_stream = get_python_network_stream();
 
-        const auto locale_file = [](const char *name) { return std::format("{}/{}", LOCALE_DIR, name); };
+        const auto locale_file = [](const char *name) { return std::format("{}{}", LOCALE_DIR, name); };
         const std::string item_list = locale_file("item_list.txt");
         const std::string item_proto = locale_file("item_proto");
         const std::string item_desc = locale_file("itemdesc.txt");

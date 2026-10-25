@@ -1,114 +1,110 @@
-#include <metin2/core/parse.h>
-#include <metin2/core/utils.h>
-#include <metin2/log/log.h>
-#include <string.h>
-
-#include <metin2/core/file_loader.h>
 #include "property.h"
-#include "property_manager.h"
+
+#include <metin2/core/file_name.h>
+#include <metin2/files/asset_toml.h>
+
+#include <array>
 
 namespace metin2::inline world::inline maps {
-    // Property file format: a fourcc, then \r\n, then the text file loader's format.
-    property::property(const char *file_name) : mc_file_name_(nullptr), crc_(0) {
-        file_name_ = file_name;
-        string_path(file_name_);
 
-        mc_file_name_ = strrchr(file_name_.c_str(), '/');
+    namespace {
+        constexpr std::array<std::string_view, property_types::PROPERTY_TYPE_MAX_NUM> kKindTables = {
+            "", "tree", "building", "effect", "ambience", "dungeon_block"};
+        constexpr std::array<std::string_view, property_types::AMBIENCE_PLAY_TYPE_MAX_NUM> kPlayTypes = {"Once", "Step", "Loop"};
 
-        if (!mc_file_name_)
-            mc_file_name_ = file_name_.c_str();
-        else
-            ++mc_file_name_;
-    }
-
-    property::~property() = default;
-
-    auto property::get_crc() -> uint32_t {
-        return crc_;
-    }
-
-    auto property::file_name() -> const char * {
-        return (file_name_.c_str());
-    }
-
-    auto property::string(const char *key, const char **string) -> bool {
-        std::string temp_key = key;
-        stl_lowers(temp_key);
-        auto it = token_map_.find(temp_key.c_str());
-
-        if (token_map_.end() == it)
-            return false;
-
-        *string = it->second[0].c_str();
-        return true;
-    }
-
-    auto property::size() -> uint32_t {
-        return token_map_.size();
-    }
-
-    auto property::vector(const char *key, token_vector &token_vector_value) -> bool {
-        std::string temp_key = key;
-        stl_lowers(temp_key);
-        auto it = token_map_.find(temp_key.c_str());
-
-        if (token_map_.end() == it)
-            return false;
-
-        // Copying with std::copy crashed here, so the tokens are copied one by one.
-        token_vector &source_token_vector = it->second;
-        auto itor = source_token_vector.begin();
-        for (; itor != source_token_vector.end(); ++itor) {
-            token_vector_value.push_back(*itor);
+        auto attribute_file_name(std::string model_file_name) -> std::string {
+            return file_name_helper::no_extension(model_file_name) + ".mdatr";
         }
-
-        return true;
     }
 
-    void property::put_vector(const char *key, const token_vector &token_vector) {
-        std::string temp_key = key;
-        stl_lowers(temp_key);
+    property::property(std::string_view file_name) : file_name_(file_name) {}
 
-        token_map_.insert(token_vector_map::value_type(temp_key, token_vector));
-    }
-
-    auto property::read_from_memory(const void *c_pv_data, int len, const char *file_name) -> bool {
-        const char *pc_data = (const char *)c_pv_data;
-
-        if (*(uint32_t *)pc_data != MAKEFOURCC('Y', 'P', 'R', 'T'))
-            return false;
-
-        pc_data += sizeof(uint32_t);
-
-        if (*pc_data != '\r' || *(pc_data + 1) != '\n') {
-            metin2::log::error("Property {}: bad file format after the FourCC", file_name);
+    auto property::load(std::string_view text) -> bool {
+        const auto table = parse_asset_toml(text, file_name_, "Property");
+        if (!table) {
             return false;
         }
 
-        pc_data += 2;
+        asset_table root(*table, file_name_);
+        root.table("asset");
+        if (const toml::table *header = root.table("property")) {
+            asset_table values(*header, file_name_);
+            values.required("id", crc_);
+            values.required("name", name_);
+            if (!values.finish()) {
+                return false;
+            }
+        } else {
+            root.error("property", "is missing");
+        }
 
-        token_vector token_vector;
-        memory_text_file_loader text_file_loader;
-        text_file_loader.bind(len - (sizeof(uint32_t) + 2), pc_data);
-
-        crc_text_ = text_file_loader.line_string(0);
-        crc_ = metin2::to_number<int>(crc_text_.c_str());
-
-        for (uint32_t i = 1; i < text_file_loader.line_count(); ++i) {
-            if (!text_file_loader.split_line(i, &token_vector))
+        const toml::table *kind = nullptr;
+        for (size_t i = 1; i < kKindTables.size(); ++i) {
+            const toml::table *found = root.table(kKindTables[i]);
+            if (!found) {
                 continue;
-
-            stl_lowers(token_vector[0]);
-            std::string key = token_vector[0];
-
-            token_vector.erase(token_vector.begin());
-            put_vector(key.c_str(), token_vector);
+            }
+            if (kind) {
+                root.error(kKindTables[i], "is a second kind table; a property has one");
+                return false;
+            }
+            kind = found;
+            type_ = static_cast<property_types::property_type>(i);
+        }
+        if (!kind) {
+            root.error("", "has no kind table ([tree], [building], [effect], [ambience] or [dungeon_block])");
+            return false;
         }
 
-        return true;
-    }
+        asset_table values(*kind, file_name_);
+        switch (type_) {
+        case property_types::PROPERTY_TYPE_TREE:
+            values.required("file", tree_.file_name);
+            break;
 
-    void property::clear() {
-        token_map_.clear();
+        case property_types::PROPERTY_TYPE_BUILDING:
+            values.required("file", building_.file_name);
+            values.optional("shadow", building_.is_shadow_flag);
+            building_.attribute_data_file_name = attribute_file_name(building_.file_name);
+            break;
+
+        case property_types::PROPERTY_TYPE_EFFECT:
+            values.required("file", effect_.file_name);
+            break;
+
+        case property_types::PROPERTY_TYPE_AMBIENCE:
+            {
+                int play_type = 0;
+                values.required_enum("play_type", kPlayTypes, play_type);
+                ambience_.play_type = static_cast<property_types::ambience_play_type>(play_type);
+                values.required("interval", ambience_.play_interval);
+                values.required("interval_variation", ambience_.play_interval_variation);
+                values.optional("max_volume_area_percentage", ambience_.max_volume_area_percentage);
+                if (const toml::array *sounds = values.array("sounds")) {
+                    for (const toml::node &node : *sounds) {
+                        const auto sound = node.value_exact<std::string>();
+                        if (!sound) {
+                            values.error("sounds", "must be an array of strings");
+                            break;
+                        }
+                        ambience_.ambience_sound_vector.push_back(*sound);
+                    }
+                } else {
+                    values.error("sounds", "is missing");
+                }
+                break;
+            }
+
+        case property_types::PROPERTY_TYPE_DUNGEON_BLOCK:
+            values.required("file", dungeon_block_.file_name);
+            dungeon_block_.attribute_data_file_name = attribute_file_name(dungeon_block_.file_name);
+            break;
+
+        default:
+            break;
+        }
+
+        const bool kind_ok = values.finish();
+        return root.finish() && kind_ok;
     }
 }

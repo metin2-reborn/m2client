@@ -13,6 +13,7 @@ namespace metin2::inline effects {
 }
 
 namespace metin2::inline world::inline maps {
+    class property;
 
     class area {
       public:
@@ -220,11 +221,11 @@ namespace metin2::inline world::inline maps {
         void clear_destroy_object_instance(object_instance *object_instance_value);
 
         void set_object_instance(object_instance *object_instance_value, const object_data *data);
-        void set_object_instance_set_tree(object_instance *object_instance_value, const object_data *data, property *property);
-        void set_object_instance_set_building(object_instance *object_instance_value, const object_data *data, property *property);
-        void set_object_instance_set_effect(object_instance *object_instance_value, const object_data *data, property *property);
-        void set_object_instance_set_ambience(object_instance *object_instance_value, const object_data *data, property *property);
-        void set_object_instance_set_dungeon_block(object_instance *object_instance_value, const object_data *data, property *property);
+        void set_object_instance_set_tree(object_instance *object_instance_value, const object_data *data, const property *property);
+        void set_object_instance_set_building(object_instance *object_instance_value, const object_data *data, const property *property);
+        void set_object_instance_set_effect(object_instance *object_instance_value, const object_data *data, const property *property);
+        void set_object_instance_set_ambience(object_instance *object_instance_value, const object_data *data, const property *property);
+        void set_object_instance_set_dungeon_block(object_instance *object_instance_value, const object_data *data, const property *property);
 
       protected:
         object_data_vector object_data_vector_value_;

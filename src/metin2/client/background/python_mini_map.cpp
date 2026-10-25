@@ -706,7 +706,7 @@ namespace metin2::inline client::inline background {
 
         auto &map = background.map_outdoor_ref();
 
-        const std::string atlas_mark_info_file_name = std::format("{}/map/{}_point.txt", LOCALE_DIR, map.get_name());
+        const std::string atlas_mark_info_file_name = std::format("{}map/{}_point.txt", LOCALE_DIR, map.get_name());
 
         token_vector_map token_vector_map;
 

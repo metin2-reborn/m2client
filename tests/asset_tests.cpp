@@ -3,7 +3,9 @@
 #include <metin2/effects/effect_data.h>
 #include <metin2/files/asset_toml.h>
 #include <metin2/files/eter_file_manager.h>
+#include <metin2/sound/type.h>
 #include <metin2/world/actors/race_motion_data.h>
+#include <metin2/world/maps/property.h>
 
 #include <string>
 
@@ -43,9 +45,9 @@ TEST(parse_path_resolves_old_names_to_the_new_archives) {
 }
 
 TEST(sound_script_name_follows_the_old_sound_folders) {
-    CHECK_EQ(eter_file_manager::sound_script_name("character:pc/warrior/wait.toml"), std::string("sound/pc/warrior/wait.mss"));
-    CHECK_EQ(eter_file_manager::sound_script_name("d:/ymir work/pc/warrior/wait.msa"), std::string("sound/pc/warrior/wait.mss"));
-    CHECK_EQ(eter_file_manager::sound_script_name("effect:etc/levelup_1/levelup.toml"), std::string("sound/effect/etc/levelup_1/levelup.mss"));
+    CHECK_EQ(eter_file_manager::sound_script_name("character:pc/warrior/wait.toml"), std::string("sound:pc/warrior/wait.toml"));
+    CHECK_EQ(eter_file_manager::sound_script_name("d:/ymir work/pc/warrior/wait.msa"), std::string("sound:pc/warrior/wait.toml"));
+    CHECK_EQ(eter_file_manager::sound_script_name("effect:etc/levelup_1/levelup.toml"), std::string("sound:effect/etc/levelup_1/levelup.toml"));
     CHECK(eter_file_manager::sound_script_name("season1/monster/x/wait.toml").empty());
 }
 
@@ -329,4 +331,86 @@ TEST(effect_rejects_bad_scripts) {
         "a.toml"));
     effect_data motion;
     CHECK(!motion.load("[asset]\ntype = \"Motion\"\n", "a.toml"));
+}
+
+TEST(sound_script_reads_the_sounds_in_order) {
+    sound_types::sound_data_vector sounds;
+    CHECK(sound_types::load_sound_script("[asset]\ntype = \"SoundScript\"\n"
+                                         "[[sound]]\ntime = 0.5\nfile = \"sound:pc/a.wav\"\n"
+                                         "[[sound]]\ntime = 0.25\nfile = \"sound:common/b.wav\"\n",
+        "a.toml", sounds));
+    CHECK_EQ(sounds.size(), std::size_t{2});
+    CHECK_EQ(sounds[0].time, 0.5f);
+    CHECK_EQ(sounds[0].sound_file_name, std::string("sound:pc/a.wav"));
+    CHECK_EQ(sounds[1].sound_file_name, std::string("sound:common/b.wav"));
+
+    CHECK(sound_types::load_sound_script("[asset]\ntype = \"SoundScript\"\n", "a.toml", sounds));
+    CHECK(sounds.empty());
+}
+
+TEST(sound_script_rejects_bad_scripts) {
+    sound_types::sound_data_vector sounds;
+    CHECK(!sound_types::load_sound_script("[asset]\ntype = \"Motion\"\n", "a.toml", sounds));
+    CHECK(!sound_types::load_sound_script("ScriptType CharacterSoundInformation\n", "a.mss", sounds));
+    CHECK(!sound_types::load_sound_script("[asset]\ntype = \"SoundScript\"\n[[sound]]\ntime = 0.5\n", "a.toml", sounds));
+    CHECK(!sound_types::load_sound_script("[asset]\ntype = \"SoundScript\"\n[[sound]]\ntime = \"x\"\nfile = \"a.wav\"\n", "a.toml", sounds));
+}
+
+namespace {
+    constexpr std::string_view kPropertyHeader = "[asset]\ntype = \"Property\"\n[property]\nid = 3000000000\nname = \"House\"\n";
+
+    auto load_property(std::string_view kind) -> std::optional<property> {
+        property p("property:a.toml");
+        if (!p.load(std::string(kPropertyHeader) + std::string(kind))) {
+            return std::nullopt;
+        }
+        return p;
+    }
+}
+
+TEST(property_reads_every_kind) {
+    const auto building = load_property("[building]\nfile = \"zone:b/house.gr2\"\nshadow = true\n");
+    CHECK(building.has_value());
+    CHECK_EQ(building->crc(), uint32_t{3000000000});
+    CHECK_EQ(building->name(), std::string("House"));
+    CHECK_EQ(building->type(), property_types::PROPERTY_TYPE_BUILDING);
+    CHECK_EQ(building->building().file_name, std::string("zone:b/house.gr2"));
+    CHECK_EQ(building->building().attribute_data_file_name, std::string("zone:b/house.mdatr"));
+    CHECK(building->building().is_shadow_flag);
+
+    const auto tree = load_property("[tree]\nfile = \"d:/ymir work/tree/a.spt\"\n");
+    CHECK(tree.has_value());
+    CHECK_EQ(tree->type(), property_types::PROPERTY_TYPE_TREE);
+    CHECK_EQ(tree->tree().file_name, std::string("d:/ymir work/tree/a.spt"));
+
+    const auto effect = load_property("[effect]\nfile = \"effect:background/a.toml\"\n");
+    CHECK(effect.has_value());
+    CHECK_EQ(effect->type(), property_types::PROPERTY_TYPE_EFFECT);
+    CHECK_EQ(effect->effect().file_name, std::string("effect:background/a.toml"));
+
+    const auto block = load_property("[dungeon_block]\nfile = \"zone:dungeon/a.gr2\"\n");
+    CHECK(block.has_value());
+    CHECK_EQ(block->type(), property_types::PROPERTY_TYPE_DUNGEON_BLOCK);
+    CHECK_EQ(block->dungeon_block().attribute_data_file_name, std::string("zone:dungeon/a.mdatr"));
+
+    const auto ambience = load_property("[ambience]\nplay_type = \"Step\"\ninterval = 2.0\ninterval_variation = 0.5\n"
+                                        "sounds = [\"sound:ambience/a.wav\", \"sound:ambience/b.wav\"]\n");
+    CHECK(ambience.has_value());
+    CHECK_EQ(ambience->type(), property_types::PROPERTY_TYPE_AMBIENCE);
+    CHECK_EQ(ambience->ambience().play_type, property_types::AMBIENCE_PLAY_TYPE_STEP);
+    CHECK_EQ(ambience->ambience().play_interval, 2.0f);
+    CHECK_EQ(ambience->ambience().max_volume_area_percentage, 0.0f); // missing: 0
+    CHECK_EQ(ambience->ambience().ambience_sound_vector.size(), std::size_t{2});
+}
+
+TEST(property_rejects_bad_scripts) {
+    CHECK(!load_property("").has_value());
+    CHECK(!load_property("[tree]\nfile = \"a.spt\"\n[effect]\nfile = \"a.toml\"\n").has_value());
+    CHECK(!load_property("[building]\n").has_value());
+    CHECK(!load_property("[ambience]\nplay_type = \"LOOP\"\ninterval = 0.0\ninterval_variation = 0.0\nsounds = []\n").has_value());
+
+    property no_id("property:a.toml");
+    CHECK(!no_id.load("[asset]\ntype = \"Property\"\n[property]\nname = \"a\"\n[tree]\nfile = \"a.spt\"\n"));
+    property old("property:a.prb");
+    CHECK(!old.load("YPRT\r\n1430790742\r\npropertytype\t\"Tree\"\r\n"));
 }

@@ -374,12 +374,7 @@ namespace metin2::inline world::inline maps {
         if (!get_property_manager().get(data->crc, &property))
             return;
 
-        const char *property_type;
-
-        if (!property->string("PropertyType", &property_type))
-            return;
-
-        switch (property_types::get_property_type(property_type)) {
+        switch (property->type()) {
         case property_types::PROPERTY_TYPE_TREE:
             set_object_instance_set_tree(object_instance_value, data, property);
             break;
@@ -399,14 +394,15 @@ namespace metin2::inline world::inline maps {
         case property_types::PROPERTY_TYPE_DUNGEON_BLOCK:
             set_object_instance_set_dungeon_block(object_instance_value, data, property);
             break;
+
+        case property_types::PROPERTY_TYPE_NONE:
+        case property_types::PROPERTY_TYPE_MAX_NUM:
+            break;
         }
     }
 
-    void area::set_object_instance_set_effect(object_instance *object_instance_value, const object_data *c_p_data, property *property) {
-        property_types::property_effect data;
-        if (!property_types::property_effect_string_to_data(property, &data))
-            return;
-
+    void area::set_object_instance_set_effect(object_instance *object_instance_value, const object_data *c_p_data, const property *property) {
+        const property_types::property_effect &data = property->effect();
         object_instance_value->type_value = property_types::PROPERTY_TYPE_EFFECT;
         object_instance_value->effect_id = get_case_crc32(data.file_name.c_str(), data.file_name.size());
         effect_manager &rem = get_effect_manager();
@@ -435,17 +431,13 @@ namespace metin2::inline world::inline maps {
         effect_instance_map_value_.insert(effect_instance_map::value_type(object_instance_value->effect_instance_index, effect_instance));
     }
 
-    void area::set_object_instance_set_tree(object_instance *object_instance_value, const object_data *data, property *property) {
-        const char *tree_name;
-        if (!property->string("TreeFile", &tree_name))
-            return;
-
+    void area::set_object_instance_set_tree(object_instance *object_instance_value, const object_data *data, const property *property) {
         object_instance_value->set_tree(
             data->position_value.x,
             data->position_value.y,
             data->position_value.z + data->height_bias,
             data->crc,
-            tree_name);
+            property->tree().file_name.c_str());
     }
 
     void area::object_instance::set_tree(float x, float y, float z, uint32_t tree_crc, const char *tree_name) {
@@ -454,11 +446,8 @@ namespace metin2::inline world::inline maps {
         type_value = property_types::PROPERTY_TYPE_TREE;
     }
 
-    void area::set_object_instance_set_building(object_instance *object_instance_value, const object_data *c_p_data, property *property) {
-        property_types::property_building data;
-        if (!property_types::property_building_string_to_data(property, &data))
-            return;
-
+    void area::set_object_instance_set_building(object_instance *object_instance_value, const object_data *c_p_data, const property *property) {
+        const property_types::property_building &data = property->building();
         resource_manager &res_mgr = get_resource_manager();
 
         auto *thing = (graphic_thing *)res_mgr.resource_pointer(data.file_name.c_str());
@@ -518,10 +507,9 @@ namespace metin2::inline world::inline maps {
         thing->release();
     }
 
-    void area::set_object_instance_set_ambience(object_instance *object_instance_value, const object_data *data, property *property) {
+    void area::set_object_instance_set_ambience(object_instance *object_instance_value, const object_data *data, const property *property) {
         object_instance_value->ambience_instance_value = ambience_instance_pool_.alloc();
-        if (!property_types::property_ambience_string_to_data(property, &object_instance_value->ambience_instance_value->ambience_data))
-            return;
+        object_instance_value->ambience_instance_value->ambience_data = property->ambience();
 
         object_instance_value->type_value = property_types::PROPERTY_TYPE_AMBIENCE;
 
@@ -532,20 +520,23 @@ namespace metin2::inline world::inline maps {
         ambience_instance_value->range = data->range;
         ambience_instance_value->max_volume_area_percentage = data->max_volume_area_percentage;
 
-        if (0 == ambience_instance_value->ambience_data.play_type.compare("ONCE")) {
+        switch (ambience_instance_value->ambience_data.play_type) {
+        case property_types::AMBIENCE_PLAY_TYPE_ONCE:
             ambience_instance_value->update_fn_value = &ambience_instance::update_once_sound;
-        } else if (0 == ambience_instance_value->ambience_data.play_type.compare("STEP")) {
+            break;
+        case property_types::AMBIENCE_PLAY_TYPE_STEP:
             ambience_instance_value->update_fn_value = &ambience_instance::update_step_sound;
-        } else if (0 == ambience_instance_value->ambience_data.play_type.compare("LOOP")) {
+            break;
+        case property_types::AMBIENCE_PLAY_TYPE_LOOP:
             ambience_instance_value->update_fn_value = &ambience_instance::update_loop_sound;
+            break;
+        case property_types::AMBIENCE_PLAY_TYPE_MAX_NUM:
+            break;
         }
     }
 
-    void area::set_object_instance_set_dungeon_block(object_instance *object_instance_value, const object_data *c_p_data, property *property) {
-        property_types::property_dungeon_block data;
-        if (!property_types::property_dungeon_block_string_to_data(property, &data))
-            return;
-
+    void area::set_object_instance_set_dungeon_block(object_instance *object_instance_value, const object_data *c_p_data, const property *property) {
+        const property_types::property_dungeon_block &data = property->dungeon_block();
         object_instance_value->type_value = property_types::PROPERTY_TYPE_DUNGEON_BLOCK;
         object_instance_value->dungeon_block_value = dungeon_block_instance_pool_.alloc();
         object_instance_value->dungeon_block_value->load(data.file_name.c_str());
