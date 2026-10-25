@@ -4,6 +4,8 @@
 #include <metin2/world/terrain/area_terrain.h>
 #include "race_data.h"
 
+#include <cmath>
+
 namespace metin2::inline world::inline actors {
 
     enum {
@@ -98,8 +100,9 @@ namespace metin2::inline world::inline actors {
 
         mov_spd_ = mov_spd;
 
+        // Re-issued straight from the move motion: going through the wait motion fired on_stop and
+        // on_move, whose packets ended and restarted the sprint that changed the speed.
         if (is_move_motion()) {
-            stop();
             move();
         }
     }
@@ -432,58 +435,57 @@ namespace metin2::inline world::inline actors {
         movement_.z += fz;
     }
 
-    const float gc_actor_slide_move_speed = 5.0f;
-
     void actor_instance::adjust_dynamic_collision_movement(const actor_instance *actor_instance) {
         if (horse_) {
             horse_->adjust_dynamic_collision_movement(actor_instance);
             return;
         }
 
-        // Pushing overlapping spheres apart let actors penetrate each other when they rubbed, so for
-        // background objects a sphere collision rolls the movement back to the previous position.
-
-        if (is_attacking())
-            return;
-
         uint32_t actor_type = actor_instance->actor_type();
         if ((actor_type == TYPE_BUILDING) || (actor_type == TYPE_OBJECT) || (actor_type == TYPE_DOOR) || (actor_type == TYPE_STONE)) {
             block_movement();
+            return;
+        }
 
-        } else {
-
-            float move_length = math::length(movement_);
-            if (move_length > gc_actor_slide_move_speed)
-                movement_ *= gc_actor_slide_move_speed / move_length;
-
-            auto it_main = body_point_instance_list_.begin();
-            for (; it_main != body_point_instance_list_.end(); ++it_main) {
-                dynamic_sphere_instance_vector &main_sphere_vector = (*it_main).sphere_instance_vector;
-                for (uint32_t i = 0; i < main_sphere_vector.size(); ++i) {
-                    dynamic_sphere_instance &main_sphere = main_sphere_vector[i];
-
-                    auto it_opp = actor_instance->body_point_instance_list_.begin();
-                    for (; it_opp != actor_instance->body_point_instance_list_.end(); ++it_opp) {
-                        sphere_collision_instance s;
-                        s.attribute().radius = it_opp->sphere_instance_vector[0].radius;
-                        s.attribute().position_value = it_opp->sphere_instance_vector[0].position_value;
-                        math::vector3 delta = s.collision_movement_adjust(main_sphere);
-                        movement_ += delta;
-                        main_sphere.position_value += delta;
-
-                        if (delta.x != 0.0f || delta.y != 0.0f || delta.z != 0.0f) {
-                            move_length = math::length(movement_);
-                            if (move_length > gc_actor_slide_move_speed) {
-                                movement_ *= gc_actor_slide_move_speed / move_length;
-                                main_sphere.position_value = main_sphere.last_position;
-                                main_sphere.position_value += movement_;
-                            }
-                        }
+        // Slide along other characters: only the part of the move that heads into a body is dropped,
+        // so a character pressed by several monsters can still walk along or away from them.
+        for (auto &main_point : body_point_instance_list_) {
+            for (const dynamic_sphere_instance &main_sphere : main_point.sphere_instance_vector) {
+                for (const auto &opp_point : actor_instance->body_point_instance_list_) {
+                    if (opp_point.sphere_instance_vector.empty()) {
+                        continue;
                     }
+                    const dynamic_sphere_instance &opp_sphere = opp_point.sphere_instance_vector[0];
+                    const float contact = main_sphere.radius + opp_sphere.radius;
+                    const float ahead_x = main_sphere.last_position.x + movement_.x - opp_sphere.position_value.x;
+                    const float ahead_y = main_sphere.last_position.y + movement_.y - opp_sphere.position_value.y;
+                    if (ahead_x * ahead_x + ahead_y * ahead_y >= contact * contact) {
+                        continue;
+                    }
+                    const float off_x = main_sphere.last_position.x - opp_sphere.position_value.x;
+                    const float off_y = main_sphere.last_position.y - opp_sphere.position_value.y;
+                    const float off_length = std::sqrt(off_x * off_x + off_y * off_y);
+                    if (off_length < contact) {
+                        continue;
+                    }
+                    const float toward = (movement_.x * off_x + movement_.y * off_y) / off_length;
+                    if (toward >= 0.0f) {
+                        continue;
+                    }
+                    movement_.x -= off_x / off_length * toward;
+                    movement_.y -= off_y / off_length * toward;
                 }
             }
         }
+
+        for (auto &main_point : body_point_instance_list_) {
+            for (dynamic_sphere_instance &main_sphere : main_point.sphere_instance_vector) {
+                main_sphere.position_value = main_sphere.last_position + movement_;
+            }
+        }
     }
+
+    const float gc_actor_slide_move_speed = 5.0f;
 
     void actor_instance::adjust_collision_movement(const graphic_object_instance *graphic_object_instance) {
         if (horse_) {

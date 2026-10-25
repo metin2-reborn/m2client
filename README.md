@@ -114,9 +114,9 @@ level = "info"           # "debug", "info", "warn" or "error"
 Rebindable actions and their original keys: `attack` (SPACE), `move_up`/`move_down`/`move_left`/
 `move_right` (arrows) and their `_alt` twins (W/S/A/D), `camera_left`/`camera_right` (Q/E),
 `camera_zoom_in`/`camera_zoom_out` (R/F), `camera_pitch_up`/`camera_pitch_down` (T/G), `pick_up`
-(Z) and `pick_up_alt` (`), `character` (C), `skills` (V), `quests` (N), `inventory` (I),
-`dragon_soul` (O), `map` (M), `chat_log` (L), `mount` (J), `help` (H), `emotions` (B). Two actions
-bound to one key both fire.
+(Z) and `pick_up_alt` (`), `sprint` (LSHIFT, held), `character` (C), `skills` (V), `quests` (N),
+`inventory` (I), `dragon_soul` (O), `map` (M), `chat_log` (L), `mount` (J), `help` (H), `emotions`
+(B). Two actions bound to one key both fire.
 
 A key with a wrong type or an unknown key is reported in `syserr.log` with its line and keeps its
 default; the rest of the file still applies. `python_system::load_config` in

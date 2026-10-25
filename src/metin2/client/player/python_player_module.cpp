@@ -2,6 +2,7 @@
 #include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
 #include "python_player.h"
+#include "python_player_event_handler.h"
 
 namespace metin2::inline client::inline app {
     extern int two_handed_weapon_attack_speed_decrease;
@@ -295,6 +296,16 @@ namespace metin2::inline client::inline player {
 
         python_player &player = get_python_player();
         player.new_set_single_dik_key_state(dik, is_pressed ? true : false);
+        Py_RETURN_NONE;
+    }
+
+    auto player_set_sprint(PyObject *self, PyObject *args) -> PyObject * {
+        int sprint;
+        if (!PyArg_ParseTuple(args, "i", &sprint)) {
+            return nullptr;
+        }
+
+        get_python_player_event_handler().set_sprint(sprint != 0);
         Py_RETURN_NONE;
     }
 
@@ -1694,6 +1705,7 @@ namespace metin2::inline client::inline player {
                 {"set_auto_camera_rotation_speed", player_set_auto_camera_rotation_speed, METH_VARARGS},
                 {"set_attack_key_state", player_set_attack_key_state, METH_VARARGS},
                 {"set_single_dik_key_state", player_set_single_dik_key_state, METH_VARARGS},
+                {"set_sprint", player_set_sprint, METH_VARARGS},
                 {"end_key_walking_immediately", player_end_key_walking_immediately, METH_VARARGS},
                 {"end_mouse_walking", player_end_mouse_walking, METH_VARARGS},
                 {"reset_camera_rotation", player_reset_camera_rotation, METH_VARARGS},

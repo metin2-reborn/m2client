@@ -471,39 +471,29 @@ namespace metin2::inline world::inline actors {
         if (f_distance > 800.0f * 800.0f)
             return false;
 
-        // While attacking or waiting, collision is checked against the defending sphere;
-        // otherwise actors slipped through each other while blending into the wait motion.
-        collision_point_instance_list *main_list;
-        collision_point_instance_list *victim_list;
-        if (is_attacking() || is_waiting()) {
-            main_list = &defending_point_instance_list_;
-            victim_list = &victim.defending_point_instance_list_;
-        } else {
-            main_list = &body_point_instance_list_;
-            victim_list = &victim.body_point_instance_list_;
-        }
-
-        auto itor_main = main_list->begin();
-        auto itor_victim = victim_list->begin();
-        for (; itor_main != main_list->end(); ++itor_main)
-            for (; itor_victim != victim_list->end(); ++itor_victim) {
-                const dynamic_sphere_instance_vector &main_sphere_vector = (*itor_main).sphere_instance_vector;
-                const dynamic_sphere_instance_vector &victim_sphere_vector = (*itor_victim).sphere_instance_vector;
-
-                for (uint32_t i = 0; i < main_sphere_vector.size(); ++i)
-                    for (uint32_t j = 0; j < victim_sphere_vector.size(); ++j) {
-                        const dynamic_sphere_instance &main_sphere = main_sphere_vector[i];
-                        const dynamic_sphere_instance &victim_sphere = victim_sphere_vector[j];
-
-                        if (detect_collision_dynamic_sphere_vs_dynamic_sphere(main_sphere, victim_sphere)) {
-                            if (get_vector3_distance(main_sphere.position_value, victim_sphere.position_value) <=
-                                get_vector3_distance(main_sphere.last_position, victim_sphere.position_value)) {
-                                return true;
-                            }
-                            return false;
+        // Body spheres only: the larger defending spheres touched every monster standing in melee
+        // range, which pinned the player in a pack. A contact counts only when the move goes deeper,
+        // and never against a body already overlapped (a monster that walked in), so it can be left.
+        for (const auto &main_point : body_point_instance_list_) {
+            for (const auto &victim_point : victim.body_point_instance_list_) {
+                for (const dynamic_sphere_instance &main_sphere : main_point.sphere_instance_vector) {
+                    for (const dynamic_sphere_instance &victim_sphere : victim_point.sphere_instance_vector) {
+                        if (!detect_collision_dynamic_sphere_vs_dynamic_sphere(main_sphere, victim_sphere)) {
+                            continue;
+                        }
+                        // get_vector3_distance is the squared distance on the ground plane.
+                        const float contact = main_sphere.radius + victim_sphere.radius;
+                        if (get_vector3_distance(main_sphere.last_position, victim_sphere.position_value) < contact * contact) {
+                            continue;
+                        }
+                        if (get_vector3_distance(main_sphere.position_value, victim_sphere.position_value) <
+                            get_vector3_distance(main_sphere.last_position, victim_sphere.position_value)) {
+                            return true;
                         }
                     }
+                }
             }
+        }
 
         return false;
     }

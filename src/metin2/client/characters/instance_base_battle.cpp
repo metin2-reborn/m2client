@@ -6,6 +6,7 @@
 #include <metin2/client/background/python_background.h>
 #include <metin2/core/random.h>
 #include <metin2/world/terrain/terrain.h>
+#include <vector>
 
 namespace metin2::inline client::inline characters {
     auto new_unsigned_degree_to_signed_degree(float ud) -> float {
@@ -441,36 +442,39 @@ namespace metin2::inline client::inline characters {
         bool using_skill = graphic_thing_instance_value_.is_using_skill();
 
         adv_actor_vid_ = 0;
-        uint32_t collision_count = 0;
 
+        // Every character in the way takes the part of the move heading into it; the move is blocked
+        // only if what is left still runs into one of them.
+        actor_instance &actor_self = graphic_thing_instance_value_;
+        std::vector<actor_instance *> touched;
         python_character_manager &chr_mgr = get_python_character_manager();
         for (python_character_manager::character_iterator i = chr_mgr.character_instance_begin(); i != chr_mgr.character_instance_end(); ++i) {
             instance_base *inst_each = *i;
-            if (inst_each == this)
+            if (inst_each == this) {
                 continue;
+            }
 
-            actor_instance &actor_self = graphic_thing_instance_value_;
             actor_instance &actor_each = inst_each->graphic_thing_instance_ref();
 
             // Doors still block movement while a skill is in use.
-            if (using_skill && !actor_each.is_door())
+            if (using_skill && !actor_each.is_door()) {
                 continue;
+            }
 
             if (actor_self.test_actor_collision(actor_each)) {
-                collision_count++;
-                if (collision_count == 2) {
-                    actor_self.block_movement();
-                    return true;
-                }
                 actor_self.adjust_dynamic_collision_movement(&actor_each);
+                touched.push_back(&actor_each);
+            }
+        }
 
-                if (actor_self.test_actor_collision(actor_each)) {
+        if (!touched.empty()) {
+            for (actor_instance *actor_each : touched) {
+                if (actor_self.test_actor_collision(*actor_each)) {
                     actor_self.block_movement();
                     return true;
-                } else {
-                    new_move_to_dest_pixel_position_direction(new_get_dst_pixel_position_ref());
                 }
             }
+            new_move_to_dest_pixel_position_direction(new_get_dst_pixel_position_ref());
         }
 
         python_background &bg = get_python_background();

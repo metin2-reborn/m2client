@@ -29,6 +29,10 @@ namespace metin2::inline client::inline player {
 
         void flush_victim_list();
 
+        // Held sprint key. The server applies the sprint and its stamina cost; it learns the state from
+        // the FUNC_MOVE argument, so a change is sent with the next move instead of after the resend delay.
+        void set_sprint(bool sprint);
+
       public:
         python_player_event_handler();
 
@@ -47,6 +51,7 @@ namespace metin2::inline client::inline player {
         uint32_t next_waiting_notify_time_;
         uint32_t next_moving_notify_time_;
         pixel_position p_pos_prev_waiting_;
+        bool sprint_ = false;
 
       private:
         class normal_bow_attack_fly_event_handler_auto_clear : public fly_event_handler {

@@ -559,6 +559,11 @@ namespace metin2::inline world::inline actors {
                     return false;
                 }
             }
+            // The player runs on through ordinary hits: the flinch stopped the run while the held
+            // direction key never restarted it, so a pack hitting in turn froze the player in place.
+            if (is_main_ && (next_mot == race_motion_data::NAME_DAMAGE || next_mot == race_motion_data::NAME_DAMAGE_BACK)) {
+                return false;
+            }
 
             if (next_mot != race_motion_data::NAME_RUN &&
                 next_mot != race_motion_data::NAME_WALK &&

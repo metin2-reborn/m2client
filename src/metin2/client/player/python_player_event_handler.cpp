@@ -63,7 +63,7 @@ namespace metin2::inline client::inline player {
         next_moving_notify_time_ = cur_time + 300;
 
         python_network_stream &net_stream = get_python_network_stream();
-        net_stream.send_character_state_packet(state.p_pos_self, state.adv_rot_self, instance_base::FUNC_MOVE, 0);
+        net_stream.send_character_state_packet(state.p_pos_self, state.adv_rot_self, instance_base::FUNC_MOVE, sprint_ ? 1 : 0);
     }
 
     void python_player_event_handler::on_move(const state &state) {
@@ -72,7 +72,7 @@ namespace metin2::inline client::inline player {
         next_moving_notify_time_ = cur_time + 300;
 
         python_network_stream &net_stream = get_python_network_stream();
-        net_stream.send_character_state_packet(state.p_pos_self, state.adv_rot_self, instance_base::FUNC_MOVE, 0);
+        net_stream.send_character_state_packet(state.p_pos_self, state.adv_rot_self, instance_base::FUNC_MOVE, sprint_ ? 1 : 0);
     }
 
     void python_player_event_handler::on_stop(const state &state) {
@@ -156,6 +156,14 @@ namespace metin2::inline client::inline player {
 
         stream.send_sequence();
         vctk_victim_.clear();
+    }
+
+    void python_player_event_handler::set_sprint(bool sprint) {
+        if (sprint == sprint_) {
+            return;
+        }
+        sprint_ = sprint;
+        next_moving_notify_time_ = 0;
     }
 
     python_player_event_handler::python_player_event_handler() {
