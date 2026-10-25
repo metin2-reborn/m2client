@@ -175,8 +175,8 @@ namespace metin2::inline client::inline app {
     void python_system::set_default_config() {
         memset(&config_value_, 0, sizeof(config_value_));
 
-        config_value_.width = 1024;
-        config_value_.height = 768;
+        config_value_.width = 1280;
+        config_value_.height = 720;
         config_value_.bpp = 32;
 
         config_value_.windowed = false;

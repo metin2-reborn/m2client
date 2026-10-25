@@ -1,22 +1,23 @@
 # Login screen walkthrough: server board -> login board -> typed ID/password -> login attempt.
 # Click targets are kept off the exact centre of buttons: the centre pixel belongs to the
-# zero-size text child window (same as on Windows).
+# zero-size text child window (same as on Windows). The targets are for a 1280x720 window.
+resize 1280 720
 waitframes 5
 wait 2500
 screenshot login_00.png
 audio
 # pick channel 1, then "OK" on the server board
-click left 600 346
+click left 760 299
 wait 300
-click left 626 653
+click left 775 606
 wait 1000
 screenshot login_01.png
-# ID field, then password field (LoginBoard at (408,358), edit lines at (77,16)/(77,43), 120x18)
-click left 500 380
+# ID field, then password field (edit lines at (610,324)/(610,351), 120x18)
+click left 660 333
 wait 200
 text "testuser"
 wait 300
-click left 500 407
+click left 660 360
 wait 200
 text "secret"
 wait 500

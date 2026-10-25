@@ -80,8 +80,8 @@ A minimal `metin2.toml`:
 
 ```toml
 [display]
-width = 1024
-height = 768
+width = 1280
+height = 720
 windowed = true
 vsync = true
 fps_limit = 0            # 0: no cap beyond vsync; e.g. 144
