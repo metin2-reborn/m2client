@@ -236,19 +236,25 @@ namespace metin2::inline files {
         return archive_value;
     }
 
-    auto eter_file_manager::find_archive(const std::string &archive_name) -> const archive * {
+    auto eter_file_manager::find_archive(const std::string &archive_name, bool report) -> const archive * {
         std::lock_guard<std::mutex> lock(mutex_value_);
 
         auto it = archives_.find(archive_name);
         if (it == archives_.end()) {
+            // A missing archive is remembered as nullptr, so it is probed only once.
             auto loaded = load_archive(archive_name);
-            if (!loaded)
-                metin2::log::error("Archive {} not found (neither data/{}.zip nor data/{}/)", archive_name.c_str(), archive_name.c_str(), archive_name.c_str());
-
-            // A missing archive is remembered as nullptr, so it is reported and probed only once.
             it = archives_.emplace(archive_name, loaded ? std::make_unique<archive>(std::move(*loaded)) : nullptr).first;
         }
 
+        if (!it->second && report) {
+            std::string key = archive_name;
+            for (char &ch : key) {
+                ch = ascii_tolower(ch);
+            }
+            if (reported_missing_.insert(std::move(key)).second) {
+                metin2::log::error("Archive {} not found (neither data/{}.zip nor data/{}/)", archive_name.c_str(), archive_name.c_str(), archive_name.c_str());
+            }
+        }
         return it->second.get();
     }
 
@@ -266,7 +272,7 @@ namespace metin2::inline files {
             return false;
 
         auto path = parse_path(filename);
-        const archive *archive_value = find_archive(path.archive_value);
+        const archive *archive_value = find_archive(path.archive_value, false);
         return archive_value && archive_value->is_exist(path.path);
     }
 

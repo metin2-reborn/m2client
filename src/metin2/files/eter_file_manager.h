@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -71,11 +72,14 @@ namespace metin2::inline files {
         static auto sound_script_name(std::string_view name) -> std::string;
 
       private:
-        auto find_archive(const std::string &archive_name) -> const archive *;
+        // A missing archive is reported once, by the first lookup with report set; is_exist only asks
+        // (the script importer probes "<module>:__init__.py" for every top-level import).
+        auto find_archive(const std::string &archive_name, bool report = true) -> const archive *;
         auto load_archive(const std::string &archive_name) -> std::optional<archive>;
 
         std::mutex mutex_value_; // guards archives_ (files are read from the loader thread as well)
         archive_map archives_;
+        std::set<std::string, std::less<>> reported_missing_;
     };
 
     auto get_file_manager() -> eter_file_manager &;
