@@ -770,7 +770,7 @@ namespace metin2::inline client::inline background {
         const char *player_mark_file_name = "d:/ymir work/ui/minimap/playermark.sub";
 
         char atlas_file_name[1024 + 1];
-        snprintf(atlas_file_name, sizeof(atlas_file_name), "%s/atlas.sub", map.get_name().c_str());
+        snprintf(atlas_file_name, sizeof(atlas_file_name), "%s", map_file_name(map.get_name(), "atlas.sub").c_str());
         if (!get_file_manager().is_exist(atlas_file_name)) {
             snprintf(atlas_file_name, sizeof(atlas_file_name), "d:/ymir work/ui/atlas/%s/atlas.sub", map.get_name().c_str());
         }

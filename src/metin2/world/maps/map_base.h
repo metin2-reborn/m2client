@@ -1,11 +1,18 @@
 #pragma once
 #include <cstdint>
+#include <format>
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/grp_screen.h>
 #include <string>
+#include <string_view>
 #include "map_type.h"
 
 namespace metin2::inline world::inline maps {
+    // Map data lives in the Maps archive, one folder per map (with its season folder, as the atlas
+    // names it): "Maps:<map>/<file>".
+    inline auto map_file_name(std::string_view map, std::string_view file) -> std::string {
+        return std::format("Maps:{}/{}", map, file);
+    }
 
     class map_base : public screen {
       public:

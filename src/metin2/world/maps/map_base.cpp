@@ -46,7 +46,7 @@ namespace metin2::inline world::inline maps {
     }
 
     auto map_base::load_property() -> bool {
-        std::string file_name = get_name() + "\\MapProperty.txt";
+        std::string file_name = map_file_name(get_name(), "MapProperty.txt");
 
         token_vector_map token_vector_map;
 

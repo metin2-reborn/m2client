@@ -10,20 +10,14 @@
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/log/log.h>
 
+#include <format>
+
 namespace metin2::inline world::inline terrain {
 
     auto map_outdoor::load(float x, float y, float z) -> bool {
         destroy();
 
-        {
-            static std::string old_path_name = "";
-
-            std::string new_path_name = get_name() + "\\cache";
-
-            old_path_name = new_path_name;
-        }
-
-        std::string file_name = map_data_directory() + "\\Setting.txt";
+        std::string file_name = map_file_name(map_data_directory(), "Setting.txt");
 
         if (!load_setting(file_name.c_str())) {
             metin2::log::error("Cannot load map settings {}", file_name.c_str());
@@ -38,7 +32,7 @@ namespace metin2::inline world::inline terrain {
 
         update(x, y, z);
 
-        std::string local_env_data_name = map_data_directory() + "\\" + settings_env_data_name_;
+        std::string local_env_data_name = map_file_name(map_data_directory(), settings_env_data_name_);
         if (get_file_manager().is_exist(local_env_data_name.c_str())) {
             env_data_name_ = local_env_data_name;
         } else {
@@ -136,14 +130,13 @@ namespace metin2::inline world::inline terrain {
         }
 
         uint32_t id = uint32_t(area_coord_x) * 1000 + uint32_t(area_coord_y);
-        char area_path_name[64 + 1];
-        snprintf(area_path_name, sizeof(area_path_name), "%s\\%06u\\", map_data_directory().c_str(), id);
+        const std::string area_path_name = map_file_name(map_data_directory(), std::format("{:06}/", id));
 
         area *area = area::new_value();
         area->set_map_out_door(this);
 
         area->set_coordinate(area_coord_x, area_coord_y);
-        if (!area->load(area_path_name)) {
+        if (!area->load(area_path_name.c_str())) {
             metin2::log::error("Cannot load area ({}, {}): shadow map missing", area_coord_x, area_coord_y);
         }
 
@@ -162,12 +155,12 @@ namespace metin2::inline world::inline terrain {
         uint32_t start_time = el_timer_get_m_sec();
 
         uint32_t id = uint32_t(terrain_coord_x) * 1000 + uint32_t(terrain_coord_y);
-        char filename[256];
-        snprintf(filename, sizeof(filename), "%s\\%06u\\AreaProperty.txt", map_data_directory().c_str(), id);
+        const std::string area_folder = map_file_name(map_data_directory(), std::format("{:06}/", id));
+        const std::string filename = area_folder + "AreaProperty.txt";
 
         token_vector_map token_vector_map;
 
-        if (!load_multiple_text_data(filename, token_vector_map)) {
+        if (!load_multiple_text_data(filename.c_str(), token_vector_map)) {
             metin2::log::error("Cannot load terrain: area property cannot be read");
             return false;
         }
@@ -199,45 +192,37 @@ namespace metin2::inline world::inline terrain {
 
         terrain->copy_setting_from_global_setting();
 
-        char raw_height_fieldname[64 + 1];
-        char water_map_name[64 + 1];
-        char attr_map_name[64 + 1];
-        char shadow_tex_name[64 + 1];
-        char shadow_map_name[64 + 1];
-        char mini_map_tex_name[64 + 1];
-        char splat_name[64 + 1];
+        const std::string raw_height_fieldname = area_folder + "height.raw";
+        const std::string splat_name = area_folder + "tile.raw";
+        const std::string attr_map_name = area_folder + "attr.atr";
+        const std::string water_map_name = area_folder + "water.wtr";
+        const std::string shadow_tex_name = area_folder + "shadowmap.dds";
+        const std::string shadow_map_name = area_folder + "shadowmap.raw";
+        const std::string mini_map_tex_name = area_folder + "minimap.dds";
 
-        snprintf(raw_height_fieldname, sizeof(raw_height_fieldname), "%s\\%06u\\height.raw", map_data_directory().c_str(), id);
-        snprintf(splat_name, sizeof(splat_name), "%s\\%06u\\tile.raw", map_data_directory().c_str(), id);
-        snprintf(attr_map_name, sizeof(attr_map_name), "%s\\%06u\\attr.atr", map_data_directory().c_str(), id);
-        snprintf(water_map_name, sizeof(water_map_name), "%s\\%06u\\water.wtr", map_data_directory().c_str(), id);
-        snprintf(shadow_tex_name, sizeof(shadow_tex_name), "%s\\%06u\\shadowmap.dds", map_data_directory().c_str(), id);
-        snprintf(shadow_map_name, sizeof(shadow_map_name), "%s\\%06u\\shadowmap.raw", map_data_directory().c_str(), id);
-        snprintf(mini_map_tex_name, sizeof(mini_map_tex_name), "%s\\%06u\\minimap.dds", map_data_directory().c_str(), id);
-
-        if (!terrain->load_water_map(water_map_name)) {
+        if (!terrain->load_water_map(water_map_name.c_str())) {
             metin2::log::error("Cannot load terrain ({}, {}): water map missing", terrain_coord_x, terrain_coord_y);
         }
 
-        if (!terrain->load_height_map(raw_height_fieldname)) {
+        if (!terrain->load_height_map(raw_height_fieldname.c_str())) {
             metin2::log::error("Cannot load terrain ({}, {}): height map missing", terrain_coord_x, terrain_coord_y);
         }
 
-        if (!terrain->load_attr_map(attr_map_name)) {
+        if (!terrain->load_attr_map(attr_map_name.c_str())) {
             metin2::log::error("Cannot load terrain ({}, {}): attribute map missing", terrain_coord_x, terrain_coord_y);
         }
 
-        if (!terrain->raw_load_tile_map(splat_name)) {
+        if (!terrain->raw_load_tile_map(splat_name.c_str())) {
             metin2::log::error("Cannot load terrain ({}, {}): tile map missing", terrain_coord_x, terrain_coord_y);
         }
 
-        terrain->load_shadow_texture(shadow_tex_name);
+        terrain->load_shadow_texture(shadow_tex_name.c_str());
 
-        if (!terrain->load_shadow_map(shadow_map_name)) {
+        if (!terrain->load_shadow_map(shadow_map_name.c_str())) {
             metin2::log::error("Cannot load terrain ({}, {}): shadow map missing", terrain_coord_x, terrain_coord_y);
         }
 
-        terrain->load_mini_map_texture(mini_map_tex_name);
+        terrain->load_mini_map_texture(mini_map_tex_name.c_str());
         terrain->set_name(area_name.c_str());
         terrain->calculate_terrain_patch();
 
