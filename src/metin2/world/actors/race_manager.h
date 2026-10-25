@@ -30,7 +30,7 @@ namespace metin2::inline world::inline actors {
 
       protected:
         auto load_race_data_impl(uint32_t race_index) -> race_data *;
-        auto load_race_motion_list(race_data &race_data, const char *path_name, const char *motion_list_file_name) -> bool;
+        void load_race_motion_list(race_data &race_data);
 
         void initialize_impl();
         void destroy_race_data_map();

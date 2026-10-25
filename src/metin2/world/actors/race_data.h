@@ -105,6 +105,13 @@ namespace metin2::inline world::inline actors {
             std::vector<skin> vct_skin;
         };
 
+        // A [[motion]] of the race script, registered in the general mode when the race loads.
+        struct motion_entry {
+            uint16_t index;
+            std::string file_name;
+            uint8_t percentage;
+        };
+
       public:
         static auto new_value() -> race_data *;
         static void delete_value(race_data *race_data);
@@ -117,7 +124,7 @@ namespace metin2::inline world::inline actors {
 
         void destroy();
 
-        auto motion_list_file_name() const -> const char *;
+        auto motion_list() const -> const std::vector<motion_entry> & { return motion_list_; }
         auto base_model_thing() -> graphic_thing *;
         auto lod_model_thing() -> graphic_thing *;
         auto attribute_data_ptr() -> attribute_data *;
@@ -189,7 +196,7 @@ namespace metin2::inline world::inline actors {
         std::string base_model_file_name_;
         std::string tree_file_name_;
         std::string attribute_file_name_;
-        std::string motion_list_file_name_;
+        std::vector<motion_entry> motion_list_;
         std::string smoke_bone_name_;
 
         model_data_map model_data_map_value_;

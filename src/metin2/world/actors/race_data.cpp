@@ -340,10 +340,6 @@ namespace metin2::inline world::inline actors {
         return true;
     }
 
-    auto race_data::motion_list_file_name() const -> const char * {
-        return motion_list_file_name_.c_str();
-    }
-
     auto race_data::base_model_thing() -> graphic_thing * {
         if (!base_model_thing_) {
             base_model_thing_ = (graphic_thing *)get_resource_manager().resource_pointer(base_model_file_name_.c_str());
@@ -400,7 +396,7 @@ namespace metin2::inline world::inline actors {
         base_model_file_name_ = "";
         tree_file_name_ = "";
         attribute_file_name_ = "";
-        motion_list_file_name_ = "motlist.txt";
+        motion_list_.clear();
 
         attaching_bone_name_map_value_.clear();
         model_data_map_value_.clear();
@@ -428,7 +424,7 @@ namespace metin2::inline world::inline actors {
     }
 
     void race_data::initialize_impl() {
-        motion_list_file_name_ = "motlist.txt";
+        motion_list_.clear();
 
         base_model_thing_ = nullptr;
         lod_model_thing_ = nullptr;

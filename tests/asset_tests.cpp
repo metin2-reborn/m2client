@@ -475,7 +475,6 @@ type = "Race"
 
 [race]
 model = "character:pc/warrior/warrior.gr2"
-motion_list = "motlist_range.txt"
 smoke_bone = "ore"
 
 [[shape]]
@@ -503,12 +502,21 @@ model_index = 1
 bone = ""
 effect = "effect:etc/a.toml"
 position = [1.0, 2.0, 3.0]
+
+[[motion]]
+name = "Wait"
+file = "character:monster/wolf/00.toml"
+percent = 70
+
+[[motion]]
+name = "Skill2"
+file = "character:monster/wolf/41.toml"
+percent = 100
 )";
 
     struct race_view : race_data {
         using race_data::attaching_data_vector_value_;
         using race_data::base_model_file_name_;
-        using race_data::motion_list_file_name_;
         using race_data::smoke_bone_name_;
     };
 }
@@ -517,7 +525,6 @@ TEST(race_reads_every_part) {
     race_view race;
     CHECK(race.load(kRaceText, "a.toml"));
     CHECK_EQ(race.base_model_file_name_, std::string("character:pc/warrior/warrior.gr2"));
-    CHECK_EQ(race.motion_list_file_name_, std::string("motlist_range.txt"));
     CHECK_EQ(race.smoke_bone_name_, std::string("ore"));
 
     const race_data::shape *shape = race.find_shape(3);
@@ -541,6 +548,12 @@ TEST(race_reads_every_part) {
     CHECK_EQ(effect.effect_data_value->file_name, std::string("effect:etc/a.toml"));
     CHECK_EQ(effect.effect_data_value->position_value.z, 3.0f);
     CHECK_EQ(effect.effect_data_value->rotation.x, 0.0f);
+
+    CHECK_EQ(race.motion_list().size(), std::size_t{2});
+    CHECK_EQ(race.motion_list()[0].index, uint16_t{race_motion_data::NAME_WAIT});
+    CHECK_EQ(race.motion_list()[0].file_name, std::string("character:monster/wolf/00.toml"));
+    CHECK_EQ(race.motion_list()[0].percentage, uint8_t{70});
+    CHECK_EQ(race.motion_list()[1].index, uint16_t{race_motion_data::NAME_SKILL + 122});
 }
 
 TEST(race_rejects_bad_scripts) {
@@ -554,6 +567,13 @@ TEST(race_rejects_bad_scripts) {
         "a.toml"));
     race_data shape_without_model;
     CHECK(!shape_without_model.load("[asset]\ntype = \"Race\"\n[race]\n[[shape]]\nindex = 0\n", "a.toml"));
+    const std::string motion = "[asset]\ntype = \"Race\"\n[race]\n[[motion]]\nfile = \"a.toml\"\npercent = 100\n";
+    race_data unknown_motion;
+    CHECK(!unknown_motion.load(motion + "name = \"Fly\"\n", "a.toml"));
+    race_data motion_without_name;
+    CHECK(!motion_without_name.load(motion, "a.toml"));
+    race_data big_percent;
+    CHECK(!big_percent.load("[asset]\ntype = \"Race\"\n[race]\n[[motion]]\nname = \"Wait\"\nfile = \"a.toml\"\npercent = 300\n", "a.toml"));
     race_data old;
     CHECK(!old.load("ScriptType RaceDataScript\nBaseModelFileName \"a.gr2\"\n", "a.msm"));
 }

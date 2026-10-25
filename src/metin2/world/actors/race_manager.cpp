@@ -1,5 +1,4 @@
 #include "race_manager.h"
-#include <metin2/core/file_loader.h>
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/log/log.h>
 #include "race_motion_data.h"
@@ -93,9 +92,7 @@ namespace metin2::inline world::inline actors {
         if (c_rst_race_name[0] == '#') {
             const char *path_name = c_rst_race_name.c_str() + 1;
             char shape_file_name[256];
-            char motion_list_file_name[256];
             snprintf(shape_file_name, sizeof(shape_file_name), "%sshape.toml", path_name);
-            snprintf(motion_list_file_name, sizeof(motion_list_file_name), "%smotlist.txt", path_name);
 
             race_data *race_data = race_data::new_value();
             race_data->set_race(race_index);
@@ -105,7 +102,7 @@ namespace metin2::inline world::inline actors {
                 return nullptr;
             }
 
-            load_race_motion_list(*race_data, path_name, motion_list_file_name);
+            load_race_motion_list(*race_data);
 
             return race_data;
         }
@@ -142,10 +139,7 @@ namespace metin2::inline world::inline actors {
                 return nullptr;
             }
 
-            std::string st_motion_list_file_name = full_path_name;
-            st_motion_list_file_name += race_data->motion_list_file_name();
-
-            load_race_motion_list(*race_data, full_path_name.c_str(), st_motion_list_file_name.c_str());
+            load_race_motion_list(*race_data);
 
             return race_data;
         }
@@ -154,142 +148,16 @@ namespace metin2::inline world::inline actors {
         return nullptr;
     }
 
-    auto race_manager::load_race_motion_list(race_data &race_data, const char *path_name, const char *motion_list_file_name) -> bool {
-        static std::map<std::string, uint32_t> map_type_index;
-        static bool is_init = false;
-
-        if (!is_init) {
-            is_init = true;
-
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SPAWN", race_motion_data::NAME_SPAWN));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("WAIT", race_motion_data::NAME_WAIT));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("WAIT1", race_motion_data::NAME_WAIT));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("WAIT2", race_motion_data::NAME_WAIT));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("WALK", race_motion_data::NAME_WALK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("WALK1", race_motion_data::NAME_WALK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("WALK2", race_motion_data::NAME_WALK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("RUN", race_motion_data::NAME_RUN));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("RUN1", race_motion_data::NAME_RUN));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("RUN2", race_motion_data::NAME_RUN));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("STOP", race_motion_data::NAME_STOP));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("DEAD", race_motion_data::NAME_DEAD));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("COMBO_ATTACK", race_motion_data::NAME_COMBO_ATTACK_1));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("COMBO_ATTACK1", race_motion_data::NAME_COMBO_ATTACK_2));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("COMBO_ATTACK2", race_motion_data::NAME_COMBO_ATTACK_3));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("NORMAL_ATTACK", race_motion_data::NAME_NORMAL_ATTACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("NORMAL_ATTACK1", race_motion_data::NAME_NORMAL_ATTACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("NORMAL_ATTACK2", race_motion_data::NAME_NORMAL_ATTACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_DAMAGE", race_motion_data::NAME_DAMAGE));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_DAMAGE1", race_motion_data::NAME_DAMAGE));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_DAMAGE2", race_motion_data::NAME_DAMAGE));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_DAMAGE3", race_motion_data::NAME_DAMAGE));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_DEAD", race_motion_data::NAME_DEAD));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_DEAD1", race_motion_data::NAME_DEAD));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_DEAD2", race_motion_data::NAME_DEAD));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_KNOCKDOWN", race_motion_data::NAME_DAMAGE_FLYING));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_KNOCKDOWN1", race_motion_data::NAME_DAMAGE_FLYING));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_STANDUP", race_motion_data::NAME_STAND_UP));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("FRONT_STANDUP1", race_motion_data::NAME_STAND_UP));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("BACK_DAMAGE", race_motion_data::NAME_DAMAGE_BACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("BACK_DAMAGE1", race_motion_data::NAME_DAMAGE_BACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("BACK_DEAD", race_motion_data::NAME_DEAD_BACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("BACK_DEAD1", race_motion_data::NAME_DEAD_BACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("BACK_DEAD2", race_motion_data::NAME_DEAD_BACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("BACK_KNOCKDOWN", race_motion_data::NAME_DAMAGE_FLYING_BACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("BACK_KNOCKDOWN1", race_motion_data::NAME_DAMAGE_FLYING_BACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("BACK_STANDUP", race_motion_data::NAME_STAND_UP_BACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("BACK_STANDUP1", race_motion_data::NAME_STAND_UP_BACK));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SPECIAL", race_motion_data::NAME_SPECIAL_1));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SPECIAL1", race_motion_data::NAME_SPECIAL_2));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SPECIAL2", race_motion_data::NAME_SPECIAL_3));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SPECIAL3", race_motion_data::NAME_SPECIAL_4));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SPECIAL4", race_motion_data::NAME_SPECIAL_5));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SPECIAL5", race_motion_data::NAME_SPECIAL_6));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SKILL1", race_motion_data::NAME_SKILL + 121));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SKILL2", race_motion_data::NAME_SKILL + 122));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SKILL3", race_motion_data::NAME_SKILL + 123));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SKILL4", race_motion_data::NAME_SKILL + 124));
-            map_type_index.insert(std::map<std::string, uint32_t>::value_type("SKILL5", race_motion_data::NAME_SKILL + 125));
+    void race_manager::load_race_motion_list(race_data &race_data) {
+        if (race_data.motion_list().empty()) {
+            return;
         }
-
-        const void *data;
-        mapped_file mapped_file;
-        if (!get_file_manager().get(mapped_file, motion_list_file_name, &data))
-            return false;
-
-        memory_text_file_loader text_file_loader;
-        text_file_loader.bind(mapped_file.size(), data);
 
         race_data.register_motion_mode(race_motion_data::MODE_GENERAL);
-
-        char mode[256];
-        char type[256];
-        char file[256];
-        int percent = 0;
-
-        bool is_spawn = false;
-
-        static std::string spawn_motion_file_name;
-        static std::string motion_file_name;
-
-        spawn_motion_file_name = "";
-        motion_file_name = "";
-
-        uint32_t line_count = text_file_loader.line_count();
-        for (uint32_t line_index = 0; line_index < line_count; ++line_index) {
-            uint32_t motion_type = race_motion_data::NAME_NONE;
-
-            const std::string &line = text_file_loader.line_string(line_index);
-            sscanf(line.c_str(), "%s %s %s %d", mode, type, file, &percent);
-
-            auto type_index = map_type_index.find(type);
-
-            if (map_type_index.end() == type_index) {
-                // When the motion list has entries like WAIT, WAIT4 and WAIT20,
-                // WAIT4 and WAIT20 are recognised as WAIT.
-                const size_t cut_length_limit = 2;
-                bool found = false;
-
-                if (cut_length_limit < strlen(type) + 1) {
-                    for (size_t i = 1; i <= cut_length_limit; ++i) {
-                        std::string type_name = std::string(type).substr(0, strlen(type) - i);
-                        type_index = map_type_index.find(type_name);
-
-                        if (map_type_index.end() != type_index) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (false == found)
-                    continue;
-            }
-
-            motion_type = type_index->second;
-
-            motion_file_name = path_name;
-            motion_file_name += file;
-
-            race_data.register_motion_data(race_motion_data::MODE_GENERAL, motion_type, motion_file_name.c_str(), percent);
-
-            switch (motion_type) {
-            case race_motion_data::NAME_SPAWN:
-                is_spawn = true;
-                break;
-            case race_motion_data::NAME_DAMAGE:
-                spawn_motion_file_name = motion_file_name;
-                break;
-            }
+        for (const race_data::motion_entry &motion : race_data.motion_list()) {
+            race_data.register_motion_data(race_motion_data::MODE_GENERAL, motion.index, motion.file_name.c_str(), motion.percentage);
         }
-
-        if (!is_spawn && spawn_motion_file_name != "") {
-            race_data.register_motion_data(race_motion_data::MODE_GENERAL, race_motion_data::NAME_SPAWN, spawn_motion_file_name.c_str(), percent);
-        }
-
         race_data.register_normal_attack(race_motion_data::MODE_GENERAL, race_motion_data::NAME_NORMAL_ATTACK);
-
-        return true;
     }
 
     void race_manager::register_race_src_name(const char *name, const char *src_name) {

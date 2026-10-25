@@ -5,8 +5,77 @@
 #include <metin2/log/log.h>
 
 #include "race_data.h"
+#include "race_motion_data.h"
+
+#include <iterator>
 
 namespace metin2::inline world::inline actors {
+
+    namespace {
+        // The motion names of [[motion]] and the motion index each one registers.
+        constexpr std::string_view motion_names[] = {
+            "Spawn",
+            "Wait",
+            "Walk",
+            "Run",
+            "Stop",
+            "Dead",
+            "DeadBack",
+            "NormalAttack",
+            "ComboAttack1",
+            "ComboAttack2",
+            "ComboAttack3",
+            "Damage",
+            "DamageBack",
+            "DamageFlying",
+            "DamageFlyingBack",
+            "StandUp",
+            "StandUpBack",
+            "Special1",
+            "Special2",
+            "Special3",
+            "Special4",
+            "Special5",
+            "Special6",
+            "Skill1",
+            "Skill2",
+            "Skill3",
+            "Skill4",
+            "Skill5",
+        };
+        constexpr uint16_t motion_indices[] = {
+            race_motion_data::NAME_SPAWN,
+            race_motion_data::NAME_WAIT,
+            race_motion_data::NAME_WALK,
+            race_motion_data::NAME_RUN,
+            race_motion_data::NAME_STOP,
+            race_motion_data::NAME_DEAD,
+            race_motion_data::NAME_DEAD_BACK,
+            race_motion_data::NAME_NORMAL_ATTACK,
+            race_motion_data::NAME_COMBO_ATTACK_1,
+            race_motion_data::NAME_COMBO_ATTACK_2,
+            race_motion_data::NAME_COMBO_ATTACK_3,
+            race_motion_data::NAME_DAMAGE,
+            race_motion_data::NAME_DAMAGE_BACK,
+            race_motion_data::NAME_DAMAGE_FLYING,
+            race_motion_data::NAME_DAMAGE_FLYING_BACK,
+            race_motion_data::NAME_STAND_UP,
+            race_motion_data::NAME_STAND_UP_BACK,
+            race_motion_data::NAME_SPECIAL_1,
+            race_motion_data::NAME_SPECIAL_2,
+            race_motion_data::NAME_SPECIAL_3,
+            race_motion_data::NAME_SPECIAL_4,
+            race_motion_data::NAME_SPECIAL_5,
+            race_motion_data::NAME_SPECIAL_6,
+            // The monster skills sit after the player skills.
+            race_motion_data::NAME_SKILL + 121,
+            race_motion_data::NAME_SKILL + 122,
+            race_motion_data::NAME_SKILL + 123,
+            race_motion_data::NAME_SKILL + 124,
+            race_motion_data::NAME_SKILL + 125,
+        };
+        static_assert(std::size(motion_names) == std::size(motion_indices));
+    }
 
     auto race_data::load(std::string_view text, std::string_view name) -> bool {
         const auto table = parse_asset_toml(text, name, "Race");
@@ -23,7 +92,6 @@ namespace metin2::inline world::inline actors {
             ok &= values.optional("model", base_model_file_name_);
             ok &= values.optional("tree", tree_file_name_);
             ok &= values.optional("attribute", attribute_file_name_);
-            ok &= values.optional("motion_list", motion_list_file_name_);
             ok &= values.optional("smoke_bone", smoke_bone_name_);
             if (const toml::array *smoke = values.array("smoke")) {
                 if (smoke->size() > SMOKE_NUM) {
@@ -99,6 +167,27 @@ namespace metin2::inline world::inline actors {
                 } else {
                     set_hair_skin(index, 0, model.c_str(), source->c_str(), target->c_str());
                 }
+                ok &= values.finish();
+            }
+        }
+
+        motion_list_.clear();
+        if (const toml::array *motions = root.array("motion")) {
+            for (const toml::node &node : *motions) {
+                const toml::table *motion_table = node.as_table();
+                if (!motion_table) {
+                    root.error("motion", "must be tables ([[motion]])");
+                    ok = false;
+                    continue;
+                }
+                asset_table values(*motion_table, name);
+                int motion = 0;
+                motion_entry entry{};
+                ok &= values.required_enum("name", motion_names, motion);
+                entry.index = motion_indices[motion];
+                ok &= values.required("file", entry.file_name);
+                ok &= values.required("percent", entry.percentage);
+                motion_list_.push_back(std::move(entry));
                 ok &= values.finish();
             }
         }
