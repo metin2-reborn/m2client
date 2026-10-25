@@ -49,7 +49,9 @@ namespace metin2::inline graphics {
         }
 
         // 2x2 box filter in linear light, the colour weighted by alpha so transparent texels (the
-        // colour key leaves them black) do not darken the edges of the next level.
+        // colour key leaves them black) do not darken the edges of the next level. A block without
+        // any alpha takes the plain average: not every alpha channel is coverage (character skins
+        // keep a specular mask there, mostly 0), and black would show through at a distance.
         void downsample(const std::vector<uint8_t> &src, uint32_t sw, uint32_t sh, std::vector<uint8_t> &dst, uint32_t dw, uint32_t dh) {
             const std::array<float, 256> &to_linear = srgb_to_linear_table();
             dst.assign(static_cast<size_t>(dw) * dh * 4, 0);
@@ -58,18 +60,21 @@ namespace metin2::inline graphics {
                     const uint32_t xs[2] = {std::min(x * 2, sw - 1), std::min(x * 2 + 1, sw - 1)};
                     const uint32_t ys[2] = {std::min(y * 2, sh - 1), std::min(y * 2 + 1, sh - 1)};
                     float color[3] = {0.0f, 0.0f, 0.0f};
+                    float plain[3] = {0.0f, 0.0f, 0.0f};
                     float alpha_sum = 0.0f;
                     for (uint32_t sy : ys)
                         for (uint32_t sx : xs) {
                             const uint8_t *p = &src[(static_cast<size_t>(sy) * sw + sx) * 4];
                             const float a = static_cast<float>(p[3]);
                             alpha_sum += a;
-                            for (int c = 0; c < 3; ++c)
+                            for (int c = 0; c < 3; ++c) {
                                 color[c] += to_linear[p[c]] * a;
+                                plain[c] += to_linear[p[c]];
+                            }
                         }
                     uint8_t *out = &dst[(static_cast<size_t>(y) * dw + x) * 4];
                     for (int c = 0; c < 3; ++c)
-                        out[c] = alpha_sum > 0.0f ? linear_to_srgb_byte(color[c] / alpha_sum) : 0;
+                        out[c] = linear_to_srgb_byte(alpha_sum > 0.0f ? color[c] / alpha_sum : plain[c] / 4.0f);
                     out[3] = static_cast<uint8_t>((alpha_sum + 2.0f) / 4.0f);
                 }
         }
