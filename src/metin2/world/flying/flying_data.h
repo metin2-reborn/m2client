@@ -3,6 +3,8 @@
 #include <metin2/core/pool.h>
 #include <metin2/math/math.h>
 #include <string>
+#include <string_view>
+#include <vector>
 
 namespace metin2::inline world::inline flying {
 
@@ -50,7 +52,10 @@ namespace metin2::inline world::inline flying {
 
         void destroy();
 
+        // Loads a fly script (TOML, [asset] type "Fly") and registers its effects.
         auto load_script_file(const char *filename) -> bool;
+        // Parses the text of a fly script; registers nothing.
+        auto load(std::string_view text, std::string_view name) -> bool;
 
         void set_bomb_effect(const char *effect_name_value);
 

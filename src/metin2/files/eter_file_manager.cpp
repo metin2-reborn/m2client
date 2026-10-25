@@ -29,6 +29,8 @@ namespace metin2::inline files {
         constexpr std::string_view kTexturesArchive = "textures";
         // Script formats that became TOML.
         constexpr std::array<std::string_view, 5> kScriptExtensions = {".msa", ".mse", ".msm", ".sub", ".msenv"};
+        // Fly scripts became x.fly.toml: many share their name with an effect (x.mse, now x.toml).
+        constexpr std::string_view kFlyExtension = ".msf";
         // Archives whose textures were converted from DDS to PNG.
         constexpr std::array<std::string_view, 7> kPngArchives = {"effect", "environment", "item", "special", "zone", "character", "ui"};
         // Folders ("archive:folder/") whose TGA images were converted to PNG.
@@ -50,6 +52,19 @@ namespace metin2::inline files {
 
         void replace_extension(std::string &path, std::string_view extension) {
             path.replace(path.rfind('.'), std::string::npos, extension);
+        }
+
+        // Gives an old script name its TOML name; false for other names.
+        auto rename_script(std::string &path) -> bool {
+            if (ends_with_no_case(path, kFlyExtension)) {
+                replace_extension(path, ".fly.toml");
+                return true;
+            }
+            if (is_script(path)) {
+                replace_extension(path, ".toml");
+                return true;
+            }
+            return false;
         }
 
         // The disk spelling of data/<name><suffix>. The archive folders are lower case, but a name
@@ -143,9 +158,10 @@ namespace metin2::inline files {
 
         // The text scripts became TOML, the DDS textures of the ymir work archives and ui PNG, and
         // the TGA images of some folders PNG.
-        if (is_script(p)) {
-            replace_extension(p, ".toml");
-        } else if (ends_with_no_case(p, ".dds") && is_one_of(result.archive_value, kPngArchives)) {
+        if (rename_script(p)) {
+            return result;
+        }
+        if (ends_with_no_case(p, ".dds") && is_one_of(result.archive_value, kPngArchives)) {
             replace_extension(p, ".png");
         } else if (ends_with_no_case(p, ".tga") && std::ranges::any_of(kTgaPngFolders, [&](const auto &folder) -> bool {
                        return assets::case_insensitive_equal{}(result.archive_value, folder.first) && assets::starts_with_no_case(p, folder.second);
@@ -162,9 +178,7 @@ namespace metin2::inline files {
         if (assets::case_insensitive_equal{}(path.archive_value, kDefaultArchive)) {
             // System names keep their spelling (drive prefix included), so the resource names they give stay the same.
             result = name;
-            if (is_script(result)) {
-                replace_extension(result, ".toml");
-            }
+            rename_script(result);
         } else {
             result = path.archive_value + ":" + path.path;
         }

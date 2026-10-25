@@ -8,6 +8,7 @@
 #include <metin2/sound/type.h>
 #include <metin2/world/actors/race_data.h>
 #include <metin2/world/actors/race_motion_data.h>
+#include <metin2/world/flying/flying_data.h>
 #include <metin2/world/maps/area.h>
 #include <metin2/world/maps/map_config.h>
 #include <metin2/world/maps/map_util.h>
@@ -37,6 +38,9 @@ TEST(canonical_name_keeps_other_names) {
     // Scripts are TOML everywhere.
     CHECK_EQ(eter_file_manager::canonical_name("Warrior_M.msm"), std::string("warrior_m.toml"));
     CHECK_EQ(eter_file_manager::canonical_name("locale:ui/Login.sub"), std::string("locale:ui/login.toml"));
+    // Fly scripts are x.fly.toml, next to the x.toml effect of the same name.
+    CHECK_EQ(eter_file_manager::canonical_name("d:/ymir work/effect/monster/bou_20_1_throw.MSF"), std::string("effect:monster/bou_20_1_throw.fly.toml"));
+    CHECK_EQ(eter_file_manager::canonical_name("Arrow.msf"), std::string("arrow.fly.toml"));
 }
 
 TEST(canonical_name_maps_the_folders_that_left_the_system_archive) {
@@ -657,6 +661,73 @@ TEST(environment_rejects_bad_scripts) {
     CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[fog]\ncolor = [1.0, 1.0, 1.0]\n", "a.toml"));
     CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[sky_box]\ngradient_upper = 2\ngradient = []\n", "a.toml"));
     CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[sky_box]\ncloud_scale = [1.0]\n", "a.toml"));
+}
+
+namespace {
+    struct fly_view : flying_data {
+        using flying_data::accel_;
+        using flying_data::bomb_effect_name_;
+        using flying_data::homing_max_angle_;
+        using flying_data::init_vel_;
+        using flying_data::is_homing_;
+        using flying_data::range_;
+    };
+}
+
+TEST(fly_reads_the_flight_and_attachments) {
+    fly_view fly;
+    CHECK(fly.load(R"([asset]
+type = "Fly"
+
+[fly]
+initial_velocity = 4000.0
+bomb_effect = "character:monster2/ch_bowman/blow.toml"
+homing = true
+range = 5000.0
+acceleration = [0.0, -100.0, 0.0]
+
+[[attach]]
+type = "Effect"
+fly_type = "Sine"
+file = "character:monster2/ch_bowman/arrow.toml"
+period = 0.2
+tail = { color = 0x66E1E1E1, length = 0.18, size = 1.0 }
+
+[[attach]]
+type = "None"
+fly_type = "Line"
+)",
+        "a.fly.toml"));
+    CHECK_EQ(fly.init_vel_, 4000.0f);
+    CHECK_EQ(fly.range_, 5000.0f);
+    CHECK(fly.is_homing_);
+    CHECK_EQ(fly.homing_max_angle_, 3.0f); // missing: the default stays
+    CHECK_EQ(fly.accel_.y, -100.0f);
+    CHECK_EQ(fly.bomb_effect_name_, std::string("character:monster2/ch_bowman/blow.toml"));
+    CHECK_EQ(fly.attach_data_count(), 2);
+    const flying_data::flying_attach_data &arrow = fly.attach_data_reference(0);
+    CHECK_EQ(arrow.type_value, int{flying_data::FLY_ATTACH_EFFECT});
+    CHECK_EQ(arrow.fly_type, int{flying_data::FLY_ATTACH_TYPE_SINE});
+    CHECK_EQ(arrow.period, 0.2f);
+    CHECK(arrow.has_tail);
+    CHECK_EQ(arrow.tail_color, 0x66E1E1E1u);
+    CHECK(!arrow.rect_shape);
+    CHECK(!fly.attach_data_reference(1).has_tail);
+    CHECK(fly.attach_data_reference(1).filename.empty());
+}
+
+TEST(fly_rejects_bad_scripts) {
+    const std::string head = "[asset]\ntype = \"Fly\"\n[fly]\ninitial_velocity = 1.0\n";
+    flying_data good;
+    CHECK(good.load(head + "range = 1.0\n", "a.fly.toml"));
+    flying_data no_range;
+    CHECK(!no_range.load(head, "a.fly.toml"));
+    flying_data effect;
+    CHECK(!effect.load("[asset]\ntype = \"Effect\"\n[fly]\ninitial_velocity = 1.0\nrange = 1.0\n", "a.fly.toml"));
+    flying_data bad_fly_type;
+    CHECK(!bad_fly_type.load(head + "range = 1.0\n[[attach]]\ntype = \"Effect\"\nfly_type = \"Spiral\"\n", "a.fly.toml"));
+    flying_data short_tail;
+    CHECK(!short_tail.load(head + "range = 1.0\n[[attach]]\ntype = \"Effect\"\nfly_type = \"Line\"\ntail = { color = 1 }\n", "a.fly.toml"));
 }
 
 TEST(map_config_reads_the_map_and_terrain) {
