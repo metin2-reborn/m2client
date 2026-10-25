@@ -131,12 +131,6 @@ namespace metin2::inline client::inline app {
             }
         }
 
-        // system.py expects this global.
-        if (!py_launcher.run_line("__COMMAND_LINE__ = \"\"")) {
-            metin2::log::error("Cannot set the Python command line");
-            return false;
-        }
-
         {
             if (!py_launcher.run_file("system.py")) {
                 metin2::log::error("Cannot run system.py");
