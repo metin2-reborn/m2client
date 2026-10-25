@@ -82,6 +82,7 @@ namespace metin2::inline script {
         get_resource_manager().register_resource_new_function_pointer("jpg", new_image);
         get_resource_manager().register_resource_new_function_pointer("tga", new_image);
         get_resource_manager().register_resource_new_function_pointer("bmp", new_image);
+        get_resource_manager().register_resource_new_function_pointer("png", new_image);
         get_resource_manager().register_resource_new_function_pointer("fnt", new_text);
         get_resource_manager().register_resource_new_function_pointer("gr2", new_thing);
         get_resource_manager().register_resource_new_function_pointer("mde", new_effect_mesh);
