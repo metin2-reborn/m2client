@@ -1096,10 +1096,10 @@ namespace metin2::inline ui {
             ui_window::set_size(int32_t(float(width()) * fx), int32_t(float(height()) * fy));
         }
         void expanded_image_box::fill_screen(int32_t width_value, int32_t height_value) {
+            // width()/height() are the image's own size, so this stretches the image to exactly the screen.
             if (image_instance_ && width() > 0 && height() > 0) {
                 auto *instance = static_cast<graphic_expanded_image_instance *>(image_instance_);
-                const math::vector2 scale = instance->scale();
-                instance->set_scale(scale.x * float(width_value) / float(width()), scale.y * float(height_value) / float(height()));
+                instance->set_scale(float(width_value) / float(width()), float(height_value) / float(height()));
             }
             ui_window::set_size(width_value, height_value);
         }

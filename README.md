@@ -50,8 +50,8 @@ The client ends up in `build/bin/client`.
 
 ## Running
 
-The client needs the game data (`data/`, the Python scripts in `data/system` and the `data/ui`
-package, `pack/`...). `just run`
+The client needs the game data (`data/`, the bootstrap in `data/system`, the game scripts in
+`data/game` and the `data/ui` package, `pack/`...). `just run`
 starts it in a bubblewrap sandbox with the game directory mounted as an overlay, so nothing can modify
 it, and `HOME` set to `run/home`. The game directory defaults to an `m2game` checkout next to this
 repository; set `METIN2_CLIENT_DIR` to use another one:

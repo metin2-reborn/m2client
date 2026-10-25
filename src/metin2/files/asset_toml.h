@@ -38,6 +38,7 @@ namespace metin2::inline files {
         auto required(std::string_view key, uint32_t &value) -> bool;
         auto required(std::string_view key, bool &value) -> bool;
         auto required(std::string_view key, std::string &value) -> bool;
+        auto required(std::string_view key, math::vector2 &value) -> bool;
         auto required(std::string_view key, math::vector3 &value) -> bool;
         auto required(std::string_view key, math::color &value) -> bool;
 
@@ -47,6 +48,7 @@ namespace metin2::inline files {
         auto optional(std::string_view key, uint32_t &value) -> bool;
         auto optional(std::string_view key, bool &value) -> bool;
         auto optional(std::string_view key, std::string &value) -> bool;
+        auto optional(std::string_view key, math::vector2 &value) -> bool;
         auto optional(std::string_view key, math::vector3 &value) -> bool;
         auto optional(std::string_view key, math::color &value) -> bool;
 

@@ -434,8 +434,8 @@ namespace metin2::inline client::inline background {
 
     auto python_mini_map::create() -> bool {
         const std::string image_root = "ui:";
-        const std::string image_filter = image_root + "minimap_image_filter.dds";
-        const std::string image_camera = image_root + "minimap_camera.dds";
+        const std::string image_filter = image_root + "minimap_image_filter.png";
+        const std::string image_camera = image_root + "minimap_camera.png";
         const std::string player_mark = image_root + "minimap/playermark.toml";
         const std::string white_mark = image_root + "minimap/whitemark.toml";
 
@@ -779,10 +779,13 @@ namespace metin2::inline client::inline background {
         atlas_image_instance_.destroy();
         atlas_player_mark_.destroy();
 
-        auto *grp_img_atlas = (graphic_image *)get_resource_manager().resource_pointer(atlas_file_name);
+        // Some maps have no atlas at all.
+        auto *grp_img_atlas = get_file_manager().is_exist(atlas_file_name) ? (graphic_image *)get_resource_manager().resource_pointer(atlas_file_name) : nullptr;
         if (grp_img_atlas) {
             atlas_image_instance_.set_image_pointer(grp_img_atlas);
             atlas_ = !grp_img_atlas->is_empty();
+        } else {
+            atlas_ = false;
         }
 
         atlas_player_mark_.set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(player_mark_file_name));

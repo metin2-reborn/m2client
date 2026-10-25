@@ -533,9 +533,9 @@ namespace metin2::inline world::inline maps {
     void map_manager::load_map_info_vector() {
         mapped_file file;
         const void *data;
-        if (!get_file_manager().get(file, atlas_info_file_name_.c_str(), &data))
-            if (!get_file_manager().get(file, "AtlasInfo.txt", &data))
-                return;
+        if (!get_file_manager().get(file, atlas_info_file_name_.c_str(), &data)) {
+            return;
+        }
 
         memory_text_file_loader text_file_loader;
         text_file_loader.bind(file.size(), data);

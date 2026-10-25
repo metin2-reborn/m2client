@@ -43,6 +43,14 @@ namespace metin2::inline files {
             value = *v;
             return true;
         }
+        auto convert(const toml::node &node, math::vector2 &value) -> bool {
+            float v[2];
+            if (!read_numbers(node, v)) {
+                return false;
+            }
+            value = math::vector2(v[0], v[1]);
+            return true;
+        }
         auto convert(const toml::node &node, math::vector3 &value) -> bool {
             float v[3];
             if (!read_numbers(node, v)) {
@@ -68,6 +76,8 @@ namespace metin2::inline files {
                 return "true or false";
             } else if constexpr (std::is_same_v<T, std::string>) {
                 return "a string";
+            } else if constexpr (std::is_same_v<T, math::vector2>) {
+                return "two numbers";
             } else if constexpr (std::is_same_v<T, math::vector3>) {
                 return "three numbers";
             } else if constexpr (std::is_same_v<T, math::color>) {
@@ -170,6 +180,7 @@ namespace metin2::inline files {
     auto asset_table::required(std::string_view key, uint32_t &value) -> bool { return read(key, value, true); }
     auto asset_table::required(std::string_view key, bool &value) -> bool { return read(key, value, true); }
     auto asset_table::required(std::string_view key, std::string &value) -> bool { return read(key, value, true); }
+    auto asset_table::required(std::string_view key, math::vector2 &value) -> bool { return read(key, value, true); }
     auto asset_table::required(std::string_view key, math::vector3 &value) -> bool { return read(key, value, true); }
     auto asset_table::required(std::string_view key, math::color &value) -> bool { return read(key, value, true); }
 
@@ -179,6 +190,7 @@ namespace metin2::inline files {
     auto asset_table::optional(std::string_view key, uint32_t &value) -> bool { return read(key, value, false); }
     auto asset_table::optional(std::string_view key, bool &value) -> bool { return read(key, value, false); }
     auto asset_table::optional(std::string_view key, std::string &value) -> bool { return read(key, value, false); }
+    auto asset_table::optional(std::string_view key, math::vector2 &value) -> bool { return read(key, value, false); }
     auto asset_table::optional(std::string_view key, math::vector3 &value) -> bool { return read(key, value, false); }
     auto asset_table::optional(std::string_view key, math::color &value) -> bool { return read(key, value, false); }
 

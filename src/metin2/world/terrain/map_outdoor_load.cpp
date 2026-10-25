@@ -43,7 +43,7 @@ namespace metin2::inline world::inline terrain {
 
             if (0 == env_data_name_.compare(environment_root)) {
                 const std::string &append_name = map_name.substr(map_name.size() - 2, 2);
-                env_data_name_ = environment_root + append_name + ".msenv";
+                env_data_name_ = environment_root + append_name + ".toml";
             }
         }
 

@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <set>
 #include <span>
+#include <utility>
 
 namespace metin2::inline files {
 
@@ -22,11 +23,18 @@ namespace metin2::inline files {
         // system:ymir work/uiloading became ui:loading.
         constexpr std::string_view kUiLoadingFolder = "uiloading";
         // Top-level folders of the system archive that became archives of their own.
-        constexpr std::array<std::string_view, 3> kTopLevelMoved = {"season1", "season2", "icon"};
+        constexpr std::array<std::string_view, 2> kTopLevelMoved = {"season1", "season2"};
+        // The icons were system:icon, then the icon archive, and are now textures:icon.
+        constexpr std::string_view kIconFolder = "icon";
+        constexpr std::string_view kTexturesArchive = "textures";
         // Script formats that became TOML.
-        constexpr std::array<std::string_view, 4> kScriptExtensions = {".msa", ".mse", ".msm", ".sub"};
+        constexpr std::array<std::string_view, 5> kScriptExtensions = {".msa", ".mse", ".msm", ".sub", ".msenv"};
         // Archives whose textures were converted from DDS to PNG.
-        constexpr std::array<std::string_view, 6> kPngArchives = {"effect", "environment", "item", "special", "zone", "character"};
+        constexpr std::array<std::string_view, 7> kPngArchives = {"effect", "environment", "item", "special", "zone", "character", "ui"};
+        // Folders ("archive:folder/") whose TGA images were converted to PNG.
+        constexpr std::array<std::pair<std::string_view, std::string_view>, 3> kTgaPngFolders = {
+            {{"ui", ""}, {"textures", "icon/"}, {"item", "quest/"}}
+        };
 
         auto is_one_of(std::string_view name, std::span<const std::string_view> names) -> bool {
             return std::ranges::any_of(names, [name](std::string_view n) -> bool { return assets::case_insensitive_equal{}(name, n); });
@@ -121,18 +129,27 @@ namespace metin2::inline files {
             }
         } else if (assets::case_insensitive_equal{}(result.archive_value, kDefaultArchive)) {
             const std::size_t slash = p.find('/');
-            if (slash != std::string::npos && is_one_of(std::string_view(p).substr(0, slash), kTopLevelMoved)) {
-                result.archive_value = p.substr(0, slash);
+            const std::string_view folder = std::string_view(p).substr(0, slash == std::string::npos ? 0 : slash);
+            if (slash != std::string::npos && is_one_of(folder, kTopLevelMoved)) {
+                result.archive_value = folder;
                 p.erase(0, slash + 1);
+            } else if (slash != std::string::npos && assets::case_insensitive_equal{}(folder, kIconFolder)) {
+                result.archive_value = kTexturesArchive;
             }
+        } else if (assets::case_insensitive_equal{}(result.archive_value, kIconFolder)) {
+            result.archive_value = kTexturesArchive;
+            p.insert(0, std::string(kIconFolder) + "/");
         }
 
-        // The text scripts became TOML, the textures of the ymir work archives PNG and the icons PNG.
+        // The text scripts became TOML, the DDS textures of the ymir work archives and ui PNG, and
+        // the TGA images of some folders PNG.
         if (is_script(p)) {
             replace_extension(p, ".toml");
         } else if (ends_with_no_case(p, ".dds") && is_one_of(result.archive_value, kPngArchives)) {
             replace_extension(p, ".png");
-        } else if (ends_with_no_case(p, ".tga") && assets::case_insensitive_equal{}(result.archive_value, "icon")) {
+        } else if (ends_with_no_case(p, ".tga") && std::ranges::any_of(kTgaPngFolders, [&](const auto &folder) -> bool {
+                       return assets::case_insensitive_equal{}(result.archive_value, folder.first) && assets::starts_with_no_case(p, folder.second);
+                   })) {
             replace_extension(p, ".png");
         }
 

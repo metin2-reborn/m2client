@@ -7,6 +7,7 @@
 #include <metin2/sound/type.h>
 #include <metin2/world/actors/race_data.h>
 #include <metin2/world/actors/race_motion_data.h>
+#include <metin2/world/maps/map_util.h>
 #include <metin2/world/maps/property.h>
 
 #include <string>
@@ -37,15 +38,23 @@ TEST(canonical_name_keeps_other_names) {
 
 TEST(canonical_name_maps_the_folders_that_left_the_system_archive) {
     CHECK_EQ(eter_file_manager::canonical_name("d:\\ymir work\\ui\\Game\\a.sub"), std::string("ui:game/a.toml"));
-    CHECK_EQ(eter_file_manager::canonical_name("D:/Ymir Work/UI/pattern/a.tga"), std::string("ui:pattern/a.tga"));
+    CHECK_EQ(eter_file_manager::canonical_name("D:/Ymir Work/UI/pattern/a.tga"), std::string("ui:pattern/a.png"));
     CHECK_EQ(eter_file_manager::canonical_name("d:/ymir work/uiloading/base/a.jpg"), std::string("ui:loading/base/a.jpg"));
     CHECK_EQ(eter_file_manager::canonical_name("d:/ymir work/guild/facility/jedan.msm"), std::string("guild:facility/jedan.toml"));
     CHECK_EQ(eter_file_manager::canonical_name("d:/ymir work/tree/B1_Sassafras.spt"), std::string("tree:b1_sassafras.spt"));
     CHECK_EQ(eter_file_manager::canonical_name("season1\\monster\\x\\wait.msa"), std::string("season1:monster/x/wait.toml"));
     CHECK_EQ(eter_file_manager::canonical_name("season2/npc/x/x.dds"), std::string("season2:npc/x/x.dds"));
-    // The icons became PNG; their hair textures stayed DDS.
-    CHECK_EQ(eter_file_manager::canonical_name("icon/item/00010.tga"), std::string("icon:item/00010.png"));
-    CHECK_EQ(eter_file_manager::canonical_name("icon:hair/45164.dds"), std::string("icon:hair/45164.dds"));
+    // The icons are textures:icon and PNG; their hair textures stayed DDS.
+    CHECK_EQ(eter_file_manager::canonical_name("icon/item/00010.tga"), std::string("textures:icon/item/00010.png"));
+    CHECK_EQ(eter_file_manager::canonical_name("icon:item/00010.png"), std::string("textures:icon/item/00010.png"));
+    CHECK_EQ(eter_file_manager::canonical_name("icon:hair/45164.dds"), std::string("textures:icon/hair/45164.dds"));
+    // The ui images and the quest item images are PNG; other item TGAs stayed.
+    CHECK_EQ(eter_file_manager::canonical_name("d:/ymir work/ui/public.dds"), std::string("ui:public.png"));
+    CHECK_EQ(eter_file_manager::canonical_name("ui:pattern/board_line_left.tga"), std::string("ui:pattern/board_line_left.png"));
+    CHECK_EQ(eter_file_manager::canonical_name("item:quest/73001.tga"), std::string("item:quest/73001.png"));
+    CHECK_EQ(eter_file_manager::canonical_name("item:weapon/a.tga"), std::string("item:weapon/a.tga"));
+    CHECK_EQ(eter_file_manager::canonical_name("textures:terrainmaps/a.tga"), std::string("textures:terrainmaps/a.tga"));
+    CHECK_EQ(eter_file_manager::canonical_name("environment:A1.msenv"), std::string("environment:a1.toml"));
 }
 
 TEST(parse_path_resolves_old_names_to_the_new_archives) {
@@ -57,7 +66,7 @@ TEST(parse_path_resolves_old_names_to_the_new_archives) {
     CHECK_EQ(zone.path, std::string("a.gr2"));
     const auto ui = eter_file_manager::parse_path("d:/ymir work/ui/a.dds");
     CHECK_EQ(ui.archive_value, std::string("ui"));
-    CHECK_EQ(ui.path, std::string("a.dds"));
+    CHECK_EQ(ui.path, std::string("a.png"));
     const auto season = eter_file_manager::parse_path("season1/npc/x/x.gr2");
     CHECK_EQ(season.archive_value, std::string("season1"));
     CHECK_EQ(season.path, std::string("npc/x/x.gr2"));
@@ -544,4 +553,85 @@ TEST(race_rejects_bad_scripts) {
     CHECK(!shape_without_model.load("[asset]\ntype = \"Race\"\n[race]\n[[shape]]\nindex = 0\n", "a.toml"));
     race_data old;
     CHECK(!old.load("ScriptType RaceDataScript\nBaseModelFileName \"a.gr2\"\n", "a.msm"));
+}
+
+namespace {
+    constexpr std::string_view kEnvironmentText = R"([asset]
+type = "Environment"
+
+[directional_light]
+direction = [0.25, 0.5, -0.75]
+
+[directional_light.background]
+enable = true
+diffuse = [0.5, 0.5, 0.6, 1.0]
+ambient = [0.1, 0.1, 0.1, 1.0]
+
+[directional_light.character]
+enable = false
+diffuse = [0.7, 0.7, 0.7, 1.0]
+ambient = [0.2, 0.2, 0.2, 1.0]
+
+[material]
+diffuse = [1.0, 1.0, 1.0, 1.0]
+
+[fog]
+enable = true
+near = 5000.0
+far = 20000.0
+color = [0.1, 0.1, 0.2, 1.0]
+
+[filter]
+enable = false
+color = [0.3, 0.3, 0.5, 0.0]
+alpha_src = 1
+alpha_dest = 2
+
+[sky_box]
+scale = [3500.0, 3500.0, 3500.0]
+gradient_upper = 1
+gradient_lower = 1
+cloud_scale = [100000.0, 100000.0]
+cloud_height = 20000.0
+cloud_speed = [0.002, 0.003]
+cloud_texture = "environment:clouds.png"
+cloud_color = { first = [1.0, 1.0, 1.0, 1.0], second = [0.5, 0.5, 0.5, 0.0] }
+gradient = [{ first = [0.1, 0.2, 0.3, 1.0], second = [0.4, 0.5, 0.6, 1.0] }, { first = [0.7, 0.8, 0.9, 1.0], second = [1.0, 1.0, 1.0, 1.0] }]
+faces = { front = "environment:skybox/front.png", bottom = "" }
+
+[lens_flare]
+enable = false
+main_flare_size = 0.3
+)";
+}
+
+TEST(environment_reads_every_table) {
+    environment_data env;
+    environment_init(env);
+    CHECK(environment_parse(env, kEnvironmentText, "a.toml"));
+    CHECK_EQ(env.dir_lights[ENV_DIRLIGHT_CHARACTER].direction.y, 0.5f);
+    CHECK(env.dir_lights_enable[ENV_DIRLIGHT_BACKGROUND]);
+    CHECK(!env.dir_lights_enable[ENV_DIRLIGHT_CHARACTER]);
+    CHECK_EQ(env.dir_lights[ENV_DIRLIGHT_BACKGROUND].diffuse.b, 0.6f);
+    CHECK_EQ(env.material_value.ambient.r, 0.8f); // missing: the default stays
+    CHECK(env.fog_enable);
+    CHECK_EQ(env.fog_far_distance, 20000.0f);
+    CHECK_EQ(env.filtering_alpha_dest, uint8_t{2});
+    CHECK_EQ(env.cloud_speed.y, 0.003f);
+    CHECK_EQ(env.cloud_texture_scale.x, 4.0f); // default
+    CHECK_EQ(env.cloud_gradient_color.second_color.a, 0.0f);
+    CHECK_EQ(env.sky_box_gradient_color_vector.size(), std::size_t{2});
+    CHECK_EQ(env.sky_box_gradient_color_vector[1].first_color.g, 0.8f);
+    CHECK_EQ(env.sky_box_face_file_name[0], std::string("environment:skybox/front.png"));
+    CHECK_EQ(env.main_flare_size, 0.3f);
+}
+
+TEST(environment_rejects_bad_scripts) {
+    environment_data env;
+    environment_init(env);
+    CHECK(!environment_parse(env, "[asset]\ntype = \"Race\"\n", "a.toml"));
+    CHECK(!environment_parse(env, "ScriptType EnvrionmentData\n", "a.msenv"));
+    CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[fog]\ncolor = [1.0, 1.0, 1.0]\n", "a.toml"));
+    CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[sky_box]\ngradient_upper = 2\ngradient = []\n", "a.toml"));
+    CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[sky_box]\ncloud_scale = [1.0]\n", "a.toml"));
 }
