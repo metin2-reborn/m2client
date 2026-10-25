@@ -90,7 +90,7 @@ format:
     git ls-files --cached --others --exclude-standard 'src/*.h' 'src/*.cpp' 'tests/*.h' 'tests/*.cpp' 'tools/*.cpp' \
         | while read -r f; do [ -f "$f" ] && echo "$f"; done | xargs clang-format -i
 
-# Load every .gr2 in the System archive through the Granny runtime and summarize formats/failures.
+# Load every .gr2 in the system archive through the Granny runtime and summarize formats/failures.
 grn-dump *ARGS: build seed-config
     bwrap --dev-bind / / --tmpfs /tmp \
         --overlay-src "{{client}}" --overlay "{{root}}/run/overlay/upper" "{{root}}/run/overlay/work" "{{client}}" \

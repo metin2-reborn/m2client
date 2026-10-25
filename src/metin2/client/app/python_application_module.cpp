@@ -223,7 +223,7 @@ namespace metin2::inline client::inline app {
 
         auto *list = PyList_New(0);
 
-        // Asset folders (BGM:*.mp3) are listed through the file manager. upload/ holds the player's
+        // Asset folders (bgm:*.mp3) are listed through the file manager. upload/ holds the player's
         // own guild mark images, which the mark uploader reads from disk, so it is listed there.
         std::string st_filter(filter);
         std::ranges::replace(st_filter, '\\', '/');

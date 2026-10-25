@@ -40,7 +40,7 @@ namespace metin2::inline world::inline terrain {
         float v_offset = 0.0f;
     };
 
-    // Reads a texture set (TOML, TextureSets:*.toml). A bad entry is reported with its line and left
+    // Reads a texture set (TOML, texturesets:*.toml). A bad entry is reported with its line and left
     // out; nullopt when the text is not TOML at all.
     auto parse_texture_set(std::string_view text, std::string_view name) -> std::optional<std::vector<texture_set_entry>>;
 

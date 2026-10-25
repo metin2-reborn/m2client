@@ -9,11 +9,11 @@
 namespace metin2::inline files {
 
     namespace {
-        constexpr std::string_view kDefaultArchive = "System";
+        constexpr std::string_view kDefaultArchive = "system";
         constexpr std::string_view kDataDirectory = "data/";
 
-        // The disk spelling of data/<name><suffix>. Resource names arrive lower-cased
-        // ("textures:terrainmaps/...") while the folders are "Textures", so the case is ignored.
+        // The disk spelling of data/<name><suffix>. The archive folders are lower case, but a name
+        // may spell the archive in any case ("BGM:..."), like the rest of the path.
         auto disk_name(const std::string &name, std::string_view suffix) -> std::string {
             std::string wanted = name + std::string(suffix);
             std::error_code ec;
@@ -91,7 +91,7 @@ namespace metin2::inline files {
 
         // The game names files with inconsistent case ("UIScript/PopupDialog.py" for
         // uiscript/popupdialog.py), so the folder is listed once and looked up without case.
-        // (About 60 ms for the 53k files of data/System/; std::filesystem::relative would stat each.)
+        // (About 60 ms for the 53k files of data/system/; std::filesystem::relative would stat each.)
         std::error_code ec;
         const std::string root = std::string(kDataDirectory) + disk_name(archive_name, "");
         for (auto it = std::filesystem::recursive_directory_iterator(root, ec); !ec && it != std::filesystem::recursive_directory_iterator(); it.increment(ec)) {

@@ -15,8 +15,8 @@
 
 namespace metin2::inline files {
 
-    // Resolves asset names to files. A name is "<Archive>:<path>", or just "<path>" for the System
-    // archive. A loose file data/<Archive>/<path> wins over the entry in data/<Archive>.zip. Names are
+    // Resolves asset names to files. A name is "<archive>:<path>", or just "<path>" for the system
+    // archive. A loose file data/<archive>/<path> wins over the entry in data/<archive>.zip. Names are
     // case-insensitive, may use backslashes, and a drive prefix ("d:/ymir work/...") is ignored.
     class eter_file_manager {
         // The loose files of an archive: path inside the archive (any case) -> path on disk.

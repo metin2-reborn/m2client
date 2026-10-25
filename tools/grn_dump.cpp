@@ -52,7 +52,7 @@ static std::string TypeSignature(const granny_data_type_definition *t) {
 
 int main(int argc, char **argv) {
     int limit = 0;
-    const char *archive = "System";
+    const char *archive = "system";
     const char *only = nullptr;
     const char *list = nullptr;
     const char *extractName = nullptr;

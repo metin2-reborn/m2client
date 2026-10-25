@@ -50,7 +50,7 @@ The client ends up in `build/bin/client`.
 
 ## Running
 
-The client needs the game data (`data/`, the Python scripts in `data/System` and the `data/UI`
+The client needs the game data (`data/`, the Python scripts in `data/system` and the `data/ui`
 package, `pack/`...). `just run`
 starts it in a bubblewrap sandbox with the game directory mounted as an overlay, so nothing can modify
 it, and `HOME` set to `run/home`. The game directory defaults to an `m2game` checkout next to this

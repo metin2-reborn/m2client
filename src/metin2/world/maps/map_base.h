@@ -8,10 +8,10 @@
 #include "map_type.h"
 
 namespace metin2::inline world::inline maps {
-    // Map data lives in the Maps archive, one folder per map (with its season folder, as the atlas
-    // names it): "Maps:<map>/<file>".
+    // Map data lives in the maps archive, one folder per map (with its season folder, as the atlas
+    // names it): "maps:<map>/<file>".
     inline auto map_file_name(std::string_view map, std::string_view file) -> std::string {
-        return std::format("Maps:{}/{}", map, file);
+        return std::format("maps:{}/{}", map, file);
     }
 
     class map_base : public screen {

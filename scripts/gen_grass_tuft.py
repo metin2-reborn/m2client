@@ -19,7 +19,7 @@ SIZE = 256
 SUPERSAMPLE = 4
 SEED = 20261024
 
-DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "m2game/data/System/ymir work/special/grass_tuft.tga"
+DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "m2game/data/system/ymir work/special/grass_tuft.tga"
 
 
 def blade(draw, rng, big):

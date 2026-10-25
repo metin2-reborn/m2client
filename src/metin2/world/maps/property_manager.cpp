@@ -17,7 +17,7 @@ namespace metin2::inline world::inline maps {
     }
 
     auto property_manager::initialize() -> bool {
-        get_file_manager().for_each("System", "property/", [this](const std::string &file_name) -> void {
+        get_file_manager().for_each("system", "property/", [this](const std::string &file_name) -> void {
             if (!strcasecmp("property/reserve", file_name.c_str()))
                 load_reserved_crc(file_name.c_str());
             else
