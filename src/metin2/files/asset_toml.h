@@ -19,6 +19,9 @@ namespace metin2::inline files {
     // is not TOML or not an asset of that type.
     auto parse_asset_toml(std::string_view text, std::string_view name, std::string_view type) -> std::optional<toml::table>;
 
+    // The type in the [asset] table of a TOML asset file; nullopt when the text is not TOML or has none.
+    auto asset_type(std::string_view text) -> std::optional<std::string>;
+
     // Reads the values of one table of an asset file. A missing optional value keeps the default the
     // caller put in it; a missing required value or a value of the wrong type is logged with the file
     // name and line and makes finish() false. finish() also warns about the keys nothing read.

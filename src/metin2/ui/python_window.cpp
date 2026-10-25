@@ -804,12 +804,12 @@ namespace metin2::inline ui {
         }
 
         number_line::number_line(PyObject *ppy_object) : ui_window(ppy_object) {
-            path_ = "d:/ymir work/ui/game/taskbar/";
+            path_ = "ui:game/taskbar/";
             horizontal_align_value_ = HORIZONTAL_ALIGN_LEFT;
             width_summary_ = 0;
         }
         number_line::number_line(ui_window *parent) : ui_window(nullptr) {
-            path_ = "d:/ymir work/ui/game/taskbar/";
+            path_ = "ui:game/taskbar/";
             horizontal_align_value_ = HORIZONTAL_ALIGN_LEFT;
             width_summary_ = 0;
 
@@ -838,25 +838,25 @@ namespace metin2::inline ui {
                 std::string image_file_name;
 
                 if (':' == char_value) {
-                    image_file_name = path_ + "colon.sub";
+                    image_file_name = path_ + "colon.toml";
                 } else if ('?' == char_value) {
-                    image_file_name = path_ + "questionmark.sub";
+                    image_file_name = path_ + "questionmark.toml";
                 } else if ('/' == char_value) {
-                    image_file_name = path_ + "slash.sub";
+                    image_file_name = path_ + "slash.toml";
                 } else if ('%' == char_value) {
-                    image_file_name = path_ + "percent.sub";
+                    image_file_name = path_ + "percent.toml";
                 } else if ('+' == char_value) {
-                    image_file_name = path_ + "plus.sub";
+                    image_file_name = path_ + "plus.toml";
                 } else if ('m' == char_value) {
-                    image_file_name = path_ + "m.sub";
+                    image_file_name = path_ + "m.toml";
                 } else if ('g' == char_value) {
-                    image_file_name = path_ + "g.sub";
+                    image_file_name = path_ + "g.toml";
                 } else if ('p' == char_value) {
-                    image_file_name = path_ + "p.sub";
+                    image_file_name = path_ + "p.toml";
                 } else if (char_value >= '0' && char_value <= '9') {
                     image_file_name = path_;
                     image_file_name += char_value;
-                    image_file_name += ".sub";
+                    image_file_name += ".toml";
                 } else
                     continue;
 

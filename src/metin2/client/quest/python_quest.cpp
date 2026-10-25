@@ -152,12 +152,12 @@ namespace metin2::inline client::inline quest {
         graphic_image *image = nullptr;
         if (!quest_instance->icon_file_name.empty()) {
             std::string icon_file_name;
-            icon_file_name = "d:/ymir work/ui/game/quest/questicon/";
+            icon_file_name = "ui:game/quest/questicon/";
             icon_file_name += quest_instance->icon_file_name.c_str();
             image = (graphic_image *)get_resource_manager().resource_pointer(icon_file_name.c_str());
         } else {
             {
-                std::string icon_file_name = "season1/icon/scroll_open.tga";
+                std::string icon_file_name = "season1:icon/scroll_open.tga";
                 image = (graphic_image *)get_resource_manager().resource_pointer(icon_file_name.c_str());
             }
         }

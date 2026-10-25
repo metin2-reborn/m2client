@@ -1,4 +1,5 @@
 #include "race_manager.h"
+#include <metin2/core/file_loader.h>
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/log/log.h>
 #include "race_motion_data.h"
@@ -24,7 +25,7 @@ namespace metin2::inline world::inline actors {
 
     void get_race_resource_pathes(unsigned race, std::vector<std::string> &vec_pathes) {
         if (is_guild_race(race)) {
-            vec_pathes.push_back("d:/ymir work/guild/");
+            vec_pathes.push_back("guild:");
             vec_pathes.push_back("character:npc/");
             vec_pathes.push_back("character:npc2/");
             vec_pathes.push_back("character:monster/");
@@ -35,13 +36,13 @@ namespace metin2::inline world::inline actors {
                 vec_pathes.push_back("character:npc/");
                 vec_pathes.push_back("character:monster/");
                 vec_pathes.push_back("character:monster2/");
-                vec_pathes.push_back("d:/ymir work/guild/");
+                vec_pathes.push_back("guild:");
             } else {
                 vec_pathes.push_back("character:npc/");
                 vec_pathes.push_back("character:npc2/");
                 vec_pathes.push_back("character:monster/");
                 vec_pathes.push_back("character:monster2/");
-                vec_pathes.push_back("d:/ymir work/guild/");
+                vec_pathes.push_back("guild:");
             }
         }
         // Exception monsters for the April Fools' event.
@@ -50,31 +51,31 @@ namespace metin2::inline world::inline actors {
             vec_pathes.push_back("character:monster/");
             vec_pathes.push_back("character:npc/");
             vec_pathes.push_back("character:npc2/");
-            vec_pathes.push_back("d:/ymir work/guild/");
+            vec_pathes.push_back("guild:");
         } else if (race > 8000) {
             vec_pathes.push_back("character:monster/");
             vec_pathes.push_back("character:monster2/");
             vec_pathes.push_back("character:npc/");
             vec_pathes.push_back("character:npc2/");
-            vec_pathes.push_back("d:/ymir work/guild/");
+            vec_pathes.push_back("guild:");
         } else if (race > 2000) {
             vec_pathes.push_back("character:monster2/");
             vec_pathes.push_back("character:monster/");
             vec_pathes.push_back("character:npc/");
             vec_pathes.push_back("character:npc2/");
-            vec_pathes.push_back("d:/ymir work/guild/");
+            vec_pathes.push_back("guild:");
         } else if (race >= 1400 && race <= 1700) {
             vec_pathes.push_back("character:monster2/");
             vec_pathes.push_back("character:monster/");
             vec_pathes.push_back("character:npc/");
             vec_pathes.push_back("character:npc2/");
-            vec_pathes.push_back("d:/ymir work/guild/");
+            vec_pathes.push_back("guild:");
         } else {
             vec_pathes.push_back("character:monster/");
             vec_pathes.push_back("character:monster2/");
             vec_pathes.push_back("character:npc/");
             vec_pathes.push_back("character:npc2/");
-            vec_pathes.push_back("d:/ymir work/guild/");
+            vec_pathes.push_back("guild:");
         }
         return;
     }
@@ -93,7 +94,7 @@ namespace metin2::inline world::inline actors {
             const char *path_name = c_rst_race_name.c_str() + 1;
             char shape_file_name[256];
             char motion_list_file_name[256];
-            snprintf(shape_file_name, sizeof(shape_file_name), "%sshape.msm", path_name);
+            snprintf(shape_file_name, sizeof(shape_file_name), "%sshape.toml", path_name);
             snprintf(motion_list_file_name, sizeof(motion_list_file_name), "%smotlist.txt", path_name);
 
             race_data *race_data = race_data::new_value();
@@ -126,17 +127,17 @@ namespace metin2::inline world::inline actors {
 
             full_path_name += "/";
 
-            std::string msm_file_name = full_path_name;
-            msm_file_name += c_rst_race_name;
-            msm_file_name += ".msm";
+            std::string script_file_name = full_path_name;
+            script_file_name += c_rst_race_name;
+            script_file_name += ".toml";
 
-            if (!race_data->load_race_data(msm_file_name.c_str())) {
+            if (!race_data->load_race_data(script_file_name.c_str())) {
                 if (i != vec_full_path_name.size() - 1) {
-                    metin2::log::warn("Race {}: cannot load {}, trying the next path", race_index, msm_file_name.c_str());
+                    metin2::log::warn("Race {}: cannot load {}, trying the next path", race_index, script_file_name.c_str());
                     continue;
                 }
 
-                metin2::log::error("Race {}: cannot load {}", race_index, msm_file_name.c_str());
+                metin2::log::error("Race {}: cannot load {}", race_index, script_file_name.c_str());
                 race_data::delete_value(race_data);
                 return nullptr;
             }

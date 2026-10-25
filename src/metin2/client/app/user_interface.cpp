@@ -5,6 +5,7 @@
 
 #include <metin2/config/state_dir.h>
 #include <metin2/core/lzo.h>
+#include <metin2/core/text_file_loader.h>
 #include <metin2/core/util.h>
 #include <metin2/core/utils.h>
 #include <metin2/dev/automation.h>

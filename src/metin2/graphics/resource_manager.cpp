@@ -2,11 +2,13 @@
 #include <metin2/core/crc32.h>
 #include <metin2/core/stl.h>
 #include <metin2/core/timer.h>
+#include <metin2/files/asset_toml.h>
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/files/eter_mark_manager.h>
 #include <metin2/log/log.h>
 
 #include <string>
+#include <strings.h>
 #include "grp_image.h"
 #include "resource_manager.h"
 
@@ -139,6 +141,10 @@ namespace metin2::inline graphics {
         res_new_func_map_[file_ext] = new_func;
     }
 
+    void resource_manager::register_asset_new_function_pointer(std::string_view asset_type, resource *(*new_func)(const char *file_name)) {
+        res_new_func_by_asset_map_.insert_or_assign(std::string(asset_type), new_func);
+    }
+
     auto resource_manager::insert_resource_pointer(uint32_t file_crc_value, resource *resource_value) -> resource * {
         auto itor = res_map_.find(file_crc_value);
 
@@ -233,7 +239,18 @@ namespace metin2::inline graphics {
 
         resource *(*new_func)(const char *) = nullptr;
 
-        if (file_ext) {
+        if (file_ext && strcasecmp(file_ext, ".toml") == 0) {
+            mapped_file file;
+            const void *data = nullptr;
+            if (!get_file_manager().get(file, file_value, &data)) {
+                metin2::log::error("Resource {} not found", file_value);
+                return nullptr;
+            }
+            const auto type = asset_type(std::string_view(static_cast<const char *>(data), file.size()));
+            if (auto f = res_new_func_by_asset_map_.find(type.value_or("")); res_new_func_by_asset_map_.end() != f) {
+                new_func = f->second;
+            }
+        } else if (file_ext) {
             auto f = res_new_func_map_.find(std::string(file_ext + 1).substr(0, 8));
 
             if (res_new_func_map_.end() != f)

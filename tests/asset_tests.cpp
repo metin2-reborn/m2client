@@ -3,7 +3,9 @@
 #include <metin2/effects/effect_data.h>
 #include <metin2/files/asset_toml.h>
 #include <metin2/files/eter_file_manager.h>
+#include <metin2/graphics/grp_sub_image.h>
 #include <metin2/sound/type.h>
+#include <metin2/world/actors/race_data.h>
 #include <metin2/world/actors/race_motion_data.h>
 #include <metin2/world/maps/property.h>
 
@@ -24,12 +26,26 @@ TEST(canonical_name_maps_the_folders_that_left_ymir_work) {
 }
 
 TEST(canonical_name_keeps_other_names) {
-    // Folders that stayed in the system archive, and other archives, keep their name (lower case, '/').
-    CHECK_EQ(eter_file_manager::canonical_name("d:\\ymir work\\ui\\Game\\a.dds"), std::string("d:/ymir work/ui/game/a.dds"));
+    // Names that stayed in the system archive, and other archives, keep their name (lower case, '/').
     CHECK_EQ(eter_file_manager::canonical_name("d:/ymir work/pcx/a.dds"), std::string("d:/ymir work/pcx/a.dds"));
     CHECK_EQ(eter_file_manager::canonical_name("textures:terrainmaps/a.dds"), std::string("textures:terrainmaps/a.dds"));
+    CHECK_EQ(eter_file_manager::canonical_name("season3/a.tga"), std::string("season3/a.tga"));
     // Scripts are TOML everywhere.
-    CHECK_EQ(eter_file_manager::canonical_name("season1/monster/x/wait.msa"), std::string("season1/monster/x/wait.toml"));
+    CHECK_EQ(eter_file_manager::canonical_name("Warrior_M.msm"), std::string("warrior_m.toml"));
+    CHECK_EQ(eter_file_manager::canonical_name("locale:ui/Login.sub"), std::string("locale:ui/login.toml"));
+}
+
+TEST(canonical_name_maps_the_folders_that_left_the_system_archive) {
+    CHECK_EQ(eter_file_manager::canonical_name("d:\\ymir work\\ui\\Game\\a.sub"), std::string("ui:game/a.toml"));
+    CHECK_EQ(eter_file_manager::canonical_name("D:/Ymir Work/UI/pattern/a.tga"), std::string("ui:pattern/a.tga"));
+    CHECK_EQ(eter_file_manager::canonical_name("d:/ymir work/uiloading/base/a.jpg"), std::string("ui:loading/base/a.jpg"));
+    CHECK_EQ(eter_file_manager::canonical_name("d:/ymir work/guild/facility/jedan.msm"), std::string("guild:facility/jedan.toml"));
+    CHECK_EQ(eter_file_manager::canonical_name("d:/ymir work/tree/B1_Sassafras.spt"), std::string("tree:b1_sassafras.spt"));
+    CHECK_EQ(eter_file_manager::canonical_name("season1\\monster\\x\\wait.msa"), std::string("season1:monster/x/wait.toml"));
+    CHECK_EQ(eter_file_manager::canonical_name("season2/npc/x/x.dds"), std::string("season2:npc/x/x.dds"));
+    // The icons became PNG; their hair textures stayed DDS.
+    CHECK_EQ(eter_file_manager::canonical_name("icon/item/00010.tga"), std::string("icon:item/00010.png"));
+    CHECK_EQ(eter_file_manager::canonical_name("icon:hair/45164.dds"), std::string("icon:hair/45164.dds"));
 }
 
 TEST(parse_path_resolves_old_names_to_the_new_archives) {
@@ -40,8 +56,14 @@ TEST(parse_path_resolves_old_names_to_the_new_archives) {
     CHECK_EQ(zone.archive_value, std::string("zone"));
     CHECK_EQ(zone.path, std::string("a.gr2"));
     const auto ui = eter_file_manager::parse_path("d:/ymir work/ui/a.dds");
-    CHECK_EQ(ui.archive_value, std::string("system"));
-    CHECK_EQ(ui.path, std::string("ymir work/ui/a.dds"));
+    CHECK_EQ(ui.archive_value, std::string("ui"));
+    CHECK_EQ(ui.path, std::string("a.dds"));
+    const auto season = eter_file_manager::parse_path("season1/npc/x/x.gr2");
+    CHECK_EQ(season.archive_value, std::string("season1"));
+    CHECK_EQ(season.path, std::string("npc/x/x.gr2"));
+    const auto other = eter_file_manager::parse_path("ymir work/missing/a.dds");
+    CHECK_EQ(other.archive_value, std::string("system"));
+    CHECK_EQ(other.path, std::string("ymir work/missing/a.dds"));
 }
 
 TEST(sound_script_name_follows_the_old_sound_folders) {
@@ -49,6 +71,7 @@ TEST(sound_script_name_follows_the_old_sound_folders) {
     CHECK_EQ(eter_file_manager::sound_script_name("d:/ymir work/pc/warrior/wait.msa"), std::string("sound:pc/warrior/wait.toml"));
     CHECK_EQ(eter_file_manager::sound_script_name("effect:etc/levelup_1/levelup.toml"), std::string("sound:effect/etc/levelup_1/levelup.toml"));
     CHECK(eter_file_manager::sound_script_name("season1/monster/x/wait.toml").empty());
+    CHECK(eter_file_manager::sound_script_name("system:x/wait.toml").empty());
 }
 
 TEST(asset_toml_checks_the_type) {
@@ -378,10 +401,10 @@ TEST(property_reads_every_kind) {
     CHECK_EQ(building->building().attribute_data_file_name, std::string("zone:b/house.mdatr"));
     CHECK(building->building().is_shadow_flag);
 
-    const auto tree = load_property("[tree]\nfile = \"d:/ymir work/tree/a.spt\"\n");
+    const auto tree = load_property("[tree]\nfile = \"tree:a.spt\"\n");
     CHECK(tree.has_value());
     CHECK_EQ(tree->type(), property_types::PROPERTY_TYPE_TREE);
-    CHECK_EQ(tree->tree().file_name, std::string("d:/ymir work/tree/a.spt"));
+    CHECK_EQ(tree->tree().file_name, std::string("tree:a.spt"));
 
     const auto effect = load_property("[effect]\nfile = \"effect:background/a.toml\"\n");
     CHECK(effect.has_value());
@@ -413,4 +436,112 @@ TEST(property_rejects_bad_scripts) {
     CHECK(!no_id.load("[asset]\ntype = \"Property\"\n[property]\nname = \"a\"\n[tree]\nfile = \"a.spt\"\n"));
     property old("property:a.prb");
     CHECK(!old.load("YPRT\r\n1430790742\r\npropertytype\t\"Tree\"\r\n"));
+}
+
+TEST(sub_image_reads_the_image_and_rect) {
+    std::string image;
+    int rect[4] = {};
+    CHECK(graphic_sub_image::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nimage = \"ui:public/public.dds\"\nrect = [0, 37, 376, 74]\n", "a.toml", image, rect));
+    CHECK_EQ(image, std::string("ui:public/public.dds"));
+    CHECK_EQ(rect[1], 37);
+    CHECK_EQ(rect[2], 376);
+}
+
+TEST(sub_image_rejects_bad_scripts) {
+    std::string image;
+    int rect[4] = {};
+    CHECK(!graphic_sub_image::load("title subImage\nversion 2.0\nimage \"a.dds\"\n", "a.sub", image, rect));
+    CHECK(!graphic_sub_image::load("[asset]\ntype = \"Race\"\n", "a.toml", image, rect));
+    CHECK(!graphic_sub_image::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nimage = \"a.dds\"\nrect = [0, 0, 1]\n", "a.toml", image, rect));
+    CHECK(!graphic_sub_image::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nimage = \"a.dds\"\nrect = [0, 0, 1.5, 2]\n", "a.toml", image, rect));
+    CHECK(!graphic_sub_image::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nrect = [0, 0, 1, 2]\n", "a.toml", image, rect));
+}
+
+namespace {
+    constexpr std::string_view kRaceText = R"([asset]
+type = "Race"
+
+[race]
+model = "character:pc/warrior/warrior.gr2"
+motion_list = "motlist_range.txt"
+smoke_bone = "ore"
+
+[[shape]]
+index = 3
+model = "character:pc/warrior/nahan.gr2"
+skins = [["character:pc/warrior/nahan.png", "character:pc/warrior/jaho.png"]]
+
+[[hair]]
+index = 1
+model = "character:pc/warrior/hair/hair_1.gr2"
+skin = ["character:pc/warrior/hair/hair_1.png", "character:pc/warrior/hair/hair_1_red.png"]
+
+[[attach]]
+type = "Collision"
+attaching = true
+model_index = 0
+bone = "Bip01"
+collision_type = "Defending"
+spheres = [{ radius = 130.0, position = [0.0, -20.0, 80.0] }, { radius = 50.0, position = [0.0, 0.0, 0.0] }]
+
+[[attach]]
+type = "Effect"
+attaching = false
+model_index = 1
+bone = ""
+effect = "effect:etc/a.toml"
+position = [1.0, 2.0, 3.0]
+)";
+
+    struct race_view : race_data {
+        using race_data::attaching_data_vector_value_;
+        using race_data::base_model_file_name_;
+        using race_data::motion_list_file_name_;
+        using race_data::smoke_bone_name_;
+    };
+}
+
+TEST(race_reads_every_part) {
+    race_view race;
+    CHECK(race.load(kRaceText, "a.toml"));
+    CHECK_EQ(race.base_model_file_name_, std::string("character:pc/warrior/warrior.gr2"));
+    CHECK_EQ(race.motion_list_file_name_, std::string("motlist_range.txt"));
+    CHECK_EQ(race.smoke_bone_name_, std::string("ore"));
+
+    const race_data::shape *shape = race.find_shape(3);
+    CHECK(shape != nullptr);
+    CHECK_EQ(shape->model_file_name, std::string("character:pc/warrior/nahan.gr2"));
+    CHECK_EQ(shape->vct_skin.size(), std::size_t{1});
+    CHECK_EQ(shape->vct_skin[0].dst_file_name, std::string("character:pc/warrior/jaho.png"));
+
+    const race_data::hair *hair = race.find_hair(1);
+    CHECK(hair != nullptr);
+    CHECK_EQ(hair->model_file_name, std::string("character:pc/warrior/hair/hair_1.gr2"));
+
+    CHECK_EQ(race.attaching_data_vector_value_.size(), std::size_t{2});
+    const race_types::attaching_data &collision = race.attaching_data_vector_value_[0];
+    CHECK_EQ(collision.type_value, uint32_t{race_types::ATTACHING_DATA_TYPE_COLLISION_DATA});
+    CHECK(collision.is_attaching);
+    CHECK_EQ(collision.collision_data_value->collision_type_value, int{race_types::COLLISION_TYPE_DEFENDING});
+    CHECK_EQ(collision.collision_data_value->sphere_data_vector.size(), std::size_t{2});
+    const race_types::attaching_data &effect = race.attaching_data_vector_value_[1];
+    CHECK_EQ(effect.attaching_model_index, uint32_t{1});
+    CHECK_EQ(effect.effect_data_value->file_name, std::string("effect:etc/a.toml"));
+    CHECK_EQ(effect.effect_data_value->position_value.z, 3.0f);
+    CHECK_EQ(effect.effect_data_value->rotation.x, 0.0f);
+}
+
+TEST(race_rejects_bad_scripts) {
+    race_data no_race;
+    CHECK(!no_race.load("[asset]\ntype = \"Race\"\n", "a.toml"));
+    race_data bad_attach;
+    CHECK(!bad_attach.load("[asset]\ntype = \"Race\"\n[race]\n[[attach]]\ntype = \"Light\"\nattaching = true\nmodel_index = 0\nbone = \"\"\n", "a.toml"));
+    race_data bad_collision;
+    CHECK(!bad_collision.load("[asset]\ntype = \"Race\"\n[race]\n[[attach]]\ntype = \"Collision\"\nattaching = true\nmodel_index = 0\nbone = \"\"\n"
+                              "collision_type = \"Hard\"\nspheres = []\n",
+        "a.toml"));
+    race_data shape_without_model;
+    CHECK(!shape_without_model.load("[asset]\ntype = \"Race\"\n[race]\n[[shape]]\nindex = 0\n", "a.toml"));
+    race_data old;
+    CHECK(!old.load("ScriptType RaceDataScript\nBaseModelFileName \"a.gr2\"\n", "a.msm"));
 }

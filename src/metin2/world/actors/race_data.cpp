@@ -436,6 +436,9 @@ namespace metin2::inline world::inline actors {
         race_index_ = 0;
 
         memset(smoke_effect_id_, 0, sizeof(smoke_effect_id_));
+        for (std::string &smoke : smoke_file_names_) {
+            smoke.clear();
+        }
     }
 
     race_data::race_data() {

@@ -1,3 +1,4 @@
+#include <metin2/core/file_loader.h>
 #include <metin2/core/lzo.h>
 #include <metin2/core/parse.h>
 #include <metin2/files/eter_file_manager.h>
@@ -130,7 +131,7 @@ namespace metin2::inline world::inline items {
                 } else {
                     uint32_t mild_base_vnum = mild_item_vnum / 10 * 10;
                     char mild_icon_path[256];
-                    snprintf(mild_icon_path, sizeof(mild_icon_path), "icon/item/%.5d.tga", mild_base_vnum);
+                    snprintf(mild_icon_path, sizeof(mild_icon_path), "icon:item/%.5d.png", mild_base_vnum);
                     if (4 == token_vector.size()) {
                         char mild_model_path[256];
                         snprintf(mild_model_path, sizeof(mild_model_path), "item:weapon/%.5d.gr2", mild_base_vnum);
@@ -277,19 +278,19 @@ namespace metin2::inline world::inline items {
 
             auto f = item_map_value_.find(vnum);
             if (item_map_value_.end() == f) {
-                snprintf(name, sizeof(name), "icon/item/%05d.tga", vnum);
+                snprintf(name, sizeof(name), "icon:item/%05d.png", vnum);
 
                 if (get_resource_manager().is_file_exist(name) == false) {
                     auto it_vnum = item_name_map_value.find(get_hash_code(table->name_value));
 
                     if (it_vnum != item_name_map_value.end())
-                        snprintf(name, sizeof(name), "icon/item/%05d.tga", it_vnum->second);
+                        snprintf(name, sizeof(name), "icon:item/%05d.png", it_vnum->second);
                     else
-                        snprintf(name, sizeof(name), "icon/item/%05d.tga", vnum - vnum % 10);
+                        snprintf(name, sizeof(name), "icon:item/%05d.png", vnum - vnum % 10);
 
                     if (get_resource_manager().is_file_exist(name) == false) {
                         const uint32_t empty_bowl = 27995;
-                        snprintf(name, sizeof(name), "icon/item/%05d.tga", empty_bowl);
+                        snprintf(name, sizeof(name), "icon:item/%05d.png", empty_bowl);
                     }
                 }
 

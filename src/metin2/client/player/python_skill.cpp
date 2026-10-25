@@ -1,5 +1,7 @@
 #include "python_skill.h"
+#include <metin2/core/file_loader.h>
 #include <metin2/core/parse.h>
+#include <metin2/core/text_file_loader.h>
 #include <metin2/log/log.h>
 
 #include <metin2/client/characters/instance_base.h>
@@ -218,7 +220,7 @@ namespace metin2::inline client::inline player {
             file_name += header;
             file_name += image_name;
             file_name += count;
-            file_name += ".sub";
+            file_name += ".toml";
             grade_data_value.image = (graphic_image *)get_resource_manager().resource_pointer(file_name.c_str());
         }
     }
@@ -227,7 +229,7 @@ namespace metin2::inline client::inline player {
         std::string file_name = "";
         file_name += header;
         file_name += image_name;
-        file_name += ".sub";
+        file_name += ".toml";
         data.image = (graphic_image *)get_resource_manager().resource_pointer(file_name.c_str());
         for (int j = 0; j < SKILL_GRADE_COUNT; ++j) {
             grade_data &grade_data_value = data.grade_data_value[j];

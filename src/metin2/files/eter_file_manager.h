@@ -57,10 +57,11 @@ namespace metin2::inline files {
 
         static auto parse_path(std::string_view path) -> eter_asset_path;
 
-        // The current name of an asset, lower case with '/': names into the folders that left
-        // system:ymir work become names of their archive ("d:/ymir work/pc/x.dds" is
-        // "character:pc/x.png"), and .msa/.mse scripts are .toml. Other system names keep their
-        // spelling. Two names of one file give the same canonical name.
+        // The current name of an asset, lower case with '/': names into the folders that left the
+        // system archive become names of their archive ("d:/ymir work/pc/x.dds" is
+        // "character:pc/x.png", "season1/npc/x.gr2" is "season1:npc/x.gr2"), and .msa/.mse/.msm/.sub
+        // scripts are .toml. Other system names keep their spelling. Two names of one file give the
+        // same canonical name.
         static auto canonical_name(std::string_view name) -> std::string;
 
         // The sound script of a motion or effect script: "character:pc/warrior/wait.toml" has

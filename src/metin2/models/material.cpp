@@ -66,7 +66,7 @@ namespace metin2::inline models {
     }
 
     auto material::is_in(const char *c_sz_image_name, int *stage) -> bool {
-        // The models name their textures the old way ("d:/ymir work/pc/x.dds"), the .msm skins the new way.
+        // The models name their textures the old way ("d:/ymir work/pc/x.dds"), the race skins the new way.
         const std::string str_image_name = eter_file_manager::canonical_name(c_sz_image_name);
 
         granny_texture *pgrn_diffuse_texture = GrannyGetMaterialTextureByType(pgrn_material_, GrannyDiffuseColorTexture);

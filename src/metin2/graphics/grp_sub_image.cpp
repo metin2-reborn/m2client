@@ -1,12 +1,10 @@
 #include "grp_sub_image.h"
-#include <metin2/core/file_loader.h>
-#include <metin2/core/parse.h>
-#include <metin2/core/stl.h>
+#include <metin2/files/asset_toml.h>
 #include "resource_manager.h"
 
-namespace metin2::inline graphics {
+#include <algorithm>
 
-    char graphic_sub_image::search_path[256] = "D:/Ymir Work/UI/";
+namespace metin2::inline graphics {
 
     auto graphic_sub_image::type() -> graphic_sub_image::type_type {
         static type_type s_type = string_to_type("CGraphicSubImage");
@@ -33,7 +31,7 @@ namespace metin2::inline graphics {
     auto graphic_sub_image::set_image_file_name(const char *file_name) -> bool {
         resource *resource = get_resource_manager().resource_pointer(file_name);
 
-        if (!resource->is_type(graphic_image::type()))
+        if (!resource || !resource->is_type(graphic_image::type()))
             return false;
 
         set_image_pointer(static_cast<graphic_image *>(resource));
@@ -51,62 +49,49 @@ namespace metin2::inline graphics {
         if (!buf)
             return false;
 
-        token_vector token_vector;
-        std::map<std::string, std::string> token_map;
-
-        memory_text_file_loader text_file_loader;
-
-        text_file_loader.bind(size, buf);
-
-        for (uint32_t i = 0; i < text_file_loader.line_count(); ++i) {
-            if (!text_file_loader.split_line(i, &token_vector))
-                continue;
-
-            if (token_vector.size() != 2)
-                return false;
-
-            stl_lowers(token_vector[0]);
-            stl_lowers(token_vector[1]);
-
-            token_map[token_vector[0]] = token_vector[1];
-        }
-
-        const std::string &title = token_map["title"];
-        const std::string &version = token_map["version"];
-        const std::string &image = token_map["image"];
-        const std::string &left = token_map["left"];
-        const std::string &top = token_map["top"];
-        const std::string &right = token_map["right"];
-        const std::string &bottom = token_map["bottom"];
-
-        if (title != "subimage")
+        int rect[4] = {};
+        std::string image;
+        if (!load(std::string_view(static_cast<const char *>(buf), size), file_name_string(), image, rect)) {
             return false;
-
-        char file_name[256];
-        if ("2.0" == version) {
-            const std::string &sub_file_name = file_name_string();
-            int pos = sub_file_name.find_last_of('\\', -1);
-            if (pos >= 0) {
-                pos++;
-                memcpy(file_name, sub_file_name.c_str(), pos);
-                file_name[pos] = '\0';
-                memcpy(file_name + pos, image.c_str(), image.length());
-                file_name[pos + image.length()] = '\0';
-            } else {
-                memcpy(file_name, image.c_str(), image.length());
-            }
-        } else {
-            snprintf(file_name, sizeof(file_name), "%s%s", search_path, image.c_str());
         }
 
-        set_image_file_name(file_name);
-
-        set_rect_position(metin2::to_number<int>(left.c_str()),
-            metin2::to_number<int>(top.c_str()),
-            metin2::to_number<int>(right.c_str()),
-            metin2::to_number<int>(bottom.c_str()));
-
+        if (!set_image_file_name(image.c_str())) {
+            return false;
+        }
+        set_rect_position(rect[0], rect[1], rect[2], rect[3]);
         return true;
+    }
+
+    auto graphic_sub_image::load(std::string_view text, std::string_view name, std::string &image, int (&rect)[4]) -> bool {
+        const auto table = parse_asset_toml(text, name, "SubImage");
+        if (!table) {
+            return false;
+        }
+
+        asset_table root(*table, name);
+        root.table("asset");
+        const toml::table *sub_image = root.table("sub_image");
+        if (!sub_image) {
+            root.error("sub_image", "is missing");
+            return false;
+        }
+
+        asset_table values(*sub_image, name);
+        bool ok = values.required("image", image);
+        const toml::array *numbers = values.array("rect");
+        if (!numbers) {
+            values.error("rect", "is missing");
+            ok = false;
+        } else if (numbers->size() != 4 || !std::ranges::all_of(*numbers, [](const toml::node &n) -> bool { return n.is_integer(); })) {
+            values.error("rect", "must be four whole numbers: left, top, right, bottom");
+            ok = false;
+        } else {
+            for (size_t i = 0; i < 4; ++i) {
+                rect[i] = static_cast<int>(*(*numbers)[i].value<int64_t>());
+            }
+        }
+        ok &= values.finish();
+        return root.finish() && ok;
     }
 
     void graphic_sub_image::on_clear() {

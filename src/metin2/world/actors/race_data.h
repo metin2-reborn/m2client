@@ -139,8 +139,10 @@ namespace metin2::inline world::inline actors {
         auto is_tree() -> bool;
         auto tree_file_name() -> const char *;
 
-        // Set up from the race script.
+        // Set up from the race script (TOML, [asset] type "Race") and register its effects.
         auto load_race_data(const char *file_name) -> bool;
+        // Parses the text of a race script; registers nothing.
+        auto load(std::string_view text, std::string_view name) -> bool;
 
         auto register_motion_data(uint16_t motion_mode, uint16_t motion_index, const char *file_name, uint8_t percentage = 100) -> graphic_thing *;
 
@@ -179,6 +181,7 @@ namespace metin2::inline world::inline actors {
       protected:
         uint32_t race_index_;
         uint32_t smoke_effect_id_[SMOKE_NUM];
+        std::string smoke_file_names_[SMOKE_NUM];
 
         graphic_thing *base_model_thing_;
         graphic_thing *lod_model_thing_;

@@ -91,16 +91,24 @@ namespace metin2::inline files {
         }
 
         toml::table table = std::move(parsed).table();
-        const auto asset_type = table["asset"]["type"].value_exact<std::string>();
-        if (!asset_type) {
+        const auto declared_type = table["asset"]["type"].value_exact<std::string>();
+        if (!declared_type) {
             metin2::log::error("{}: [asset] type is missing; expected \"{}\"", name, type);
             return std::nullopt;
         }
-        if (*asset_type != type) {
-            metin2::log::error("{}: [asset] type is \"{}\"; expected \"{}\"", name, *asset_type, type);
+        if (*declared_type != type) {
+            metin2::log::error("{}: [asset] type is \"{}\"; expected \"{}\"", name, *declared_type, type);
             return std::nullopt;
         }
         return table;
+    }
+
+    auto asset_type(std::string_view text) -> std::optional<std::string> {
+        toml::parse_result parsed = toml::parse(text);
+        if (!parsed) {
+            return std::nullopt;
+        }
+        return parsed.table()["asset"]["type"].value_exact<std::string>();
     }
 
     auto read_numbers(const toml::node &node, std::span<float> values) -> bool {

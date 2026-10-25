@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include <metin2/core/text_file_loader.h>
+#include <metin2/core/pool.h>
 #include <metin2/files/asset_toml.h>
 #include <metin2/geometry/collision_data.h>
 
@@ -12,8 +12,6 @@ namespace metin2::inline client::inline app {
 namespace metin2::inline world::inline actors {
 
     extern float game_fps;
-
-    extern std::string resource_path;
 
 #define MOTION_KEY                                uint32_t
 #define MAKE_MOTION_KEY(mode, index)              (((uint32_t)(((uint8_t)(mode)) << 24) | ((uint32_t)((uint16_t)(index))) << 8) | ((uint32_t)((uint8_t)(0))))
@@ -124,11 +122,8 @@ namespace metin2::inline world::inline actors {
         // type is under type_key ("type" or "attack_type").
         auto load_attack_data(asset_table &table, std::string_view type_key, attack_data *data) -> bool;
         auto load_motion_attack_data(asset_table &table, motion_attack_data *data) -> bool;
-        auto load_collision_data(text_file_loader &text_file_loader, collision_data *collision_data_value) -> bool;
         // collision_type and spheres = [{ radius, position }] of a special attack event.
         auto load_collision_data(asset_table &table, collision_data *collision_data_value) -> bool;
-        auto load_effect_data(text_file_loader &text_file_loader, attaching_effect_data *effect_data) -> bool;
-        auto load_object_data(text_file_loader &text_file_loader, attaching_object_data *object_data) -> bool;
 
         enum attaching_data_type {
             ATTACHING_DATA_TYPE_NONE,
@@ -156,7 +151,10 @@ namespace metin2::inline world::inline actors {
 
         using attaching_data_vector = std::vector<attaching_data>;
 
-        auto load_attaching_data(text_file_loader &text_file_loader, attaching_data_vector *attaching_data_vector_value) -> bool;
+        // One [[attach]] table of a race: type, attaching, model_index, bone, then the collision
+        // (collision_type, spheres), effect (effect, position, rotation) or object (object) keys.
+        // The effect is not registered here.
+        auto load_attaching_data(asset_table &table, attaching_data *data) -> bool;
 
         extern dynamic_pool<collision_data> collision_data_pool;
         extern dynamic_pool<attaching_effect_data> effect_data_pool;

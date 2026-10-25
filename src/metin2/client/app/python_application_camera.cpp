@@ -1,6 +1,7 @@
 #include "python_application.h"
 
 #include <metin2/core/parse.h>
+#include <metin2/core/text_file_loader.h>
 #include <metin2/core/timer.h>
 #include <metin2/graphics/camera.h>
 

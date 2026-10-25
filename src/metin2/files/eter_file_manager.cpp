@@ -16,9 +16,15 @@ namespace metin2::inline files {
         constexpr std::string_view kDataDirectory = "data/";
 
         // Folders of system:ymir work that became archives of their own.
-        constexpr std::array<std::string_view, 5> kMovedToArchive = {"effect", "environment", "item", "special", "zone"};
+        constexpr std::array<std::string_view, 8> kMovedToArchive = {"effect", "environment", "item", "special", "zone", "guild", "tree", "ui"};
         constexpr std::array<std::string_view, 6> kMovedToCharacter = {"monster", "monster2", "npc", "npc2", "pc", "pc2"};
         constexpr std::string_view kCharacterArchive = "character";
+        // system:ymir work/uiloading became ui:loading.
+        constexpr std::string_view kUiLoadingFolder = "uiloading";
+        // Top-level folders of the system archive that became archives of their own.
+        constexpr std::array<std::string_view, 3> kTopLevelMoved = {"season1", "season2", "icon"};
+        // Script formats that became TOML.
+        constexpr std::array<std::string_view, 4> kScriptExtensions = {".msa", ".mse", ".msm", ".sub"};
         // Archives whose textures were converted from DDS to PNG.
         constexpr std::array<std::string_view, 6> kPngArchives = {"effect", "environment", "item", "special", "zone", "character"};
 
@@ -28,6 +34,10 @@ namespace metin2::inline files {
 
         auto ends_with_no_case(std::string_view s, std::string_view suffix) -> bool {
             return s.size() >= suffix.size() && assets::case_insensitive_equal{}(s.substr(s.size() - suffix.size()), suffix);
+        }
+
+        auto is_script(std::string_view path) -> bool {
+            return std::ranges::any_of(kScriptExtensions, [path](std::string_view extension) -> bool { return ends_with_no_case(path, extension); });
         }
 
         void replace_extension(std::string &path, std::string_view extension) {
@@ -93,8 +103,8 @@ namespace metin2::inline files {
         while ((dup = p.find("//")) != std::string::npos)
             p.erase(dup, 1);
 
-        // Names from before the ymir work split: "ymir work/pc/x" is character:pc/x and
-        // "ymir work/effect/x" is effect:x. The models still carry such names for their textures.
+        // Names from before the system split: "ymir work/pc/x" is character:pc/x, "ymir work/effect/x"
+        // is effect:x and "season1/x" is season1:x. The models still carry such names for their textures.
         constexpr std::string_view legacy_root = "ymir work/";
         if (assets::case_insensitive_equal{}(result.archive_value, kDefaultArchive) && assets::starts_with_no_case(p, legacy_root)) {
             const std::size_t slash = p.find('/', legacy_root.size());
@@ -102,16 +112,27 @@ namespace metin2::inline files {
             if (slash != std::string::npos && is_one_of(folder, kMovedToArchive)) {
                 result.archive_value = folder;
                 p.erase(0, slash + 1);
+            } else if (slash != std::string::npos && assets::case_insensitive_equal{}(folder, kUiLoadingFolder)) {
+                result.archive_value = "ui";
+                p.replace(0, slash, "loading");
             } else if (slash != std::string::npos && is_one_of(folder, kMovedToCharacter)) {
                 result.archive_value = kCharacterArchive;
                 p.erase(0, legacy_root.size());
             }
+        } else if (assets::case_insensitive_equal{}(result.archive_value, kDefaultArchive)) {
+            const std::size_t slash = p.find('/');
+            if (slash != std::string::npos && is_one_of(std::string_view(p).substr(0, slash), kTopLevelMoved)) {
+                result.archive_value = p.substr(0, slash);
+                p.erase(0, slash + 1);
+            }
         }
 
-        // Motion (.msa) and effect (.mse) scripts became TOML, and the textures of the split archives PNG.
-        if (ends_with_no_case(p, ".msa") || ends_with_no_case(p, ".mse")) {
+        // The text scripts became TOML, the textures of the ymir work archives PNG and the icons PNG.
+        if (is_script(p)) {
             replace_extension(p, ".toml");
         } else if (ends_with_no_case(p, ".dds") && is_one_of(result.archive_value, kPngArchives)) {
+            replace_extension(p, ".png");
+        } else if (ends_with_no_case(p, ".tga") && assets::case_insensitive_equal{}(result.archive_value, "icon")) {
             replace_extension(p, ".png");
         }
 
@@ -124,7 +145,7 @@ namespace metin2::inline files {
         if (assets::case_insensitive_equal{}(path.archive_value, kDefaultArchive)) {
             // System names keep their spelling (drive prefix included), so the resource names they give stay the same.
             result = name;
-            if (ends_with_no_case(result, ".msa") || ends_with_no_case(result, ".mse")) {
+            if (is_script(result)) {
                 replace_extension(result, ".toml");
             }
         } else {

@@ -4,6 +4,7 @@
 #include <metin2/client/background/python_background.h>
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/core/error.h>
+#include <metin2/core/text_file_loader.h>
 #include <metin2/core/utils.h>
 #include <metin2/dev/automation.h>
 #include <metin2/gpu/types.h>

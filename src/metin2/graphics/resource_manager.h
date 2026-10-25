@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <string_view>
 
 namespace metin2::inline graphics {
 
@@ -28,6 +29,8 @@ namespace metin2::inline graphics {
         auto is_resource_pointer_data(uint32_t file_crc) -> bool;
 
         void register_resource_new_function_pointer(const char *file_ext, resource *(*res_new_func)(const char *file_name));
+        // A .toml resource is created by the function registered for the type in its [asset] table.
+        void register_asset_new_function_pointer(std::string_view asset_type, resource *(*res_new_func)(const char *file_name));
 
         auto is_file_exist(const char *file_name) -> bool;
 
@@ -52,6 +55,7 @@ namespace metin2::inline graphics {
         using resource_pointer_map = std::map<uint32_t, resource *>;
         using resource_new_function_pointer_map = std::map<std::string, resource *(*)(const char *)>;
         using resource_new_function_by_type_pointer_map = std::map<int, resource *(*)(const char *)>;
+        using resource_new_function_by_asset_pointer_map = std::map<std::string, resource *(*)(const char *), std::less<>>;
         using resource_deleting_map = std::map<resource *, uint32_t>;
         using resource_request_map = std::map<uint32_t, std::string>;
         using resource_ref_decrease_waiting_map = std::map<uint32_t, resource *>;
@@ -61,6 +65,7 @@ namespace metin2::inline graphics {
         resource_pointer_map res_map_;
         resource_new_function_pointer_map res_new_func_map_;
         resource_new_function_by_type_pointer_map res_new_func_by_type_map_;
+        resource_new_function_by_asset_pointer_map res_new_func_by_asset_map_;
         resource_deleting_map resource_deleting_map_value_;
         resource_request_map request_map_; // files requested from the loader thread
         resource_request_map waiting_map_;

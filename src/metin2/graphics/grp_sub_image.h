@@ -2,6 +2,9 @@
 
 #include "grp_image.h"
 
+#include <string>
+#include <string_view>
+
 namespace metin2::inline graphics {
 
     class graphic_sub_image : public graphic_image {
@@ -10,7 +13,8 @@ namespace metin2::inline graphics {
 
       public:
         static auto type() -> type_type;
-        static char search_path[256];
+        // Parses a sub image (TOML, [asset] type "SubImage"): the image and its left, top, right, bottom.
+        static auto load(std::string_view text, std::string_view name, std::string &image, int (&rect)[4]) -> bool;
 
       public:
         graphic_sub_image(const char *file_name);

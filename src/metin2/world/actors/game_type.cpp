@@ -21,6 +21,7 @@ namespace metin2::inline world::inline actors {
         constexpr std::string_view hit_type_names[] = {"None", "Great", "Good"};
         constexpr std::string_view motion_type_names[] = {"None", "Normal", "Combo", "Skill"};
         constexpr std::string_view collision_type_names[] = {"None", "Body", "Attacking", "Defending", "Splash"};
+        constexpr std::string_view attaching_type_names[] = {"", "Collision", "Effect", "Object"};
     }
 
     auto race_types::load_attack_data(asset_table &table, std::string_view type_key, attack_data *data) -> bool {
@@ -104,100 +105,34 @@ namespace metin2::inline world::inline actors {
         return ok;
     }
 
-    auto race_types::load_collision_data(text_file_loader &text_file_loader, collision_data *collision_data_value) -> bool {
-        if (!text_file_loader.token_integer("collisiontype", &collision_data_value->collision_type_value))
-            return false;
+    auto race_types::load_attaching_data(asset_table &table, attaching_data *data) -> bool {
+        int type = ATTACHING_DATA_TYPE_NONE;
+        bool ok = table.required_enum("type", attaching_type_names, type);
+        data->type_value = type;
+        ok &= table.required("attaching", data->is_attaching);
+        ok &= table.required("model_index", data->attaching_model_index);
+        ok &= table.required("bone", data->attaching_bone_name);
 
-        uint32_t sphere_data_count;
-        if (!text_file_loader.token_double_word("spheredatacount", &sphere_data_count))
-            return false;
-
-        collision_data_value->sphere_data_vector.clear();
-        collision_data_value->sphere_data_vector.resize(sphere_data_count);
-        for (uint32_t i = 0; i < sphere_data_count; ++i) {
-            sphere_data &r = collision_data_value->sphere_data_vector[i].attribute();
-
-            if (!text_file_loader.set_child_node("spheredata", i))
-                return false;
-
-            if (!text_file_loader.token_float("radius", &r.radius))
-                return false;
-            if (!text_file_loader.token_position("position", &r.position_value))
-                return false;
-
-            text_file_loader.set_parent_node();
-        }
-
-        return true;
-    }
-
-    auto race_types::load_effect_data(text_file_loader &text_file_loader, attaching_effect_data *effect_data) -> bool {
-        if (!text_file_loader.token_string("effectscriptname", &effect_data->file_name))
-            return false;
-
-        if (!text_file_loader.token_position("effectposition", &effect_data->position_value)) {
-            effect_data->position_value = math::vector3(0.0f, 0.0f, 0.0f);
-        }
-
-        if (!text_file_loader.token_position("effectrotation", &effect_data->rotation)) {
-            effect_data->rotation = math::vector3(0.0f, 0.0f, 0.0f);
-        }
-
-        get_effect_manager().register_effect(effect_data->file_name.c_str());
-
-        return true;
-    }
-
-    auto race_types::load_object_data(text_file_loader &text_file_loader, attaching_object_data *object_data) -> bool {
-        if (!text_file_loader.token_string("objectscriptname", &object_data->file_name))
-            return false;
-
-        return true;
-    }
-
-    auto race_types::load_attaching_data(text_file_loader &text_file_loader, attaching_data_vector *attaching_data_vector_value) -> bool {
-        uint32_t data_count;
-        if (!text_file_loader.token_double_word("attachingdatacount", &data_count))
-            return false;
-
-        attaching_data_vector_value->clear();
-        attaching_data_vector_value->resize(data_count);
-
-        for (uint32_t i = 0; i < data_count; ++i) {
-            race_types::attaching_data &attaching_data_value = attaching_data_vector_value->at(i);
-            if (!text_file_loader.set_child_node("attachingdata", i))
-                return false;
-
-            if (!text_file_loader.token_double_word("attachingdatatype", &attaching_data_value.type_value))
-                return false;
-
-            if (!text_file_loader.token_boolean("isattaching", &attaching_data_value.is_attaching))
-                return false;
-            if (!text_file_loader.token_double_word("attachingmodelindex", &attaching_data_value.attaching_model_index))
-                return false;
-            if (!text_file_loader.token_string("attachingbonename", &attaching_data_value.attaching_bone_name))
-                return false;
-
-            switch (attaching_data_value.type_value) {
-            case race_types::ATTACHING_DATA_TYPE_COLLISION_DATA:
-                attaching_data_value.collision_data_value = collision_data_pool.alloc();
-                if (!race_types::load_collision_data(text_file_loader, attaching_data_value.collision_data_value))
-                    return false;
-                break;
-            case race_types::ATTACHING_DATA_TYPE_EFFECT:
-                attaching_data_value.effect_data_value = effect_data_pool.alloc();
-                if (!race_types::load_effect_data(text_file_loader, attaching_data_value.effect_data_value))
-                    return false;
-                break;
-            case race_types::ATTACHING_DATA_TYPE_OBJECT:
-                attaching_data_value.object_data_value = object_data_pool.alloc();
-                if (!race_types::load_object_data(text_file_loader, attaching_data_value.object_data_value))
-                    return false;
+        switch (data->type_value) {
+        case ATTACHING_DATA_TYPE_COLLISION_DATA:
+            data->collision_data_value = collision_data_pool.alloc();
+            ok &= load_collision_data(table, data->collision_data_value);
+            break;
+        case ATTACHING_DATA_TYPE_EFFECT:
+            {
+                attaching_effect_data &effect = *(data->effect_data_value = effect_data_pool.alloc());
+                effect.position_value = math::vector3(0.0f, 0.0f, 0.0f);
+                effect.rotation = math::vector3(0.0f, 0.0f, 0.0f);
+                ok &= table.required("effect", effect.file_name);
+                ok &= table.optional("position", effect.position_value);
+                ok &= table.optional("rotation", effect.rotation);
                 break;
             }
-
-            text_file_loader.set_parent_node();
+        case ATTACHING_DATA_TYPE_OBJECT:
+            data->object_data_value = object_data_pool.alloc();
+            ok &= table.required("object", data->object_data_value->file_name);
+            break;
         }
-        return true;
+        return ok;
     }
 }

@@ -702,9 +702,9 @@ namespace metin2::inline client::inline background {
         grade = std::min(grade, 2);
 
         static std::string tree_name[3] = {
-            "d:/ymir work/tree/christmastree1.spt",
-            "d:/ymir work/tree/christmastree2.spt",
-            "d:/ymir work/tree/christmastree3.spt"};
+            "tree:christmastree1.spt",
+            "tree:christmastree2.spt",
+            "tree:christmastree3.spt"};
         static std::string effect_name_value[3] = {
             "effect:etc/christmas_tree/tree_1s.toml",
             "effect:etc/christmas_tree/tree_2s.toml",

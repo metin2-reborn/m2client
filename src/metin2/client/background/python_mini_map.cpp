@@ -7,6 +7,7 @@
 #include <metin2/client/characters/python_character_manager.h>
 #include <metin2/client/guilds/python_guild.h>
 #include <metin2/core/parse.h>
+#include <metin2/core/text_file_loader.h>
 #include <metin2/core/timer.h>
 #include <metin2/core/utils.h>
 #include <metin2/files/eter_file_manager.h>
@@ -432,11 +433,11 @@ namespace metin2::inline client::inline background {
 #pragma pack(pop)
 
     auto python_mini_map::create() -> bool {
-        const std::string image_root = "D:/ymir work/ui/";
+        const std::string image_root = "ui:";
         const std::string image_filter = image_root + "minimap_image_filter.dds";
         const std::string image_camera = image_root + "minimap_camera.dds";
-        const std::string player_mark = image_root + "minimap/playermark.sub";
-        const std::string white_mark = image_root + "minimap/whitemark.sub";
+        const std::string player_mark = image_root + "minimap/playermark.toml";
+        const std::string white_mark = image_root + "minimap/whitemark.toml";
 
         auto *image = (graphic_image *)get_resource_manager().resource_pointer(image_filter.c_str());
         mini_map_filter_graphic_image_instance_.set_image_pointer(image);
@@ -455,24 +456,24 @@ namespace metin2::inline client::inline background {
 
         char buf[256];
         for (int i = 0; i < MINI_WAYPOINT_IMAGE_COUNT; ++i) {
-            snprintf(buf, sizeof(buf), "%sminimap/mini_waypoint%02d.sub", image_root.c_str(), i + 1);
+            snprintf(buf, sizeof(buf), "%sminimap/mini_waypoint%02d.toml", image_root.c_str(), i + 1);
             mini_way_point_graphic_image_instances_[i].set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(buf));
             mini_way_point_graphic_image_instances_[i].set_rendering_mode(graphic_expanded_image_instance::RENDERING_MODE_SCREEN);
         }
 
         for (int j = 0; j < WAYPOINT_IMAGE_COUNT; ++j) {
-            snprintf(buf, sizeof(buf), "%sminimap/waypoint%02d.sub", image_root.c_str(), j + 1);
+            snprintf(buf, sizeof(buf), "%sminimap/waypoint%02d.toml", image_root.c_str(), j + 1);
             way_point_graphic_image_instances_[j].set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(buf));
             way_point_graphic_image_instances_[j].set_rendering_mode(graphic_expanded_image_instance::RENDERING_MODE_SCREEN);
         }
 
         for (int k = 0; k < TARGET_MARK_IMAGE_COUNT; ++k) {
-            snprintf(buf, sizeof(buf), "%sminimap/targetmark%02d.sub", image_root.c_str(), k + 1);
+            snprintf(buf, sizeof(buf), "%sminimap/targetmark%02d.toml", image_root.c_str(), k + 1);
             target_mark_graphic_image_instances_[k].set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer(buf));
             target_mark_graphic_image_instances_[k].set_rendering_mode(graphic_expanded_image_instance::RENDERING_MODE_SCREEN);
         }
 
-        guild_area_flag_image_instance_.set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer("d:/ymir work/ui/minimap/GuildArea01.sub"));
+        guild_area_flag_image_instance_.set_image_pointer((graphic_sub_image *)get_resource_manager().resource_pointer("ui:minimap/guildarea01.toml"));
 
 #pragma pack(push)
 #pragma pack(1)
@@ -767,12 +768,12 @@ namespace metin2::inline client::inline background {
 
         auto &map = background.map_outdoor_ref();
 
-        const char *player_mark_file_name = "d:/ymir work/ui/minimap/playermark.sub";
+        const char *player_mark_file_name = "ui:minimap/playermark.toml";
 
         char atlas_file_name[1024 + 1];
-        snprintf(atlas_file_name, sizeof(atlas_file_name), "%s", map_file_name(map.get_name(), "atlas.sub").c_str());
+        snprintf(atlas_file_name, sizeof(atlas_file_name), "%s", map_file_name(map.get_name(), "atlas.toml").c_str());
         if (!get_file_manager().is_exist(atlas_file_name)) {
-            snprintf(atlas_file_name, sizeof(atlas_file_name), "d:/ymir work/ui/atlas/%s/atlas.sub", map.get_name().c_str());
+            snprintf(atlas_file_name, sizeof(atlas_file_name), "ui:atlas/%s/atlas.toml", map.get_name().c_str());
         }
 
         atlas_image_instance_.destroy();

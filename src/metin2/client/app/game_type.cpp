@@ -3,8 +3,7 @@
 #include <metin2/graphics/resource_manager.h>
 
 namespace metin2::inline client::inline app {
-    std::string resource_path = "d:/ymir work/";
-    std::string image_path = "d:/ymir work/ui/";
+    std::string image_path = "ui:";
 
     std::string guild_symbol_path_name = "mark/10/";
 
