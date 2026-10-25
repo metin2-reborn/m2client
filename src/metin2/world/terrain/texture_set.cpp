@@ -3,6 +3,7 @@
 #include "terrain_type.h"
 
 #include <metin2/core/mapped_file.h>
+#include <metin2/files/asset_toml.h>
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/log/log.h>
@@ -103,20 +104,18 @@ namespace metin2::inline world::inline terrain {
     }
 
     auto parse_texture_set(std::string_view text, std::string_view name) -> std::optional<std::vector<texture_set_entry>> {
-        toml::parse_result parsed = toml::parse(text, name);
+        const auto parsed = parse_asset_toml(text, name, "TextureSet");
         if (!parsed) {
-            const toml::parse_error &error = parsed.error();
-            metin2::log::error("{}:{}: {}", name, error.source().begin.line, error.description());
             return std::nullopt;
         }
 
         std::vector<texture_set_entry> entries;
-        for (const auto &[key, node] : parsed.table()) {
-            if (key.str() != "texture") {
+        for (const auto &[key, node] : *parsed) {
+            if (key.str() != "asset" && key.str() != "texture") {
                 metin2::log::warn("{}:{}: unknown key {}", name, node.source().begin.line, key.str());
             }
         }
-        const toml::array *textures = parsed.table()["texture"].as_array();
+        const toml::array *textures = (*parsed)["texture"].as_array();
         if (!textures) {
             return entries;
         }
@@ -173,7 +172,7 @@ namespace metin2::inline world::inline terrain {
     }
 
     void texture_set::create() {
-        auto *resource = get_resource_manager().resource_pointer("d:/ymir work/special/error.tga");
+        auto *resource = get_resource_manager().resource_pointer("special:error.tga");
         error_texture_.image_instance.set_image_pointer(static_cast<graphic_image *>(resource));
         add_empty_texture(); // The eraser texture has to be the first entry.
     }

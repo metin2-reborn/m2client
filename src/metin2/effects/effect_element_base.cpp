@@ -1,6 +1,5 @@
 #include "effect_element_base.h"
 #include <cmath>
-#include <metin2/core/parse.h>
 
 namespace metin2::inline effects {
 
@@ -58,48 +57,35 @@ namespace metin2::inline effects {
         on_clear();
     }
 
-    auto effect_element_base::load_script(text_file_loader &text_file_loader) -> bool {
-        token_vector *token_vector;
-        if (!text_file_loader.token_float("starttime", &start_time_)) {
-            start_time_ = 0.0f;
-        }
-        if (text_file_loader.get_token_vector("timeeventposition", &token_vector)) {
-            time_event_table_position_value_.clear();
+    auto effect_element_base::load_script(asset_table &table) -> bool {
+        constexpr std::string_view moving_type_names[] = {"Direct", "Bezier"};
 
-            for (uint32_t i = 0; i < token_vector->size();) {
-                effect_position effect_position;
-                effect_position.time = metin2::to_number<double>(token_vector->at(i++).c_str());
-                if (token_vector->at(i) == "MOVING_TYPE_BEZIER_CURVE") {
-                    i++;
+        start_time_ = 0.0f;
+        bool ok = table.optional("start_time", start_time_);
 
-                    effect_position.moving_type_value = MOVING_TYPE_BEZIER_CURVE;
-
-                    effect_position.position_value.x = metin2::to_number<double>(token_vector->at(i++).c_str());
-                    effect_position.position_value.y = metin2::to_number<double>(token_vector->at(i++).c_str());
-                    effect_position.position_value.z = metin2::to_number<double>(token_vector->at(i++).c_str());
-
-                    effect_position.control_point.x = metin2::to_number<double>(token_vector->at(i++).c_str());
-                    effect_position.control_point.y = metin2::to_number<double>(token_vector->at(i++).c_str());
-                    effect_position.control_point.z = metin2::to_number<double>(token_vector->at(i++).c_str());
-                } else if (token_vector->at(i) == "MOVING_TYPE_DIRECT") {
-                    i++;
-
-                    effect_position.moving_type_value = MOVING_TYPE_DIRECT;
-
-                    effect_position.position_value.x = metin2::to_number<double>(token_vector->at(i++).c_str());
-                    effect_position.position_value.y = metin2::to_number<double>(token_vector->at(i++).c_str());
-                    effect_position.position_value.z = metin2::to_number<double>(token_vector->at(i++).c_str());
-
-                    effect_position.control_point = math::vector3(0.0f, 0.0f, 0.0f);
-                } else {
+        time_event_table_position_value_.clear();
+        if (const toml::array *path = table.array("path")) {
+            for (const toml::node &node : *path) {
+                const toml::table *entry = node.as_table();
+                if (!entry) {
+                    table.error("path", "must hold tables { time, mode, position, control }");
                     return false;
                 }
-
-                time_event_table_position_value_.push_back(effect_position);
+                asset_table entry_table(*entry, table.file_name());
+                effect_position position{};
+                position.moving_type_value = MOVING_TYPE_DIRECT;
+                ok &= entry_table.required("time", position.time);
+                ok &= entry_table.required_enum("mode", moving_type_names, position.moving_type_value);
+                ok &= entry_table.required("position", position.position_value);
+                if (position.moving_type_value == MOVING_TYPE_BEZIER_CURVE) {
+                    ok &= entry_table.required("control", position.control_point);
+                }
+                ok &= entry_table.finish();
+                time_event_table_position_value_.push_back(position);
             }
         }
 
-        return on_load_script(text_file_loader);
+        return on_load_script(table) && ok;
     }
 
     auto effect_element_base::start_time() -> float {

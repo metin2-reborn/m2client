@@ -238,7 +238,7 @@ namespace metin2::inline world::inline actors {
         auto i = vct_skin.begin();
         const race_data::skin &skin_item = *i;
 
-        std::string dst_file_name = "d:/ymir work/npc/guild_symbol/guild_symbol.dds";
+        std::string dst_file_name = "character:npc/guild_symbol/guild_symbol.png";
         dst_file_name = file_name;
 
         resource *res = get_resource_manager().resource_pointer(dst_file_name.c_str());

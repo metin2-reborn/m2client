@@ -1,5 +1,5 @@
 #include "material.h"
-#include <metin2/core/file_name.h>
+#include <metin2/files/eter_file_manager.h>
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/grp_screen.h>
 #include <metin2/graphics/resource_manager.h>
@@ -66,14 +66,12 @@ namespace metin2::inline models {
     }
 
     auto material::is_in(const char *c_sz_image_name, int *stage) -> bool {
-        std::string str_image_name = c_sz_image_name;
-        file_name_helper::string_path(str_image_name);
+        // The models name their textures the old way ("d:/ymir work/pc/x.dds"), the .msm skins the new way.
+        const std::string str_image_name = eter_file_manager::canonical_name(c_sz_image_name);
 
         granny_texture *pgrn_diffuse_texture = GrannyGetMaterialTextureByType(pgrn_material_, GrannyDiffuseColorTexture);
         if (pgrn_diffuse_texture) {
-            std::string diffuse_file_name = pgrn_diffuse_texture->FromFileName;
-            file_name_helper::string_path(diffuse_file_name);
-            if (diffuse_file_name == str_image_name) {
+            if (eter_file_manager::canonical_name(pgrn_diffuse_texture->FromFileName) == str_image_name) {
                 *stage = 0;
                 return true;
             }
@@ -81,9 +79,7 @@ namespace metin2::inline models {
 
         granny_texture *pgrn_opacity_texture = GrannyGetMaterialTextureByType(pgrn_material_, GrannyOpacityTexture);
         if (pgrn_opacity_texture) {
-            std::string opacity_file_name = pgrn_opacity_texture->FromFileName;
-            file_name_helper::string_path(opacity_file_name);
-            if (opacity_file_name == str_image_name) {
+            if (eter_file_manager::canonical_name(pgrn_opacity_texture->FromFileName) == str_image_name) {
                 *stage = 1;
                 return true;
             }

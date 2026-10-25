@@ -2,6 +2,7 @@
 
 #include <metin2/core/crc32.h>
 #include <metin2/effects/effect_manager.h>
+#include <metin2/files/eter_file_manager.h>
 #include <metin2/world/flying/flying_object_manager.h>
 #include "game_type.h"
 
@@ -17,7 +18,9 @@ namespace metin2::inline world::inline actors {
             motion_event_data() : frame(0), starting_time(0.0f), duration_time(0.0f) {}
             virtual ~motion_event_data() = default;
 
-            virtual auto load(text_file_loader &text_file_loader) -> bool { return true; }
+            // Reads the keys of the event's type; register_assets() then loads the files it names.
+            virtual auto load(asset_table &table) -> bool { return true; }
+            virtual void register_assets() {}
         };
 
         struct motion_event_data_screen_waving : public motion_event_data {
@@ -27,15 +30,12 @@ namespace metin2::inline world::inline actors {
             motion_event_data_screen_waving() = default;
             ~motion_event_data_screen_waving() override = default;
 
-            auto load(text_file_loader &text_file_loader) -> bool override {
-                if (!text_file_loader.token_float("duringtime", &duration_time))
-                    return false;
-                if (!text_file_loader.token_integer("power", &power))
-                    return false;
-                if (!text_file_loader.token_integer("affectingrange", &affecting_range))
-                    affecting_range = 0;
-
-                return true;
+            auto load(asset_table &table) -> bool override {
+                affecting_range = 0;
+                bool ok = table.required("duration", duration_time);
+                ok &= table.required("power", power);
+                ok &= table.optional("range", affecting_range);
+                return ok;
             }
         };
 
@@ -44,10 +44,6 @@ namespace metin2::inline world::inline actors {
 
             motion_event_data_screen_flashing() = default;
             ~motion_event_data_screen_flashing() override = default;
-
-            auto load(text_file_loader &text_file_loader) -> bool override {
-                return true;
-            }
         };
 
         struct motion_event_data_effect : public motion_event_data {
@@ -63,24 +59,22 @@ namespace metin2::inline world::inline actors {
             motion_event_data_effect() = default;
             ~motion_event_data_effect() override = default;
 
-            auto load(text_file_loader &text_file_loader) -> bool override {
-                if (!text_file_loader.token_boolean("independentflag", &is_independent))
-                    is_independent = false;
-                if (!text_file_loader.token_boolean("attachingenable", &is_attaching))
-                    return false;
-                if (!text_file_loader.token_string("attachingbonename", &attaching_bone_name))
-                    return false;
-                if (!text_file_loader.token_string("effectfilename", &effect_file_name))
-                    return false;
-                if (!text_file_loader.token_position("effectposition", &effect_position_value))
-                    return false;
-                if (!text_file_loader.token_boolean("followingenable", &is_following)) {
-                    is_following = false;
-                }
+            auto load(asset_table &table) -> bool override {
+                is_independent = false;
+                is_following = false;
+                bool ok = table.required("effect", effect_file_name);
+                ok &= table.required("position", effect_position_value);
+                ok &= table.required("bone", attaching_bone_name);
+                ok &= table.required("attach", is_attaching);
+                ok &= table.optional("follow", is_following);
+                ok &= table.optional("independent", is_independent);
+                effect_file_name = eter_file_manager::canonical_name(effect_file_name);
                 effect_index = get_case_crc32(effect_file_name.c_str(), effect_file_name.length());
-                get_effect_manager().register_effect(effect_file_name.c_str());
+                return ok;
+            }
 
-                return true;
+            void register_assets() override {
+                get_effect_manager().register_effect(effect_file_name.c_str());
             }
         };
 
@@ -95,21 +89,20 @@ namespace metin2::inline world::inline actors {
             motion_event_data_effect_to_target() = default;
             ~motion_event_data_effect_to_target() override = default;
 
-            auto load(text_file_loader &text_file_loader) -> bool override {
-                if (!text_file_loader.token_string("effectfilename", &effect_file_name))
-                    return false;
-                if (!text_file_loader.token_position("effectposition", &effect_position_value))
-                    return false;
-                if (!text_file_loader.token_boolean("followingenable", &is_following)) {
-                    is_following = false;
-                }
-                if (!text_file_loader.token_boolean("fishingeffectflag", &is_fishing_effect)) {
-                    is_fishing_effect = false;
-                }
+            auto load(asset_table &table) -> bool override {
+                is_following = false;
+                is_fishing_effect = false;
+                bool ok = table.required("effect", effect_file_name);
+                ok &= table.required("position", effect_position_value);
+                ok &= table.optional("follow", is_following);
+                ok &= table.optional("fishing", is_fishing_effect);
+                effect_file_name = eter_file_manager::canonical_name(effect_file_name);
                 effect_index = get_case_crc32(effect_file_name.c_str(), effect_file_name.length());
-                get_effect_manager().register_effect(effect_file_name.c_str());
+                return ok;
+            }
 
-                return true;
+            void register_assets() override {
+                get_effect_manager().register_effect(effect_file_name.c_str());
             }
         };
 
@@ -124,20 +117,18 @@ namespace metin2::inline world::inline actors {
             motion_event_data_fly() = default;
             ~motion_event_data_fly() override = default;
 
-            auto load(text_file_loader &text_file_loader) -> bool override {
-                if (!text_file_loader.token_boolean("attachingenable", &is_attaching))
-                    return false;
-                if (!text_file_loader.token_string("attachingbonename", &attaching_bone_name))
-                    return false;
-                if (!text_file_loader.token_string("flyfilename", &fly_file_name))
-                    return false;
-                if (!text_file_loader.token_position("flyposition", &fly_position))
-                    return false;
+            auto load(asset_table &table) -> bool override {
+                bool ok = table.required("fly", fly_file_name);
+                ok &= table.required("position", fly_position);
+                ok &= table.required("bone", attaching_bone_name);
+                ok &= table.required("attach", is_attaching);
+                fly_file_name = eter_file_manager::canonical_name(fly_file_name);
                 fly_index = get_case_crc32(fly_file_name.c_str(), fly_file_name.length());
+                return ok;
+            }
 
+            void register_assets() override {
                 get_flying_manager().register_flying_data(fly_file_name.c_str());
-
-                return true;
             }
         };
 
@@ -149,21 +140,13 @@ namespace metin2::inline world::inline actors {
             motion_event_data_attack() = default;
             ~motion_event_data_attack() override = default;
 
-            auto load(text_file_loader &text_file_loader) -> bool override {
-                if (!text_file_loader.token_float("duringtime", &duration_time))
-                    return false;
-
-                if (!text_file_loader.token_boolean("enablehitprocess", &is_enable_hit_process)) {
-                    is_enable_hit_process = true;
-                }
-
-                if (!race_types::load_attack_data(text_file_loader, &attack_data_value))
-                    return false;
-
-                if (!race_types::load_collision_data(text_file_loader, &collision_data_value))
-                    return false;
-
-                return true;
+            auto load(asset_table &table) -> bool override {
+                is_enable_hit_process = true;
+                bool ok = table.required("duration", duration_time);
+                ok &= table.optional("hit_process", is_enable_hit_process);
+                ok &= race_types::load_attack_data(table, "attack_type", &attack_data_value);
+                ok &= race_types::load_collision_data(table, &collision_data_value);
+                return ok;
             }
         };
         using motion_event_data_attacking = motion_event_data_attack;
@@ -174,11 +157,8 @@ namespace metin2::inline world::inline actors {
             motion_event_data_sound() = default;
             ~motion_event_data_sound() override = default;
 
-            auto load(text_file_loader &text_file_loader) -> bool override {
-                if (!text_file_loader.token_string("soundfilename", &sound_file_name))
-                    return false;
-
-                return true;
+            auto load(asset_table &table) -> bool override {
+                return table.required("sound", sound_file_name);
             }
         };
 

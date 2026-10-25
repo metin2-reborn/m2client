@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <metin2/core/crc32.h>
 #include <metin2/core/stl.h>
 #include <metin2/core/timer.h>
@@ -268,10 +269,10 @@ namespace metin2::inline graphics {
 
     auto resource_manager::file_crc_impl(const char *file_name, const char **ppsz_lower_file_name) -> uint32_t {
         // The returned name stays valid until the next call on this thread.
+        // Keyed by the canonical name, so that the old and the new name of a file give one resource.
         thread_local std::string full_path_file_name;
-        full_path_file_name.clear();
-        for (const char *src = file_name; *src; ++src)
-            full_path_file_name += *src == '/' ? '\\' : static_cast<char>(ascii_tolower(*src));
+        full_path_file_name = eter_file_manager::canonical_name(file_name);
+        std::ranges::replace(full_path_file_name, '/', '\\');
 
         if (ppsz_lower_file_name)
             *ppsz_lower_file_name = full_path_file_name.c_str();

@@ -234,7 +234,11 @@ namespace metin2::inline world::inline actors {
 
         auto sound_instance_vector_pointer() const -> const sound_types::sound_instance_vector *;
 
+        // Reads a motion script (TOML, type "Motion") and loads the effects, flying objects and
+        // sounds it names.
         auto load_motion_data(const char *file_name) -> bool;
+        // Only reads the script; errors are logged with name and line.
+        auto load(std::string_view text, std::string_view name) -> bool;
         auto load_sound_script_data(const char *file_name) -> bool;
 
       protected:

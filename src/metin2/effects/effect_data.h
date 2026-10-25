@@ -19,7 +19,10 @@ namespace metin2::inline effects {
         virtual ~effect_data();
 
         void clear();
+        // Reads an effect script (TOML, type "Effect") and its sound script.
         auto load_script(const char *file_name) -> bool;
+        // Only reads the script; errors are logged with name and line.
+        auto load(std::string_view text, std::string_view name) -> bool;
         auto load_sound_script_data(const char *file_name) -> bool;
 
         auto particle_count() -> uint32_t;

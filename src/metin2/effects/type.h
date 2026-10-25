@@ -1,6 +1,9 @@
 #pragma once
 
-#include <metin2/core/text_file_loader.h>
+#include <metin2/core/pool.h>
+#include <metin2/files/asset_toml.h>
+
+#include <cassert>
 
 #include <algorithm>
 #include <cstdint>
@@ -167,5 +170,8 @@ namespace metin2::inline effects {
         }
     }
 
-    extern auto get_token_time_event_float(text_file_loader &text_file_loader, const char *key, time_event_table_float *time_event_table_float_value) -> bool;
+    // A time event table [[time, value], ...]. A missing key leaves the table alone (true).
+    auto read_time_events(asset_table &table, std::string_view key, time_event_table_float &events) -> bool;
+    // The same for a table that must be there.
+    auto read_required_time_events(asset_table &table, std::string_view key, time_event_table_float &events) -> bool;
 }

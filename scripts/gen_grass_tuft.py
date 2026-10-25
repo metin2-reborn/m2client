@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draws the grass tuft texture the terrain grass uses (d:/ymir work/special/grass_tuft.tga).
+"""Draws the grass tuft texture the terrain grass uses (special:grass_tuft.tga).
 
 The tuft is a fan of tapered, slightly curved blades. It is near-white with a darker root: the grass
 vertices are tinted with the colour of the terrain tile they grow on, so the texture only carries the
@@ -19,7 +19,7 @@ SIZE = 256
 SUPERSAMPLE = 4
 SEED = 20261024
 
-DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "m2game/data/system/ymir work/special/grass_tuft.tga"
+DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "m2game/data/special/grass_tuft.tga"
 
 
 def blade(draw, rng, big):

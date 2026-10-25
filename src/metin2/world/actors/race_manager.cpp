@@ -25,55 +25,55 @@ namespace metin2::inline world::inline actors {
     void get_race_resource_pathes(unsigned race, std::vector<std::string> &vec_pathes) {
         if (is_guild_race(race)) {
             vec_pathes.push_back("d:/ymir work/guild/");
-            vec_pathes.push_back("d:/ymir work/npc/");
-            vec_pathes.push_back("d:/ymir work/npc2/");
-            vec_pathes.push_back("d:/ymir work/monster/");
-            vec_pathes.push_back("d:/ymir work/monster2/");
+            vec_pathes.push_back("character:npc/");
+            vec_pathes.push_back("character:npc2/");
+            vec_pathes.push_back("character:monster/");
+            vec_pathes.push_back("character:monster2/");
         } else if (is_npc_race(race)) {
             if (race >= 30000) {
-                vec_pathes.push_back("d:/ymir work/npc2/");
-                vec_pathes.push_back("d:/ymir work/npc/");
-                vec_pathes.push_back("d:/ymir work/monster/");
-                vec_pathes.push_back("d:/ymir work/monster2/");
+                vec_pathes.push_back("character:npc2/");
+                vec_pathes.push_back("character:npc/");
+                vec_pathes.push_back("character:monster/");
+                vec_pathes.push_back("character:monster2/");
                 vec_pathes.push_back("d:/ymir work/guild/");
             } else {
-                vec_pathes.push_back("d:/ymir work/npc/");
-                vec_pathes.push_back("d:/ymir work/npc2/");
-                vec_pathes.push_back("d:/ymir work/monster/");
-                vec_pathes.push_back("d:/ymir work/monster2/");
+                vec_pathes.push_back("character:npc/");
+                vec_pathes.push_back("character:npc2/");
+                vec_pathes.push_back("character:monster/");
+                vec_pathes.push_back("character:monster2/");
                 vec_pathes.push_back("d:/ymir work/guild/");
             }
         }
         // Exception monsters for the April Fools' event.
         else if (8507 == race || 8510 == race) {
-            vec_pathes.push_back("d:/ymir work/monster2/");
-            vec_pathes.push_back("d:/ymir work/monster/");
-            vec_pathes.push_back("d:/ymir work/npc/");
-            vec_pathes.push_back("d:/ymir work/npc2/");
+            vec_pathes.push_back("character:monster2/");
+            vec_pathes.push_back("character:monster/");
+            vec_pathes.push_back("character:npc/");
+            vec_pathes.push_back("character:npc2/");
             vec_pathes.push_back("d:/ymir work/guild/");
         } else if (race > 8000) {
-            vec_pathes.push_back("d:/ymir work/monster/");
-            vec_pathes.push_back("d:/ymir work/monster2/");
-            vec_pathes.push_back("d:/ymir work/npc/");
-            vec_pathes.push_back("d:/ymir work/npc2/");
+            vec_pathes.push_back("character:monster/");
+            vec_pathes.push_back("character:monster2/");
+            vec_pathes.push_back("character:npc/");
+            vec_pathes.push_back("character:npc2/");
             vec_pathes.push_back("d:/ymir work/guild/");
         } else if (race > 2000) {
-            vec_pathes.push_back("d:/ymir work/monster2/");
-            vec_pathes.push_back("d:/ymir work/monster/");
-            vec_pathes.push_back("d:/ymir work/npc/");
-            vec_pathes.push_back("d:/ymir work/npc2/");
+            vec_pathes.push_back("character:monster2/");
+            vec_pathes.push_back("character:monster/");
+            vec_pathes.push_back("character:npc/");
+            vec_pathes.push_back("character:npc2/");
             vec_pathes.push_back("d:/ymir work/guild/");
         } else if (race >= 1400 && race <= 1700) {
-            vec_pathes.push_back("d:/ymir work/monster2/");
-            vec_pathes.push_back("d:/ymir work/monster/");
-            vec_pathes.push_back("d:/ymir work/npc/");
-            vec_pathes.push_back("d:/ymir work/npc2/");
+            vec_pathes.push_back("character:monster2/");
+            vec_pathes.push_back("character:monster/");
+            vec_pathes.push_back("character:npc/");
+            vec_pathes.push_back("character:npc2/");
             vec_pathes.push_back("d:/ymir work/guild/");
         } else {
-            vec_pathes.push_back("d:/ymir work/monster/");
-            vec_pathes.push_back("d:/ymir work/monster2/");
-            vec_pathes.push_back("d:/ymir work/npc/");
-            vec_pathes.push_back("d:/ymir work/npc2/");
+            vec_pathes.push_back("character:monster/");
+            vec_pathes.push_back("character:monster2/");
+            vec_pathes.push_back("character:npc/");
+            vec_pathes.push_back("character:npc2/");
             vec_pathes.push_back("d:/ymir work/guild/");
         }
         return;

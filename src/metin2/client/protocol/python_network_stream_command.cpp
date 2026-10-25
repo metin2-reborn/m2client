@@ -279,20 +279,20 @@ namespace metin2::inline client::inline protocol {
 
             switch (distance) {
             case 0:
-                get_effect_manager().register_effect("d:/ymir work/effect/etc/firecracker/find_out.mse");
-                get_effect_manager().create_effect("d:/ymir work/effect/etc/firecracker/find_out.mse", pixel_position, rotation);
+                get_effect_manager().register_effect("effect:etc/firecracker/find_out.toml");
+                get_effect_manager().create_effect("effect:etc/firecracker/find_out.toml", pixel_position, rotation);
                 break;
             case 1:
-                get_effect_manager().register_effect("d:/ymir work/effect/etc/compass/appear_small.mse");
-                get_effect_manager().create_effect("d:/ymir work/effect/etc/compass/appear_small.mse", pixel_position, rotation);
+                get_effect_manager().register_effect("effect:etc/compass/appear_small.toml");
+                get_effect_manager().create_effect("effect:etc/compass/appear_small.toml", pixel_position, rotation);
                 break;
             case 2:
-                get_effect_manager().register_effect("d:/ymir work/effect/etc/compass/appear_middle.mse");
-                get_effect_manager().create_effect("d:/ymir work/effect/etc/compass/appear_middle.mse", pixel_position, rotation);
+                get_effect_manager().register_effect("effect:etc/compass/appear_middle.toml");
+                get_effect_manager().create_effect("effect:etc/compass/appear_middle.toml", pixel_position, rotation);
                 break;
             case 3:
-                get_effect_manager().register_effect("d:/ymir work/effect/etc/compass/appear_large.mse");
-                get_effect_manager().create_effect("d:/ymir work/effect/etc/compass/appear_large.mse", pixel_position, rotation);
+                get_effect_manager().register_effect("effect:etc/compass/appear_large.toml");
+                get_effect_manager().create_effect("effect:etc/compass/appear_large.toml", pixel_position, rotation);
                 break;
             default:
                 metin2::log::warn("Server command {}: unknown distance", command);

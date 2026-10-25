@@ -133,7 +133,7 @@ namespace metin2::inline world::inline items {
                     snprintf(mild_icon_path, sizeof(mild_icon_path), "icon/item/%.5d.tga", mild_base_vnum);
                     if (4 == token_vector.size()) {
                         char mild_model_path[256];
-                        snprintf(mild_model_path, sizeof(mild_model_path), "d:/ymir work/item/weapon/%.5d.gr2", mild_base_vnum);
+                        snprintf(mild_model_path, sizeof(mild_model_path), "item:weapon/%.5d.gr2", mild_base_vnum);
                         item_data->set_default_item_data(mild_icon_path, mild_model_path);
                     } else {
                         item_data->set_default_item_data(mild_icon_path);

@@ -2,6 +2,7 @@
 #include <metin2/core/crc32.h>
 #include <metin2/core/random.h>
 #include <metin2/core/utils.h>
+#include <metin2/files/eter_file_manager.h>
 #include <metin2/graphics/state_manager.h>
 #include <metin2/log/log.h>
 
@@ -86,8 +87,7 @@ namespace metin2::inline effects {
     }
 
     auto effect_manager::register_effect(const char *c_sz_file_name, bool is_exist_delete, bool is_need_cache) -> bool {
-        std::string str_file_name;
-        string_path(c_sz_file_name, str_file_name);
+        const std::string str_file_name = eter_file_manager::canonical_name(c_sz_file_name);
         uint32_t crc = get_case_crc32(str_file_name.c_str(), str_file_name.length());
 
         auto itor = eft_data_map_.find(crc);
@@ -122,8 +122,7 @@ namespace metin2::inline effects {
         return true;
     }
     auto effect_manager::register_effect2(const char *c_sz_file_name, uint32_t *ret_crc, bool is_need_cache) -> bool {
-        std::string str_file_name;
-        string_path(c_sz_file_name, str_file_name);
+        const std::string str_file_name = eter_file_manager::canonical_name(c_sz_file_name);
         uint32_t crc = get_case_crc32(str_file_name.c_str(), str_file_name.length());
         *ret_crc = crc;
 
@@ -131,8 +130,7 @@ namespace metin2::inline effects {
     }
 
     auto effect_manager::create_effect(const char *c_sz_file_name, const math::vector3 &position, const math::vector3 &rotation) -> int {
-        std::string str_file_name;
-        string_path(c_sz_file_name, str_file_name);
+        const std::string str_file_name = eter_file_manager::canonical_name(c_sz_file_name);
         uint32_t id = get_case_crc32(str_file_name.c_str(), str_file_name.length());
         return create_effect(id, position, rotation);
     }

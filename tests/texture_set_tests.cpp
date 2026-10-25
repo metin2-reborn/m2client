@@ -7,8 +7,9 @@
 using namespace metin2;
 
 namespace {
+    // The [asset] table goes last, so that keys at the top of text stay top-level keys.
     auto parse(const std::string &text) -> std::vector<texture_set_entry> {
-        const auto entries = parse_texture_set(text, "test.toml");
+        const auto entries = parse_texture_set(text + "\n[asset]\ntype = \"TextureSet\"\n", "test.toml");
         CHECK(entries.has_value());
         return entries.value_or(std::vector<texture_set_entry>{});
     }
@@ -48,7 +49,9 @@ TEST(texture_set_keeps_entries_with_unknown_keys) {
     CHECK_EQ(entries.size(), std::size_t{1});
 }
 
-TEST(texture_set_rejects_text_that_is_not_toml) {
+TEST(texture_set_rejects_text_that_is_not_a_texture_set) {
     CHECK(!parse_texture_set("TextureSet\nTextureCount 1\n", "old.txt").has_value());
-    CHECK(parse_texture_set("", "empty.toml").value().empty());
+    CHECK(!parse_texture_set("[[texture]]\nindex = 1\npath = \"a.png\"\n", "untyped.toml").has_value());
+    CHECK(!parse_texture_set("[asset]\ntype = \"Effect\"\n", "effect.toml").has_value());
+    CHECK(parse("").empty());
 }

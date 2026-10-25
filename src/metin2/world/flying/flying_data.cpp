@@ -2,6 +2,7 @@
 #include <metin2/log/log.h>
 
 #include <metin2/core/crc32.h>
+#include <metin2/core/text_file_loader.h>
 #include <metin2/core/utils.h>
 #include "flying_data.h"
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <metin2/core/text_file_loader.h>
-
 #include "effect_element_base.h"
 #include "emitter_property.h"
 #include "particle_property.h"
@@ -23,7 +21,7 @@ namespace metin2::inline effects {
         void build_decorator(particle_instance *instance);
 
       protected:
-        auto on_load_script(text_file_loader &text_file_loader) -> bool override;
+        auto on_load_script(asset_table &table) -> bool override;
 
         void on_clear() override;
         auto on_is_data() -> bool override;

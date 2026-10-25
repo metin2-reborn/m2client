@@ -735,8 +735,8 @@ namespace metin2::inline client::inline app {
 
         graphic_image_instance::create_system(32);
 
-        material::create_sphere_map(0, "d:/ymir work/special/spheremap.jpg");
-        material::create_sphere_map(1, "d:/ymir work/special/spheremap01.jpg");
+        material::create_sphere_map(0, "special:spheremap.jpg");
+        material::create_sphere_map(1, "special:spheremap01.jpg");
         return true;
     }
 

@@ -19,7 +19,7 @@
 
 namespace metin2::inline client::inline background {
 
-    std::string effect_name = "d:/ymir work/effect/etc/direction/direction_land.mse";
+    std::string effect_name = "effect:etc/direction/direction_land.toml";
 
     auto python_background::render_shadow_time() -> uint32_t {
         return render_shadow_time_;
@@ -706,9 +706,9 @@ namespace metin2::inline client::inline background {
             "d:/ymir work/tree/christmastree2.spt",
             "d:/ymir work/tree/christmastree3.spt"};
         static std::string effect_name_value[3] = {
-            "d:/ymir work/effect/etc/christmas_tree/tree_1s.mse",
-            "d:/ymir work/effect/etc/christmas_tree/tree_2s.mse",
-            "d:/ymir work/effect/etc/christmas_tree/tree_3s.mse",
+            "effect:etc/christmas_tree/tree_1s.toml",
+            "effect:etc/christmas_tree/tree_2s.toml",
+            "effect:etc/christmas_tree/tree_3s.toml",
         };
         map.x_mas_tree_set(c_v3TreePos.x, c_v3TreePos.y, c_v3TreePos.z, tree_name[grade].c_str(), effect_name_value[grade].c_str());
     }

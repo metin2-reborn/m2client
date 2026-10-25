@@ -1,7 +1,8 @@
 #include "race_motion_data.h"
-#include <metin2/core/file_name.h>
-#include <metin2/core/parse.h>
+#include <metin2/core/mapped_file.h>
 #include <metin2/effects/effect_manager.h>
+#include <metin2/files/asset_toml.h>
+#include <metin2/files/eter_file_manager.h>
 #include <metin2/log/log.h>
 #include <metin2/world/flying/flying_object_manager.h>
 
@@ -242,154 +243,141 @@ namespace metin2::inline world::inline actors {
         is_accumulation_motion_ = true;
     }
 
-    auto race_motion_data::load_motion_data(const char *file_name) -> bool {
+    namespace {
+        constexpr std::string_view event_type_names[] = {
+            "", "Effect", "ScreenWaving", "", "SpecialAttack", "Sound", "Fly", "CharacterShow", "CharacterHide", "Warp", "EffectToTarget"};
+
+        auto new_event(int type_value) -> race_motion_data::motion_event_data * {
+            switch (type_value) {
+            case race_motion_data::MOTION_EVENT_TYPE_EFFECT:
+                return new race_motion_data::motion_effect_event_data;
+            case race_motion_data::MOTION_EVENT_TYPE_SCREEN_WAVING:
+                return new race_motion_data::screen_waving_event_data;
+            case race_motion_data::MOTION_EVENT_TYPE_SPECIAL_ATTACKING:
+                return new race_motion_data::motion_attacking_event_data;
+            case race_motion_data::MOTION_EVENT_TYPE_SOUND:
+                return new race_motion_data::motion_sound_event_data;
+            case race_motion_data::MOTION_EVENT_TYPE_FLY:
+                return new race_motion_data::motion_fly_event_data;
+            case race_motion_data::MOTION_EVENT_TYPE_CHARACTER_SHOW:
+                return new race_motion_data::motion_character_show_event_data;
+            case race_motion_data::MOTION_EVENT_TYPE_CHARACTER_HIDE:
+                return new race_motion_data::motion_character_hide_event_data;
+            case race_motion_data::MOTION_EVENT_TYPE_WARP:
+                return new race_motion_data::motion_warp_event_data;
+            case race_motion_data::MOTION_EVENT_TYPE_EFFECT_TO_TARGET:
+                return new race_motion_data::motion_effect_to_target_event_data;
+            default:
+                return nullptr;
+            }
+        }
+    }
+
+    auto race_motion_data::load(std::string_view text, std::string_view name) -> bool {
+        const auto parsed = parse_asset_toml(text, name, "Motion");
+        if (!parsed) {
+            return false;
+        }
+
+        asset_table root(*parsed, name);
+        root.table("asset");
+        const toml::table *motion = root.table("motion");
+        if (!motion) {
+            root.error("", "[motion] is missing");
+            return false;
+        }
+        asset_table motion_table(*motion, name);
+        bool ok = motion_table.required("file", motion_file_name_);
+        ok &= motion_table.required("duration", motion_duration_);
+        if (motion->contains("accumulation")) {
+            math::vector3 accumulation;
+            if (motion_table.required("accumulation", accumulation)) {
+                set_accumulation_position(accumulation);
+            }
+        }
+        ok &= motion_table.finish();
+
+        if (const toml::table *combo = root.table("combo")) {
+            is_combo_motion_ = true;
+            asset_table table(*combo, name);
+            ok &= table.required("pre_input_time", combo_input_data_value_.input_start_time);
+            ok &= table.required("direct_input_time", combo_input_data_value_.next_combo_time);
+            ok &= table.required("input_limit_time", combo_input_data_value_.input_end_time);
+            ok &= table.finish();
+        }
+
+        if (const toml::table *attack = root.table("attack")) {
+            is_attacking_motion_ = true;
+            asset_table table(*attack, name);
+            ok &= race_types::load_motion_attack_data(table, &motion_attack_data_value_);
+            ok &= table.finish();
+        }
+
+        if (const toml::table *loop = root.table("loop")) {
+            is_loop_motion_ = true;
+            asset_table table(*loop, name);
+            loop_count_ = -1;
+            ok &= table.optional("count", loop_count_);
+            ok &= table.optional("cancel_enable", cancel_enable_skill_);
+            ok &= table.required("start_time", loop_start_time_);
+            ok &= table.required("end_time", loop_end_time_);
+            ok &= table.finish();
+        }
+
         const float frame_time_value = 1.0f / game_fps;
-
-        text_file_loader *pk_text_file_loader = text_file_loader::cache(file_name);
-        if (!pk_text_file_loader)
-            return false;
-
-        text_file_loader &rk_text_file_loader = *pk_text_file_loader;
-
-        if (rk_text_file_loader.is_empty())
-            return false;
-
-        rk_text_file_loader.set_top();
-
-        if (!rk_text_file_loader.token_string("motionfilename", &motion_file_name_))
-            return false;
-
-        if (!rk_text_file_loader.token_float("motionduration", &motion_duration_))
-            return false;
-
-        token_vector *token_vector;
-
-        if (rk_text_file_loader.get_token_vector("accumulation", &token_vector)) {
-            if (token_vector->size() != 3) {
-                metin2::log::error("Syntax error in accumulation: {} values", token_vector->size());
-                return false;
-            }
-
-            pixel_position pos(metin2::to_number<double>(token_vector->at(0).c_str()),
-                metin2::to_number<double>(token_vector->at(1).c_str()),
-                metin2::to_number<double>(token_vector->at(2).c_str()));
-
-            set_accumulation_position(pos);
-        }
-
-        std::string node_name;
-        for (uint32_t i = 0; i < rk_text_file_loader.child_node_count(); ++i) {
-            text_file_loader::goto_child goto_child(&rk_text_file_loader, i);
-
-            rk_text_file_loader.current_node_name(&node_name);
-
-            if (0 == node_name.compare("comboinputdata")) {
-                is_combo_motion_ = true;
-
-                if (!rk_text_file_loader.token_float("preinputtime", &combo_input_data_value_.input_start_time))
+        stl_wipe(motion_event_data_vector_value_);
+        if (const toml::array *events = root.array("event")) {
+            for (const toml::node &node : *events) {
+                const toml::table *event = node.as_table();
+                if (!event) {
+                    root.error("event", "must be tables ([[event]])");
                     return false;
-                if (!rk_text_file_loader.token_float("directinputtime", &combo_input_data_value_.next_combo_time))
-                    return false;
-                if (!rk_text_file_loader.token_float("inputlimittime", &combo_input_data_value_.input_end_time))
-                    return false;
-            } else if (0 == node_name.compare("attackingdata")) {
-                is_attacking_motion_ = true;
-
-                if (!race_types::load_motion_attack_data(rk_text_file_loader, &motion_attack_data_value_))
-                    return false;
-            } else if (0 == node_name.compare("loopdata")) {
-                is_loop_motion_ = true;
-                if (!rk_text_file_loader.token_integer("motionloopcount", &loop_count_)) {
-                    loop_count_ = -1;
                 }
-                if (!rk_text_file_loader.token_boolean("loopcancelenable", &cancel_enable_skill_)) {
-                    cancel_enable_skill_ = false;
+                asset_table table(*event, name);
+                int type_value = MOTION_EVENT_TYPE_NONE;
+                if (!table.required_enum("type", event_type_names, type_value)) {
+                    return false;
                 }
-                if (!rk_text_file_loader.token_float("loopstarttime", &loop_start_time_))
-                    return false;
-                if (!rk_text_file_loader.token_float("loopendtime", &loop_end_time_))
-                    return false;
-            } else if (0 == node_name.compare("motioneventdata")) {
-                uint32_t motion_event_data_count;
-
-                if (!rk_text_file_loader.token_double_word("motioneventdatacount", &motion_event_data_count))
-                    continue;
-
-                stl_wipe(motion_event_data_vector_value_);
-
-                motion_event_data_vector_value_.resize(motion_event_data_count, nullptr);
-
-                for (uint32_t j = 0; j < motion_event_data_vector_value_.size(); ++j) {
-                    if (!rk_text_file_loader.set_child_node("event", j))
-                        return false;
-
-                    int type_value;
-                    if (!rk_text_file_loader.token_integer("motioneventtype", &type_value))
-                        return false;
-
-                    motion_event_data *data = nullptr;
-                    switch (type_value) {
-                    case MOTION_EVENT_TYPE_FLY:
-                        data = new motion_fly_event_data;
-                        break;
-                    case MOTION_EVENT_TYPE_EFFECT:
-                        data = new motion_effect_event_data;
-                        break;
-                    case MOTION_EVENT_TYPE_SCREEN_WAVING:
-                        data = new screen_waving_event_data;
-                        break;
-                    case MOTION_EVENT_TYPE_SPECIAL_ATTACKING:
-                        data = new motion_attacking_event_data;
-                        has_splash_event_ = true;
-                        break;
-                    case MOTION_EVENT_TYPE_SOUND:
-                        data = new motion_sound_event_data;
-                        break;
-                    case MOTION_EVENT_TYPE_CHARACTER_SHOW:
-                        data = new motion_character_show_event_data;
-                        break;
-                    case MOTION_EVENT_TYPE_CHARACTER_HIDE:
-                        data = new motion_character_hide_event_data;
-                        break;
-                    case MOTION_EVENT_TYPE_WARP:
-                        data = new motion_warp_event_data;
-                        break;
-                    case MOTION_EVENT_TYPE_EFFECT_TO_TARGET:
-                        data = new motion_effect_to_target_event_data;
-                        break;
-                    default:
-                        assert(!" CRaceMotionData::LoadMotionData - Strange Event Type");
-                        return false;
-                        break;
-                    }
-                    motion_event_data_vector_value_[j] = data;
-                    motion_event_data_vector_value_[j]->load(rk_text_file_loader);
-                    motion_event_data_vector_value_[j]->type_value = type_value;
-                    if (!rk_text_file_loader.token_float("startingtime", &motion_event_data_vector_value_[j]->starting_time))
-                        return false;
-
-                    motion_event_data_vector_value_[j]->frame = (motion_event_data_vector_value_[j]->starting_time / frame_time_value);
-
-                    rk_text_file_loader.set_parent_node();
+                motion_event_data *data = new_event(type_value);
+                motion_event_data_vector_value_.push_back(data);
+                data->type_value = type_value;
+                ok &= table.required("time", data->starting_time);
+                ok &= data->load(table);
+                ok &= table.finish();
+                data->frame = static_cast<uint32_t>(data->starting_time / frame_time_value);
+                if (type_value == MOTION_EVENT_TYPE_SPECIAL_ATTACKING) {
+                    has_splash_event_ = true;
                 }
             }
         }
 
-        std::string sound_file_name_temp = file_name;
-        sound_file_name_temp = file_name_helper::no_extension(sound_file_name_temp);
-        sound_file_name_temp += ".mss";
+        return root.finish() && ok;
+    }
 
-        if (sound_file_name_temp.length() > 13) {
-            const char *header = &sound_file_name_temp[13];
+    auto race_motion_data::load_motion_data(const char *file_name) -> bool {
+        const std::string name = eter_file_manager::canonical_name(file_name);
 
-            sound_script_data_file_name_ = "sound/";
-            sound_script_data_file_name_ += header;
+        mapped_file file;
+        const void *data = nullptr;
+        if (!get_file_manager().get(file, name.c_str(), &data)) {
+            return false;
+        }
+        if (!load(std::string_view(static_cast<const char *>(data), file.size()), name)) {
+            return false;
+        }
 
+        for (motion_event_data *event : motion_event_data_vector_value_) {
+            event->register_assets();
+        }
+
+        sound_script_data_file_name_ = eter_file_manager::sound_script_name(name);
+        if (!sound_script_data_file_name_.empty()) {
             load_sound_script_data(sound_script_data_file_name_.c_str());
         }
 
         return true;
     }
+
     auto race_motion_data::load_sound_script_data(const char *file_name) -> bool {
         sound_types::sound_data_vector sound_data_vector;
         if (!sound_types::load_sound_information_piece(file_name, sound_data_vector)) {

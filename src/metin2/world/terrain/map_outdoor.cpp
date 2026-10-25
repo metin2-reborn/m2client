@@ -60,9 +60,9 @@ namespace metin2::inline world::inline terrain {
     };
 
     map_outdoor::map_outdoor() {
-        auto *alpha_fog_image = (graphic_image *)get_resource_manager().resource_pointer("D:/ymir work/special/fog.tga");
-        auto *attr_image = (graphic_image *)get_resource_manager().resource_pointer("d:/ymir work/special/white.dds");
-        auto *build_transparent_image = (graphic_image *)get_resource_manager().resource_pointer("d:/ymir Work/special/PCBlockerAlpha.dds");
+        auto *alpha_fog_image = (graphic_image *)get_resource_manager().resource_pointer("special:fog.tga");
+        auto *attr_image = (graphic_image *)get_resource_manager().resource_pointer("special:white.png");
+        auto *build_transparent_image = (graphic_image *)get_resource_manager().resource_pointer("special:pcblockeralpha.png");
         alpha_fog_image_instance_.set_image_pointer(alpha_fog_image);
         attr_image_instance_.set_image_pointer(attr_image);
         building_transparent_image_instance_.set_image_pointer(build_transparent_image);
@@ -285,7 +285,7 @@ namespace metin2::inline world::inline terrain {
             mc_environment_data_->lens_flare_max_brightness,
             mc_environment_data_->lens_flare_brightness_color);
 
-        lens_flare_value_.initialize("d:/ymir work/environment");
+        lens_flare_value_.initialize("environment:");
 
         if (!mc_environment_data_->main_flare_texture_file_name.empty()) {
             lens_flare_value_.set_main_flare(mc_environment_data_->main_flare_texture_file_name.c_str(),

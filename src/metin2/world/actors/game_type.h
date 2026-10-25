@@ -3,6 +3,7 @@
 #include <string>
 
 #include <metin2/core/text_file_loader.h>
+#include <metin2/files/asset_toml.h>
 #include <metin2/geometry/collision_data.h>
 
 namespace metin2::inline client::inline app {
@@ -67,7 +68,7 @@ namespace metin2::inline world::inline actors {
 
             hit_time_position_map hit_position;
 
-            auto load(text_file_loader &text_file_loader) -> bool;
+            auto load(asset_table &table) -> bool;
         };
 
         using hit_data_container = std::vector<hit_data>;
@@ -119,9 +120,13 @@ namespace metin2::inline world::inline actors {
 
         void destroy_system();
 
-        auto load_attack_data(text_file_loader &text_file_loader, attack_data *data) -> bool;
-        auto load_motion_attack_data(text_file_loader &text_file_loader, motion_attack_data *data) -> bool;
+        // The attack keys of a motion's [attack] table or of a special attack event, whose attack
+        // type is under type_key ("type" or "attack_type").
+        auto load_attack_data(asset_table &table, std::string_view type_key, attack_data *data) -> bool;
+        auto load_motion_attack_data(asset_table &table, motion_attack_data *data) -> bool;
         auto load_collision_data(text_file_loader &text_file_loader, collision_data *collision_data_value) -> bool;
+        // collision_type and spheres = [{ radius, position }] of a special attack event.
+        auto load_collision_data(asset_table &table, collision_data *collision_data_value) -> bool;
         auto load_effect_data(text_file_loader &text_file_loader, attaching_effect_data *effect_data) -> bool;
         auto load_object_data(text_file_loader &text_file_loader, attaching_object_data *object_data) -> bool;
 

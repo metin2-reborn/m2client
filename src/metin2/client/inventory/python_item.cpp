@@ -538,7 +538,7 @@ namespace metin2::inline client::inline inventory {
     }
 
     void python_item::create() {
-        get_effect_manager().register_effect2("d:/ymir work/effect/etc/dropitem/dropitem.mse", &drop_item_effect_id_);
+        get_effect_manager().register_effect2("effect:etc/dropitem/dropitem.toml", &drop_item_effect_id_);
     }
 
     python_item::python_item() {

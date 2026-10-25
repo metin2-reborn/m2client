@@ -1,4 +1,5 @@
 #include "effect_mesh.h"
+#include <metin2/core/file_loader.h>
 #include <metin2/core/utils.h>
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/gpu/types.h>
@@ -454,66 +455,49 @@ namespace metin2::inline effects {
         return mesh_animation_frame_delay_;
     }
 
-    auto effect_mesh_script::on_load_script(text_file_loader &text_file_loader) -> bool {
-        if (text_file_loader.token_string("meshfilename", &mesh_file_name_)) {
-            if (!is_global_file_name(mesh_file_name_.c_str())) {
-                mesh_file_name_ = get_only_path_name(text_file_loader.file_name()) + mesh_file_name_;
-            }
-        } else {
-            return false;
-        }
+    auto effect_mesh_script::on_load_script(asset_table &table) -> bool {
+        constexpr std::string_view billboard_names[] = {"None", "All", "Y", "Move"};
 
-        int mesh_animation_loop;
-        if (!text_file_loader.token_integer("meshanimationloopenable", &mesh_animation_loop))
-            return false;
-        is_mesh_animation_loop_ = mesh_animation_loop != 0;
-        if (!text_file_loader.token_integer("meshanimationloopcount", &mesh_animation_loop_count_)) {
-            mesh_animation_loop_count_ = 0;
+        bool ok = table.required("mesh", mesh_file_name_);
+        if (!is_global_file_name(mesh_file_name_.c_str())) {
+            mesh_file_name_ = get_only_path_name(std::string(table.file_name()).c_str()) + mesh_file_name_;
         }
-        if (!text_file_loader.token_float("meshanimationframedelay", &mesh_animation_frame_delay_))
-            return false;
-
-        uint32_t mesh_element_count;
-        if (!text_file_loader.token_double_word("meshelementcount", &mesh_element_count))
-            return false;
+        mesh_animation_loop_count_ = 0;
+        ok &= table.required("loop", is_mesh_animation_loop_);
+        ok &= table.optional("loop_count", mesh_animation_loop_count_);
+        ok &= table.required("frame_delay", mesh_animation_frame_delay_);
 
         mesh_data_vector_value_.clear();
-        mesh_data_vector_value_.resize(mesh_element_count);
-        for (uint32_t i = 0; i < mesh_data_vector_value_.size(); ++i) {
-            text_file_loader::goto_child goto_child(&text_file_loader, i);
-
-            mesh_data &mesh_data_value = mesh_data_vector_value_[i];
-
-            if (!text_file_loader.token_byte("billboardtype", &mesh_data_value.billboard_type))
-                return false;
-            if (!text_file_loader.token_boolean("blendingenable", &mesh_data_value.blending_enable))
-                return false;
-            if (!text_file_loader.token_byte("blendingsrctype", &mesh_data_value.blending_src_type))
-                return false;
-            if (!text_file_loader.token_byte("blendingdesttype", &mesh_data_value.blending_dest_type))
-                return false;
-
-            if (!text_file_loader.token_boolean("textureanimationloopenable", &mesh_data_value.texture_animation_loop_enable))
-                return false;
-            if (!text_file_loader.token_float("textureanimationframedelay", &mesh_data_value.texture_animation_frame_delay))
-                return false;
-            if (!text_file_loader.token_double_word("textureanimationstartframe", &mesh_data_value.texture_animation_start_frame)) {
+        if (const toml::array *elements = table.array("element")) {
+            for (const toml::node &node : *elements) {
+                const toml::table *element = node.as_table();
+                if (!element) {
+                    table.error("element", "must be tables ([[mesh.element]])");
+                    return false;
+                }
+                asset_table t(*element, table.file_name());
+                mesh_data &mesh_data_value = mesh_data_vector_value_.emplace_back();
                 mesh_data_value.texture_animation_start_frame = 0;
-            }
-
-            if (!text_file_loader.token_byte("coloroperationtype", &mesh_data_value.color_operation_type)) {
                 mesh_data_value.color_operation_type = gpu::texture_op::MODULATE;
-            }
-            if (!text_file_loader.token_color("colorfactor", &mesh_data_value.color_factor)) {
                 mesh_data_value.color_factor = math::color(1.0f, 1.0f, 1.0f, 1.0f);
-            }
 
-            if (!get_token_time_event_float(text_file_loader, "timeeventalpha", &mesh_data_value.time_event_alpha)) {
-                mesh_data_value.time_event_alpha.clear();
+                int billboard = MESH_BILLBOARD_TYPE_NONE;
+                ok &= t.required_enum("billboard", billboard_names, billboard);
+                mesh_data_value.billboard_type = static_cast<uint8_t>(billboard);
+                ok &= t.required("blending", mesh_data_value.blending_enable);
+                ok &= t.required("src_blend", mesh_data_value.blending_src_type);
+                ok &= t.required("dest_blend", mesh_data_value.blending_dest_type);
+                ok &= t.required("texture_loop", mesh_data_value.texture_animation_loop_enable);
+                ok &= t.required("texture_frame_delay", mesh_data_value.texture_animation_frame_delay);
+                ok &= t.optional("texture_start_frame", mesh_data_value.texture_animation_start_frame);
+                ok &= t.optional("color_operation", mesh_data_value.color_operation_type);
+                ok &= t.optional("color_factor", mesh_data_value.color_factor);
+                ok &= read_time_events(t, "alpha_events", mesh_data_value.time_event_alpha);
+                ok &= t.finish();
             }
         }
 
-        return true;
+        return ok;
     }
 
     auto effect_mesh_script::on_is_data() -> bool {

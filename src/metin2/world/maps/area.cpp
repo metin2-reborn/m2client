@@ -1,6 +1,7 @@
 
 #include <metin2/core/parse.h>
 #include <metin2/core/random.h>
+#include <metin2/core/text_file_loader.h>
 #include <metin2/core/timer.h>
 #include <metin2/core/utf8.h>
 #include <metin2/effects/effect_manager.h>

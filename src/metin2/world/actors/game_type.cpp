@@ -16,94 +16,92 @@ namespace metin2::inline world::inline actors {
         object_data_pool.destroy();
     }
 
-    auto race_types::load_attack_data(text_file_loader &text_file_loader, attack_data *data) -> bool {
-        if (!text_file_loader.token_integer("attacktype", &data->attack_type_value)) {
-            data->attack_type_value = ATTACK_TYPE_SPLASH;
-        }
-        if (!text_file_loader.token_integer("hittingtype", &data->hitting_type))
-            return false;
-        if (!text_file_loader.token_float("stiffentime", &data->stiffen_time))
-            return false;
-        if (!text_file_loader.token_float("invisibletime", &data->invisible_time))
-            return false;
-        if (!text_file_loader.token_float("externalforce", &data->external_force))
-            return false;
-        if (!text_file_loader.token_integer("hitlimitcount", &data->hit_limit_count)) {
-            data->hit_limit_count = 0;
-        }
-
-        return true;
+    namespace {
+        constexpr std::string_view attack_type_names[] = {"Splash", "Snipe"};
+        constexpr std::string_view hit_type_names[] = {"None", "Great", "Good"};
+        constexpr std::string_view motion_type_names[] = {"None", "Normal", "Combo", "Skill"};
+        constexpr std::string_view collision_type_names[] = {"None", "Body", "Attacking", "Defending", "Splash"};
     }
 
-    auto race_types::hit_data::load(text_file_loader &text_file_loader) -> bool {
-        if (!text_file_loader.token_float("attackingstarttime", &attack_start_time))
-            return false;
-        if (!text_file_loader.token_float("attackingendtime", &attack_end_time))
-            return false;
+    auto race_types::load_attack_data(asset_table &table, std::string_view type_key, attack_data *data) -> bool {
+        data->attack_type_value = ATTACK_TYPE_SPLASH;
+        data->hit_limit_count = 0;
+        bool ok = table.optional_enum(type_key, attack_type_names, data->attack_type_value);
+        ok &= table.required_enum("hitting_type", hit_type_names, data->hitting_type);
+        ok &= table.required("stiffen_time", data->stiffen_time);
+        ok &= table.required("invisible_time", data->invisible_time);
+        ok &= table.required("external_force", data->external_force);
+        ok &= table.optional("hit_limit_count", data->hit_limit_count);
+        return ok;
+    }
 
-        if (!text_file_loader.token_string("attackingbone", &bone_name))
-            bone_name = "";
-        if (!text_file_loader.token_float("weaponlength", &weapon_length))
-            weapon_length = 0.0f;
-
+    auto race_types::hit_data::load(asset_table &table) -> bool {
+        bone_name.clear();
+        weapon_length = 0.0f;
         hit_position.clear();
 
-        token_vector *tv;
-        if (text_file_loader.get_token_vector("hitposition", &tv)) {
-            auto it = tv->begin();
+        bool ok = table.required("start_time", attack_start_time);
+        ok &= table.required("end_time", attack_end_time);
+        ok &= table.optional("bone", bone_name);
+        ok &= table.optional("weapon_length", weapon_length);
 
-            while (it != tv->end()) {
-                float time;
-                race_types::hit_time_position hp;
-                time = metin2::to_number<double>(it++->c_str());
-                hp.last_position.x = metin2::to_number<double>(it++->c_str());
-                hp.last_position.y = metin2::to_number<double>(it++->c_str());
-                hp.last_position.z = metin2::to_number<double>(it++->c_str());
-                hp.position_value.x = metin2::to_number<double>(it++->c_str());
-                hp.position_value.y = metin2::to_number<double>(it++->c_str());
-                hp.position_value.z = metin2::to_number<double>(it++->c_str());
-
-                hit_position[time] = hp;
+        if (const toml::array *positions = table.array("positions")) {
+            for (const toml::node &row : *positions) {
+                float v[7];
+                if (!read_numbers(row, v)) {
+                    table.error("positions", "must hold rows of seven numbers: time, last position, position");
+                    return false;
+                }
+                hit_time_position &hp = hit_position[v[0]];
+                hp.last_position = math::vector3(v[1], v[2], v[3]);
+                hp.position_value = math::vector3(v[4], v[5], v[6]);
             }
         }
-
-        return true;
+        return ok;
     }
 
-    auto race_types::load_motion_attack_data(text_file_loader &text_file_loader, motion_attack_data *data) -> bool {
-        if (!load_attack_data(text_file_loader, data))
-            return false;
-
-        // Motion type used to be called attacking type; older data without "motiontype" is read
-        // through the old key.
-        if (!text_file_loader.token_integer("motiontype", &data->motion_type_value)) {
-            if (!text_file_loader.token_integer("attackingtype", &data->motion_type_value))
-                return false;
-        }
+    auto race_types::load_motion_attack_data(asset_table &table, motion_attack_data *data) -> bool {
+        bool ok = load_attack_data(table, "type", data);
+        ok &= table.required_enum("motion_type", motion_type_names, data->motion_type_value);
 
         data->hit_data_container_value.clear();
-
-        uint32_t hit_data_count;
-        if (!text_file_loader.token_double_word("hitdatacount", &hit_data_count)) {
-            data->hit_data_container_value.push_back(hit_data());
-            hit_data &hit_data_value = *(data->hit_data_container_value.rbegin());
-            if (!hit_data_value.load(text_file_loader))
-                return false;
-        } else {
-            for (uint32_t i = 0; i < hit_data_count; ++i) {
-                if (!text_file_loader.set_child_node(i))
+        if (const toml::array *hits = table.array("hit")) {
+            for (const toml::node &node : *hits) {
+                const toml::table *hit = node.as_table();
+                if (!hit) {
+                    table.error("hit", "must be tables ([[attack.hit]])");
                     return false;
-
-                data->hit_data_container_value.push_back(hit_data());
-                hit_data &hit_data_value = *(data->hit_data_container_value.rbegin());
-                if (!hit_data_value.load(text_file_loader))
-                    return false;
-
-                text_file_loader.set_parent_node();
+                }
+                asset_table hit_table(*hit, table.file_name());
+                ok &= data->hit_data_container_value.emplace_back().load(hit_table);
+                ok &= hit_table.finish();
             }
         }
+        return ok;
+    }
 
-        return true;
+    auto race_types::load_collision_data(asset_table &table, collision_data *collision_data_value) -> bool {
+        bool ok = table.required_enum("collision_type", collision_type_names, collision_data_value->collision_type_value);
+
+        collision_data_value->sphere_data_vector.clear();
+        const toml::array *spheres = table.array("spheres");
+        if (!spheres) {
+            table.error("spheres", "is missing");
+            return false;
+        }
+        for (const toml::node &node : *spheres) {
+            const toml::table *sphere = node.as_table();
+            if (!sphere) {
+                table.error("spheres", "must be tables { radius, position }");
+                return false;
+            }
+            asset_table sphere_table(*sphere, table.file_name());
+            sphere_data &r = collision_data_value->sphere_data_vector.emplace_back().attribute();
+            ok &= sphere_table.required("radius", r.radius);
+            ok &= sphere_table.required("position", r.position_value);
+            ok &= sphere_table.finish();
+        }
+        return ok;
     }
 
     auto race_types::load_collision_data(text_file_loader &text_file_loader, collision_data *collision_data_value) -> bool {

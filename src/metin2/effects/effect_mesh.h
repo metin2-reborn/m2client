@@ -2,7 +2,6 @@
 
 #include <metin2/math/math.h>
 
-#include <metin2/core/text_file_loader.h>
 #include <metin2/graphics/grp_image_instance.h>
 #include <metin2/graphics/grp_screen.h>
 #include <metin2/graphics/resource.h>
@@ -121,7 +120,7 @@ namespace metin2::inline effects {
       protected:
         void on_clear() override;
         auto on_is_data() -> bool override;
-        auto on_load_script(text_file_loader &text_file_loader) -> bool override;
+        auto on_load_script(asset_table &table) -> bool override;
 
       protected:
         bool is_mesh_animation_loop_;

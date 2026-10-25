@@ -29,14 +29,14 @@ namespace metin2::inline graphics {
 
     static string files[] =
         {
-            "flare2.dds",
-            "flare1.dds",
-            "flare2.dds",
-            "flare1.dds",
-            "flare6.dds",
-            "flare4.dds",
-            "flare2.dds",
-            "flare3.dds",
+            "flare2.png",
+            "flare1.png",
+            "flare2.png",
+            "flare1.png",
+            "flare6.png",
+            "flare4.png",
+            "flare2.png",
+            "flare3.png",
             ""};
     static float flare_positions[] =
         {
@@ -427,7 +427,7 @@ namespace metin2::inline graphics {
         int i = 0;
 
         while (files[i] != "") {
-            resource *resource = get_resource_manager().resource_pointer((path + "/" + string(files[i])).c_str());
+            resource *resource = get_resource_manager().resource_pointer((path + string(files[i])).c_str());
 
             if (!resource->is_type(graphic_image::type()))
                 assert(false);

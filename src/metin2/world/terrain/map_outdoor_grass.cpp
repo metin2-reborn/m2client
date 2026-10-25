@@ -25,7 +25,7 @@ namespace metin2::inline world::inline terrain {
         constexpr uint32_t RELEASE_AFTER_FRAMES = 300;
         constexpr uint32_t MAX_TUFTS_PER_PATCH = 32 * 32 * 3;
         constexpr uint32_t MAX_QUADS_PER_PATCH = MAX_TUFTS_PER_PATCH * 2;
-        const char *const GRASS_TEXTURE = "d:/ymir work/special/grass_tuft.tga";
+        const char *const GRASS_TEXTURE = "special:grass_tuft.tga";
 
         auto hash32(uint32_t a, uint32_t b, uint32_t c, uint32_t d) -> uint32_t {
             uint32_t h = a * 0x9E3779B1u ^ (b + 0x7F4A7C15u) * 0x85EBCA77u;

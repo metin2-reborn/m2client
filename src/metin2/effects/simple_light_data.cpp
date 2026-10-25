@@ -59,39 +59,24 @@ namespace metin2::inline effects {
         return true;
     }
 
-    auto light_data::on_load_script(text_file_loader &text_file_loader) -> bool {
-        if (!text_file_loader.token_float("duration", &duration_))
-            duration_ = 1.0f;
-
-        if (!text_file_loader.token_boolean("loopflag", &loop_flag_))
-            loop_flag_ = false;
-
-        if (!text_file_loader.token_integer("loopcount", &loop_count_))
-            loop_count_ = 0;
-
-        if (!text_file_loader.token_color("ambientcolor", &ambient_value_))
-            return false;
-
-        if (!text_file_loader.token_color("diffusecolor", &diffuse_value_))
-            return false;
-
-        if (!text_file_loader.token_float("maxrange", &max_range_))
-            return false;
-
-        if (!text_file_loader.token_float("attenuation0", &attenuation0_))
-            return false;
-
-        if (!text_file_loader.token_float("attenuation1", &attenuation1_))
-            return false;
-
-        if (!text_file_loader.token_float("attenuation2", &attenuation2_))
-            return false;
-
-        if (!get_token_time_event_float(text_file_loader, "timeeventrange", &time_event_table_range_)) {
-            time_event_table_range_.clear();
-        }
-
-        return true;
+    auto light_data::on_load_script(asset_table &table) -> bool {
+        duration_ = 1.0f;
+        loop_flag_ = false;
+        loop_count_ = 0;
+        time_event_table_range_.clear();
+        bool ok = table.optional("duration", duration_);
+        ok &= table.optional("loop", loop_flag_);
+        ok &= table.optional("loop_count", loop_count_);
+        ok &= table.required("ambient", ambient_value_);
+        ok &= table.required("diffuse", diffuse_value_);
+        ok &= table.required("max_range", max_range_);
+        math::vector3 attenuation;
+        ok &= table.required("attenuation", attenuation);
+        attenuation0_ = attenuation.x;
+        attenuation1_ = attenuation.y;
+        attenuation2_ = attenuation.z;
+        ok &= read_time_events(table, "range_events", time_event_table_range_);
+        return ok;
     }
 
     light_data::light_data() {

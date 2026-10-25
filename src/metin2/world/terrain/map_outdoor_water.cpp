@@ -17,7 +17,7 @@ namespace metin2::inline world::inline terrain {
         unload_water_texture();
         char buf[256];
         for (int i = 0; i < 30; ++i) {
-            snprintf(buf, sizeof(buf), "d:/ymir Work/special/water/%02d.dds", i + 1);
+            snprintf(buf, sizeof(buf), "special:water/%02d.png", i + 1);
             water_instances_[i].set_image_pointer((graphic_image *)get_resource_manager().resource_pointer(buf));
         }
     }

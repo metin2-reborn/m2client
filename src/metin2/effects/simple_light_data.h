@@ -2,8 +2,6 @@
 
 #include <metin2/math/math.h>
 
-#include <metin2/core/text_file_loader.h>
-
 #include <metin2/gpu/types.h>
 #include "effect_element_base.h"
 #include "type.h"
@@ -31,7 +29,7 @@ namespace metin2::inline effects {
         void on_clear() override;
         auto on_is_data() -> bool override;
 
-        auto on_load_script(text_file_loader &text_file_loader) -> bool override;
+        auto on_load_script(asset_table &table) -> bool override;
 
       protected:
         float max_range_;

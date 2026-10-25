@@ -36,7 +36,7 @@ namespace metin2::inline world::inline terrain {
         if (get_file_manager().is_exist(local_env_data_name.c_str())) {
             env_data_name_ = local_env_data_name;
         } else {
-            const std::string &environment_root = "d:/ymir work/environment/";
+            const std::string &environment_root = "environment:";
             const std::string &map_name = get_name();
 
             env_data_name_ = environment_root + settings_env_data_name_;

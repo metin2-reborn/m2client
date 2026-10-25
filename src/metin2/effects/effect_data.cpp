@@ -1,5 +1,7 @@
 #include "effect_data.h"
-#include <metin2/core/file_name.h>
+#include <metin2/core/mapped_file.h>
+#include <metin2/files/asset_toml.h>
+#include <metin2/files/eter_file_manager.h>
 
 namespace metin2::inline effects {
 
@@ -22,58 +24,62 @@ namespace metin2::inline effects {
         light_data::destroy_system();
     }
 
-    auto effect_data::load_script(const char *file_name) -> bool {
-        file_name_ = file_name;
-        file_name_helper::string_path(file_name_);
-
-        text_file_loader text_file_loader;
-        if (!text_file_loader.load(file_name))
+    auto effect_data::load(std::string_view text, std::string_view name) -> bool {
+        const auto parsed = parse_asset_toml(text, name, "Effect");
+        if (!parsed) {
             return false;
-
-        text_file_loader.set_top();
-
-        if (!text_file_loader.token_float("boundingsphereradius", &bounding_sphere_radius_)) {
-            bounding_sphere_radius_ = 0.0f;
         }
 
-        if (!text_file_loader.token_vector3("boundingsphereposition", &bounding_sphere_position_)) {
-            bounding_sphere_position_.x = bounding_sphere_position_.y = bounding_sphere_position_.z = 0.0f;
+        asset_table root(*parsed, name);
+        root.table("asset");
+        bool ok = true;
+        if (const toml::table *sphere = root.table("bounding_sphere")) {
+            asset_table t(*sphere, name);
+            ok &= t.required("radius", bounding_sphere_radius_);
+            ok &= t.required("center", bounding_sphere_position_);
+            ok &= t.finish();
         }
 
-        for (uint32_t i = 0; i < text_file_loader.child_node_count(); ++i) {
-            if (!text_file_loader.set_child_node(i))
-                continue;
-
-            std::string name;
-
-            if (!text_file_loader.current_node_name(&name))
-                continue;
-
-            if (0 == name.compare("mesh")) {
-                effect_mesh_script *mesh = alloc_mesh();
-                mesh->clear();
-                mesh->load_script(text_file_loader);
-            } else if (0 == name.compare("particle")) {
-                particle_system_data *particle_system_data = alloc_particle();
-                particle_system_data->clear();
-                particle_system_data->load_script(text_file_loader);
-            } else if (0 == name.compare("light")) {
-                light_data *light_data = alloc_light();
-                light_data->clear();
-                light_data->load_script(text_file_loader);
+        auto load_elements = [&](std::string_view key, auto alloc) -> void {
+            const toml::array *elements = root.array(key);
+            if (!elements) {
+                return;
             }
+            for (const toml::node &node : *elements) {
+                const toml::table *element = node.as_table();
+                if (!element) {
+                    root.error(key, "must be tables");
+                    ok = false;
+                    continue;
+                }
+                asset_table t(*element, name);
+                auto *data = alloc();
+                data->clear();
+                ok &= data->load_script(t);
+                ok &= t.finish();
+            }
+        };
+        load_elements("particle", [this] { return alloc_particle(); });
+        load_elements("mesh", [this] { return alloc_mesh(); });
+        load_elements("light", [this] { return alloc_light(); });
 
-            text_file_loader.set_parent_node();
+        return root.finish() && ok;
+    }
+
+    auto effect_data::load_script(const char *file_name) -> bool {
+        file_name_ = eter_file_manager::canonical_name(file_name);
+
+        mapped_file file;
+        const void *data = nullptr;
+        if (!get_file_manager().get(file, file_name_.c_str(), &data)) {
+            return false;
+        }
+        if (!load(std::string_view(static_cast<const char *>(data), file.size()), file_name_)) {
+            return false;
         }
 
-        std::string path_header = "d:/ymir work/";
-        std::string no_extension_name = file_name_helper::no_extension(file_name_);
-        if (no_extension_name.compare(0, path_header.size(), path_header) == 0 && no_extension_name.size() > path_header.size()) {
-            std::string sound_file_name;
-            sound_file_name = "sound/";
-            sound_file_name += &no_extension_name[path_header.size()];
-            sound_file_name += ".mss";
-
+        const std::string sound_file_name = eter_file_manager::sound_script_name(file_name_);
+        if (!sound_file_name.empty()) {
             load_sound_script_data(sound_file_name.c_str());
         }
 

@@ -17,7 +17,8 @@ namespace metin2::inline files {
 
     // Resolves asset names to files. A name is "<archive>:<path>", or just "<path>" for the system
     // archive. A loose file data/<archive>/<path> wins over the entry in data/<archive>.zip. Names are
-    // case-insensitive, may use backslashes, and a drive prefix ("d:/ymir work/...") is ignored.
+    // case-insensitive, may use backslashes, and a drive prefix ("d:/ymir work/...") is ignored. Names
+    // from before the ymir work split still resolve (see canonical_name).
     class eter_file_manager {
         // The loose files of an archive: path inside the archive (any case) -> path on disk.
         using loose_file_map = std::unordered_map<
@@ -55,6 +56,17 @@ namespace metin2::inline files {
         void for_each(std::string_view archive_value, std::string_view prefix, const std::function<void(const std::string &)> &fn);
 
         static auto parse_path(std::string_view path) -> eter_asset_path;
+
+        // The current name of an asset, lower case with '/': names into the folders that left
+        // system:ymir work become names of their archive ("d:/ymir work/pc/x.dds" is
+        // "character:pc/x.png"), and .msa/.mse scripts are .toml. Other system names keep their
+        // spelling. Two names of one file give the same canonical name.
+        static auto canonical_name(std::string_view name) -> std::string;
+
+        // The sound script (.mss) of a motion or effect script: "character:pc/warrior/wait.toml" has
+        // "sound/pc/warrior/wait.mss", "effect:etc/x.toml" has "sound/effect/etc/x.mss". Empty for
+        // scripts outside the split archives, which have no sound scripts.
+        static auto sound_script_name(std::string_view name) -> std::string;
 
       private:
         auto find_archive(const std::string &archive_name) -> const archive *;

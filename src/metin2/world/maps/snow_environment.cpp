@@ -218,7 +218,7 @@ namespace metin2::inline world::inline maps {
         if (!create_geometry())
             return false;
 
-        auto *image = (graphic_image *)get_resource_manager().resource_pointer("d:/ymir work/special/snow.dds");
+        auto *image = (graphic_image *)get_resource_manager().resource_pointer("special:snow.png");
         image_instance_ = graphic_image_instance::new_value();
         image_instance_->set_image_pointer(image);
 

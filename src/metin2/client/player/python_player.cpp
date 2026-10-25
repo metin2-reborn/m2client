@@ -1090,8 +1090,8 @@ namespace metin2::inline client::inline player {
 
         pixel_position.y *= -1.0f;
 
-        get_effect_manager().register_effect("d:/ymir work/effect/etc/compass/appear_middle.mse");
-        get_effect_manager().create_effect("d:/ymir work/effect/etc/compass/appear_middle.mse", pixel_position, rotation);
+        get_effect_manager().register_effect("effect:etc/compass/appear_middle.toml");
+        get_effect_manager().create_effect("effect:etc/compass/appear_middle.toml", pixel_position, rotation);
     }
 
     void python_player::exit_party() {

@@ -150,7 +150,7 @@ namespace metin2::inline client::inline characters {
             }
             num = damage % 10;
             damage /= 10;
-            textures.push_back(std::format("d:/ymir work/effect/affect/damagevalue/{}{}.dds", damage_type, num));
+            textures.push_back(std::format("effect:affect/damagevalue/{}{}.png", damage_type, num));
 
             eft_mgr.set_effect_textures(affect_effect_crcs_[crc_eft], textures);
 

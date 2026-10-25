@@ -90,7 +90,7 @@ namespace metin2::inline world::inline items {
             drop_model_file_name_ = model_file_name;
         } else {
             model_file_name_ = "";
-            drop_model_file_name_ = "d:/ymir work/item/etc/item_bag.gr2";
+            drop_model_file_name_ = "item:etc/item_bag.gr2";
         }
         icon_file_name_ = icon_file_name;
 
