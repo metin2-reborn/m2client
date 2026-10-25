@@ -11,6 +11,23 @@ namespace metin2::inline files {
     namespace {
         constexpr std::string_view kDefaultArchive = "System";
         constexpr std::string_view kDataDirectory = "data/";
+
+        // The disk spelling of data/<name><suffix>. Resource names arrive lower-cased
+        // ("textures:terrainmaps/...") while the folders are "Textures", so the case is ignored.
+        auto disk_name(const std::string &name, std::string_view suffix) -> std::string {
+            std::string wanted = name + std::string(suffix);
+            std::error_code ec;
+            if (std::filesystem::exists(std::string(kDataDirectory) + wanted, ec)) {
+                return wanted;
+            }
+            for (auto it = std::filesystem::directory_iterator(kDataDirectory, ec); !ec && it != std::filesystem::directory_iterator(); it.increment(ec)) {
+                const std::string entry = it->path().filename().native();
+                if (assets::case_insensitive_equal{}(entry, wanted)) {
+                    return entry;
+                }
+            }
+            return wanted;
+        }
     }
 
     auto get_file_manager() -> eter_file_manager & {
@@ -76,7 +93,7 @@ namespace metin2::inline files {
         // uiscript/popupdialog.py), so the folder is listed once and looked up without case.
         // (About 60 ms for the 53k files of data/System/; std::filesystem::relative would stat each.)
         std::error_code ec;
-        const std::string root = std::string(kDataDirectory) + archive_name;
+        const std::string root = std::string(kDataDirectory) + disk_name(archive_name, "");
         for (auto it = std::filesystem::recursive_directory_iterator(root, ec); !ec && it != std::filesystem::recursive_directory_iterator(); it.increment(ec)) {
             if (!it->is_regular_file(ec))
                 continue;
@@ -84,7 +101,7 @@ namespace metin2::inline files {
             archive_value.loose.emplace(disk_path.substr(root.size() + 1), disk_path);
         }
 
-        std::string zip_path = std::string(kDataDirectory) + archive_name + ".zip";
+        std::string zip_path = std::string(kDataDirectory) + disk_name(archive_name, ".zip");
         if (std::filesystem::is_regular_file(zip_path, ec)) {
             auto zip = std::make_unique<zip_archive>();
             if (zip->open(zip_path))
