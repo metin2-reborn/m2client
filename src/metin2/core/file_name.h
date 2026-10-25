@@ -92,10 +92,11 @@ namespace metin2::inline core {
     }
 
     inline auto file_name_helper::path(std::string &str) -> std::string {
-        // everything up to and including the last separator (a separator at index 0 does not count)
+        // everything up to and including the last separator (a separator at index 0 does not count);
+        // an archive name counts as a folder ("tree:a.spt" is in "tree:")
         size_t length = str.length();
         for (size_t i = length; i-- > 1;) {
-            if (str[i] == '/' || str[i] == '\\')
+            if (str[i] == '/' || str[i] == '\\' || str[i] == ':')
                 return str.substr(0, i + 1);
         }
         return std::string();

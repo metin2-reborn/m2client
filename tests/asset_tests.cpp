@@ -1,5 +1,6 @@
 #include "check.h"
 
+#include <metin2/core/file_name.h>
 #include <metin2/effects/effect_data.h>
 #include <metin2/files/asset_toml.h>
 #include <metin2/files/eter_file_manager.h>
@@ -634,4 +635,15 @@ TEST(environment_rejects_bad_scripts) {
     CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[fog]\ncolor = [1.0, 1.0, 1.0]\n", "a.toml"));
     CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[sky_box]\ngradient_upper = 2\ngradient = []\n", "a.toml"));
     CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[sky_box]\ncloud_scale = [1.0]\n", "a.toml"));
+}
+
+TEST(file_name_path_counts_the_archive_as_a_folder) {
+    std::string tree = "tree:b1_oak.spt";
+    CHECK_EQ(file_name_helper::path(tree), std::string("tree:"));
+    std::string old = "d:/ymir work/tree/b1_oak.spt";
+    CHECK_EQ(file_name_helper::path(old), std::string("d:/ymir work/tree/"));
+    std::string nested = "zone:b/obj/house.gr2";
+    CHECK_EQ(file_name_helper::path(nested), std::string("zone:b/obj/"));
+    std::string bare = "house.gr2";
+    CHECK(file_name_helper::path(bare).empty());
 }
