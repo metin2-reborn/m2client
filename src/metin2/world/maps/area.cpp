@@ -1,10 +1,13 @@
 
+#include <metin2/core/mapped_file.h>
 #include <metin2/core/parse.h>
 #include <metin2/core/random.h>
 #include <metin2/core/text_file_loader.h>
 #include <metin2/core/timer.h>
 #include <metin2/core/utf8.h>
 #include <metin2/effects/effect_manager.h>
+#include <metin2/files/asset_toml.h>
+#include <metin2/files/eter_file_manager.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/graphics/state_manager.h>
 #include <metin2/log/log.h>
@@ -605,164 +608,116 @@ namespace metin2::inline world::inline maps {
     auto area::load(const char *path_name) -> bool {
         clear();
 
-        std::string object_data_file_name = path_name + std::string("AreaData.txt");
-        std::string ambience_data_file_name = path_name + std::string("AreaAmbienceData.txt");
+        const std::string file_name = path_name + std::string("area.toml");
+        mapped_file file;
+        const void *data = nullptr;
+        object_data_vector objects;
+        object_data_vector ambiences;
+        if (!get_file_manager().get(file, file_name.c_str(), &data) ||
+            !load_config(std::string_view(static_cast<const char *>(data), file.size()), file_name, objects, ambiences)) {
+            metin2::log::error("Cannot load area {}", file_name);
+        }
 
-        load_load_object(object_data_file_name.c_str());
-        load_load_ambience(ambience_data_file_name.c_str());
+        for (const object_data &object : objects) {
+            property *property;
+            if (!get_property_manager().get(object.crc, &property)) {
+                metin2::log::warn("Area object property {} cannot be loaded", object.crc);
+                continue;
+            }
+            object_data_vector_value_.push_back(object);
+        }
+        for (const object_data &ambience : ambiences) {
+            property *property;
+            if (!get_property_manager().get(ambience.crc, &property)) {
+                metin2::log::warn("Area ambience property {} cannot be loaded", ambience.crc);
+                continue;
+            }
+            object_data_vector_value_.push_back(ambience);
+        }
+
         load_build_object_instances();
-
         return true;
     }
 
-    auto area::load_load_object(const char *file_name) -> bool {
-        token_vector_map token_vector_map;
-
-        if (!load_multiple_text_data(file_name, token_vector_map)) {
-            metin2::log::error("Cannot load area objects {}", file_name);
-            return false;
+    namespace {
+        // The [[object]] and [[ambience]] entries share property and position.
+        auto read_placement(asset_table &values, area::object_data &data) -> bool {
+            memset(static_cast<void *>(&data), 0, sizeof(data));
+            data.initialize_rotation();
+            math::vector3 position;
+            bool ok = values.required("property", data.crc);
+            ok &= values.required("position", position);
+            data.position_value.x = position.x;
+            data.position_value.y = position.y;
+            data.position_value.z = position.z;
+            return ok;
         }
-
-        if (token_vector_map.end() == token_vector_map.find("areadatafile")) {
-            metin2::log::error("Area objects {}: no areadatafile key", file_name);
-            return false;
-        }
-
-        if (token_vector_map.end() == token_vector_map.find("objectcount")) {
-            metin2::log::error("Area objects {}: no objectcount key", file_name);
-            return false;
-        }
-
-        const std::string &c_rstr_count = token_vector_map["objectcount"][0];
-
-        uint32_t dw_count = metin2::to_number<int>(c_rstr_count.c_str());
-
-        char object_name[32 + 1];
-
-        for (uint32_t i = 0; i < dw_count; ++i) {
-            snprintf(object_name, sizeof(object_name), "object%03d", i);
-
-            if (token_vector_map.end() == token_vector_map.find(object_name))
-                continue;
-
-            const token_vector &vector = token_vector_map[object_name];
-
-            const std::string &rstrx_position = vector[0].c_str();
-            const std::string &rstry_position = vector[1].c_str();
-            const std::string &rstrz_position = vector[2].c_str();
-            const std::string &crc = vector[3].c_str();
-
-            object_data object_data_value;
-            memset(static_cast<void *>(&object_data_value), 0, sizeof(object_data_value));
-            object_data_value.position_value.x = metin2::to_number<double>(rstrx_position.c_str());
-            object_data_value.position_value.y = metin2::to_number<double>(rstry_position.c_str());
-            object_data_value.position_value.z = metin2::to_number<double>(rstrz_position.c_str());
-            object_data_value.crc = metin2::to_number<int>(crc.c_str());
-
-            object_data_value.initialize_rotation();
-            if (vector.size() > 4) {
-                std::string::size_type s = vector[4].find('#');
-                if (s != vector[4].npos) {
-                    object_data_value.yaw = metin2::to_number<int>(vector[4].substr(0, s - 1).c_str());
-                    int p = s + 1;
-                    s = vector[4].find('#', p);
-                    object_data_value.pitch = metin2::to_number<int>(vector[4].substr(p, s - 1 - p + 1).c_str());
-                    object_data_value.roll = metin2::to_number<int>(vector[4].substr(s + 1).c_str());
-                } else {
-                    object_data_value.yaw = 0.0f;
-                    object_data_value.pitch = 0.0f;
-                    object_data_value.roll = metin2::to_number<int>(vector[4].c_str());
-                }
-            }
-
-            object_data_value.height_bias = 0.0f;
-            if (vector.size() > 5) {
-                object_data_value.height_bias = metin2::to_number<double>(vector[5].c_str());
-            }
-
-            if (vector.size() > 6) {
-                for (size_t portal_idx = 0; portal_idx < std::min<size_t>(vector.size() - 6, PORTAL_ID_MAX_NUM); ++portal_idx) {
-                    object_data_value.portal_id[portal_idx] = metin2::to_number<int>(vector[6 + portal_idx].c_str());
-                }
-            }
-
-            property *property;
-            if (!get_property_manager().get(object_data_value.crc, &property)) {
-                metin2::log::warn("Area object property {} cannot be loaded", object_data_value.crc);
-                continue;
-            }
-
-            object_data_vector_value_.push_back(object_data_value);
-        }
-
-        return true;
     }
 
-    auto area::load_load_ambience(const char *file_name) -> bool {
-        token_vector_map token_vector_map;
-
-        if (!load_multiple_text_data(file_name, token_vector_map)) {
-            metin2::log::error("Cannot load area ambience {}", file_name);
+    auto area::load_config(std::string_view text, std::string_view name, object_data_vector &objects, object_data_vector &ambiences) -> bool {
+        const auto table = parse_asset_toml(text, name, "Area");
+        if (!table) {
             return false;
         }
 
-        if (token_vector_map.end() == token_vector_map.find("areaambiencedatafile")) {
-            metin2::log::error("Area ambience {}: no areaambiencedatafile key", file_name);
-            return false;
-        }
+        asset_table root(*table, name);
+        root.table("asset");
+        bool ok = true;
 
-        if (token_vector_map.end() == token_vector_map.find("objectcount")) {
-            metin2::log::error("Area ambience {}: no objectcount key", file_name);
-            return false;
-        }
-
-        const std::string &c_rstr_count = token_vector_map["objectcount"][0];
-
-        uint32_t dw_count = metin2::to_number<int>(c_rstr_count.c_str());
-
-        char object_name[32 + 1];
-
-        for (uint32_t i = 0; i < dw_count; ++i) {
-            snprintf(object_name, sizeof(object_name), "object%03d", i);
-
-            if (token_vector_map.end() == token_vector_map.find(object_name))
-                continue;
-
-            const token_vector &vector = token_vector_map[object_name];
-
-            const std::string &rstrx_position = vector[0].c_str();
-            const std::string &rstry_position = vector[1].c_str();
-            const std::string &rstrz_position = vector[2].c_str();
-            const std::string &crc = vector[3].c_str();
-            const std::string &range = vector[4].c_str();
-
-            object_data object_data_value;
-            memset(static_cast<void *>(&object_data_value), 0, sizeof(object_data_value));
-            object_data_value.position_value.x = metin2::to_number<double>(rstrx_position.c_str());
-            object_data_value.position_value.y = metin2::to_number<double>(rstry_position.c_str());
-            object_data_value.position_value.z = metin2::to_number<double>(rstrz_position.c_str());
-            object_data_value.crc = metin2::to_number<int>(crc.c_str());
-            object_data_value.range = metin2::to_number<int>(range.c_str());
-
-            object_data_value.initialize_rotation();
-            object_data_value.height_bias = 0.0f;
-            object_data_value.max_volume_area_percentage = 0.0f;
-
-            if (vector.size() >= 6) {
-                const std::string &percentage = vector[5].c_str();
-                object_data_value.max_volume_area_percentage = metin2::to_number<double>(percentage.c_str());
+        if (const toml::array *entries = root.array("object")) {
+            for (const toml::node &node : *entries) {
+                const toml::table *entry = node.as_table();
+                if (!entry) {
+                    root.error("object", "must be tables ([[object]])");
+                    ok = false;
+                    continue;
+                }
+                asset_table values(*entry, name);
+                object_data &data = objects.emplace_back();
+                ok &= read_placement(values, data);
+                math::vector3 rotation;
+                ok &= values.required("rotation", rotation);
+                data.yaw = rotation.x;
+                data.pitch = rotation.y;
+                data.roll = rotation.z;
+                ok &= values.optional("height_bias", data.height_bias);
+                if (const toml::array *portals = values.array("portals")) {
+                    if (portals->size() > PORTAL_ID_MAX_NUM) {
+                        values.error("portals", "has too many portal ids");
+                        ok = false;
+                    }
+                    for (size_t i = 0; i < portals->size() && i < PORTAL_ID_MAX_NUM; ++i) {
+                        const auto id = (*portals)[i].value_exact<int64_t>();
+                        if (!id || *id < 0 || *id > 255) {
+                            values.error("portals", "must be whole numbers from 0 to 255");
+                            ok = false;
+                            break;
+                        }
+                        data.portal_id[i] = static_cast<uint8_t>(*id);
+                    }
+                }
+                ok &= values.finish();
             }
-
-            property *property;
-            if (!get_property_manager().get(object_data_value.crc, &property)) {
-                metin2::log::warn("Area ambience property {} cannot be loaded", object_data_value.crc);
-                continue;
-            }
-
-            object_data_vector_value_.push_back(object_data_value);
         }
 
-        return true;
+        if (const toml::array *entries = root.array("ambience")) {
+            for (const toml::node &node : *entries) {
+                const toml::table *entry = node.as_table();
+                if (!entry) {
+                    root.error("ambience", "must be tables ([[ambience]])");
+                    ok = false;
+                    continue;
+                }
+                asset_table values(*entry, name);
+                object_data &data = ambiences.emplace_back();
+                ok &= read_placement(values, data);
+                ok &= values.required("range", data.range);
+                ok &= values.optional("max_volume_area_percentage", data.max_volume_area_percentage);
+                ok &= values.finish();
+            }
+        }
+
+        return root.finish() && ok;
     }
 
     auto area::check_object_index(uint32_t index) const -> bool {

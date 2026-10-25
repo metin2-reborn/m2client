@@ -8,6 +8,8 @@
 #include <metin2/sound/type.h>
 #include <metin2/world/actors/race_data.h>
 #include <metin2/world/actors/race_motion_data.h>
+#include <metin2/world/maps/area.h>
+#include <metin2/world/maps/map_config.h>
 #include <metin2/world/maps/map_util.h>
 #include <metin2/world/maps/property.h>
 
@@ -635,6 +637,109 @@ TEST(environment_rejects_bad_scripts) {
     CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[fog]\ncolor = [1.0, 1.0, 1.0]\n", "a.toml"));
     CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[sky_box]\ngradient_upper = 2\ngradient = []\n", "a.toml"));
     CHECK(!environment_parse(env, "[asset]\ntype = \"Environment\"\n[sky_box]\ncloud_scale = [1.0]\n", "a.toml"));
+}
+
+TEST(map_config_reads_the_map_and_terrain) {
+    map_config config;
+    CHECK(load_map_config(R"([asset]
+type = "Map"
+
+[map]
+type = "Outdoor"
+
+[terrain]
+size = [4, 5]
+base_position = [409600, 896000]
+view_radius = 128
+height_scale = 0.5
+texture_set = "texturesets:metin2_a1.toml"
+environment = "A1.toml"
+visible = false
+)",
+        "map.toml", config));
+    CHECK(!config.indoor);
+    CHECK(config.parent.empty());
+    CHECK(config.has_terrain);
+    CHECK_EQ(config.size_y, 5);
+    CHECK(config.has_base_position);
+    CHECK_EQ(config.base_x, 409600u);
+    CHECK_EQ(config.view_radius, 128);
+    CHECK_EQ(config.height_scale, 0.5f);
+    CHECK_EQ(config.texture_set, std::string("texturesets:metin2_a1.toml"));
+    CHECK_EQ(config.environment, std::string("A1.toml"));
+    CHECK(!config.terrain_visible);
+
+    map_config copy;
+    CHECK(load_map_config("[asset]\ntype = \"Map\"\n[map]\ntype = \"Indoor\"\nparent = \"metin2_map_a1\"\n", "map.toml", copy));
+    CHECK(copy.indoor);
+    CHECK_EQ(copy.parent, std::string("metin2_map_a1"));
+    CHECK(!copy.has_terrain);
+}
+
+TEST(map_config_rejects_bad_scripts) {
+    map_config config;
+    CHECK(!load_map_config("[asset]\ntype = \"Area\"\n[map]\ntype = \"Outdoor\"\n", "map.toml", config));
+    CHECK(!load_map_config("[asset]\ntype = \"Map\"\n", "map.toml", config));
+    CHECK(!load_map_config("[asset]\ntype = \"Map\"\n[map]\ntype = \"Cave\"\n", "map.toml", config));
+    const std::string terrain = "[asset]\ntype = \"Map\"\n[map]\ntype = \"Outdoor\"\n[terrain]\nheight_scale = 0.5\ntexture_set = \"a.toml\"\n";
+    CHECK(load_map_config(terrain + "size = [1, 1]\nview_radius = 1\n", "map.toml", config));
+    CHECK(!load_map_config(terrain + "size = [1]\nview_radius = 1\n", "map.toml", config));
+    CHECK(!load_map_config(terrain + "size = [1, 1]\nview_radius = 0\n", "map.toml", config));
+    CHECK(!load_map_config(terrain + "size = [1, 1]\nview_radius = 1\nbase_position = [-1, 0]\n", "map.toml", config));
+}
+
+TEST(area_reads_objects_and_ambiences) {
+    area::object_data_vector objects;
+    area::object_data_vector ambiences;
+    CHECK(area::load_config(R"([asset]
+type = "Area"
+
+[[object]]
+property = 569394331
+position = [20801.75, -13522.1, 17875.5]
+rotation = [0, 15, 180]
+height_bias = -40.0
+
+[[object]]
+property = 3
+position = [1.0, 2.0, 3.0]
+rotation = [0, 0, 0]
+portals = [1, 255]
+
+[[ambience]]
+property = 7
+position = [4.0, 5.0, 6.0]
+range = 1000
+max_volume_area_percentage = 0.5
+)",
+        "area.toml", objects, ambiences));
+    CHECK_EQ(objects.size(), std::size_t{2});
+    CHECK_EQ(objects[0].crc, 569394331u);
+    CHECK_EQ(objects[0].position_value.z, 17875.5f);
+    CHECK_EQ(objects[0].pitch, 15.0f);
+    CHECK_EQ(objects[0].roll, 180.0f);
+    CHECK_EQ(objects[0].height_bias, -40.0f);
+    CHECK_EQ(objects[0].portal_id[0], uint8_t{0});
+    CHECK_EQ(objects[1].height_bias, 0.0f);
+    CHECK_EQ(objects[1].portal_id[1], uint8_t{255});
+    CHECK_EQ(ambiences.size(), std::size_t{1});
+    CHECK_EQ(ambiences[0].range, 1000u);
+    CHECK_EQ(ambiences[0].max_volume_area_percentage, 0.5f);
+
+    objects.clear();
+    CHECK(area::load_config("[asset]\ntype = \"Area\"\n", "area.toml", objects, ambiences));
+    CHECK(objects.empty());
+}
+
+TEST(area_rejects_bad_scripts) {
+    area::object_data_vector objects;
+    area::object_data_vector ambiences;
+    const std::string head = "[asset]\ntype = \"Area\"\n";
+    CHECK(!area::load_config("[asset]\ntype = \"Map\"\n", "area.toml", objects, ambiences));
+    CHECK(!area::load_config(head + "[[object]]\nproperty = 1\nposition = [1.0, 2.0, 3.0]\n", "area.toml", objects, ambiences));
+    CHECK(!area::load_config(head + "[[object]]\nproperty = 1\nposition = [1.0, 2.0]\nrotation = [0, 0, 0]\n", "area.toml", objects, ambiences));
+    CHECK(!area::load_config(head + "[[object]]\nproperty = 1\nposition = [1.0, 2.0, 3.0]\nrotation = [0, 0, 0]\nportals = [256]\n", "area.toml", objects, ambiences));
+    CHECK(!area::load_config(head + "[[ambience]]\nproperty = 1\nposition = [1.0, 2.0, 3.0]\n", "area.toml", objects, ambiences));
 }
 
 TEST(file_name_path_counts_the_archive_as_a_folder) {

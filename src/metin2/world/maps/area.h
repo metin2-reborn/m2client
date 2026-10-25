@@ -5,6 +5,8 @@
 #include "dungeon_block.h"
 #include "map_type.h"
 
+#include <string_view>
+
 namespace metin2::inline world::inline terrain {
     class map_outdoor;
 }
@@ -175,6 +177,8 @@ namespace metin2::inline world::inline maps {
         void clear();
 
         auto load(const char *path_name) -> bool;
+        // Parses an area.toml ([asset] type "Area"): the placed objects and the ambience sounds.
+        static auto load_config(std::string_view text, std::string_view name, object_data_vector &objects, object_data_vector &ambiences) -> bool;
 
         auto object_data_count() -> uint32_t;
         auto object_data_pointer(uint32_t index, const object_data **object_data_value) const -> bool;
@@ -208,8 +212,6 @@ namespace metin2::inline world::inline maps {
       protected:
         auto check_object_index(uint32_t index) const -> bool;
 
-        auto load_load_object(const char *file_name) -> bool;
-        auto load_load_ambience(const char *file_name) -> bool;
         void load_build_object_instances();
 
         void update_ani_thing_list();
