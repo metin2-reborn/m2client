@@ -375,13 +375,17 @@ void main() {
     }
 
     auto gl_device::reset(const device_settings &settings) -> bool {
+        // The back buffer is the window's framebuffer, which on a scaled desktop has more pixels
+        // than the window's logical size that SetWindowSize takes.
         settings_ = settings;
         if (settings_.width == 0)
-            settings_.width = static_cast<uint32_t>(GetScreenWidth());
+            settings_.width = static_cast<uint32_t>(GetRenderWidth());
         if (settings_.height == 0)
-            settings_.height = static_cast<uint32_t>(GetScreenHeight());
-        if (static_cast<uint32_t>(GetScreenWidth()) != settings_.width || static_cast<uint32_t>(GetScreenHeight()) != settings_.height)
-            SetWindowSize(static_cast<int>(settings_.width), static_cast<int>(settings_.height));
+            settings_.height = static_cast<uint32_t>(GetRenderHeight());
+        if (static_cast<uint32_t>(GetRenderWidth()) != settings_.width || static_cast<uint32_t>(GetRenderHeight()) != settings_.height) {
+            const Vector2 scale = GetWindowScaleDPI();
+            SetWindowSize(static_cast<int>(lroundf(static_cast<float>(settings_.width) / scale.x)), static_cast<int>(lroundf(static_cast<float>(settings_.height) / scale.y)));
+        }
         for (auto &t : textures_)
             t.reset();
         target_.reset();

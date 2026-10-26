@@ -20,6 +20,7 @@ namespace metin2::inline graphics {
         auto create_device_objects() -> bool override;
         void destroy_device_objects() override;
 
+        // The atlas, rasterized again first when the interface pixel scale changed since.
         auto font_texture_pointer() -> graphic_font_texture *;
 
       protected:
@@ -30,5 +31,8 @@ namespace metin2::inline graphics {
 
       protected:
         graphic_font_texture font_texture_;
+        std::string font_name_;
+        int font_size_ = 12;
+        bool italic_ = false;
     };
 }

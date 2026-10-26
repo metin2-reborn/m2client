@@ -1,0 +1,24 @@
+# The XML-built login screen: boards stay centred and hang from the bottom across resizes, the hidden
+# server board takes no clicks, and malformed layouts fail with a LayoutError naming the element.
+resize 1280 720
+waitframes 5
+wait 2500
+screenshot resize_00_1280.png
+# pick channel 1 and OK: the server board hides, the login board shows
+click left 760 299
+wait 300
+click left 775 606
+wait 1000
+resize 1600 900
+waitframes 5
+screenshot resize_01_1600.png
+# the hidden server board must not take clicks: this is inside its (hidden) rectangle
+click left 800 640
+wait 500
+screenshot resize_02_click.png
+resize 1024 768
+waitframes 5
+screenshot resize_03_1024.png
+pyexec "import __main__, sys\nf=sys._getframe()\nms=None\nwhile f:\n  ms = f.f_locals.get('main_stream', ms)\n  f=f.f_back\nw=ms.cur_phase_window\nfrom metin2 import log\nlog.trace_error('RSZCHK size %r board %r login %r server %r' % ((w.get_width(), w.get_height()), w.connect_board.get_local_position(), w.login_board.get_local_position(), w.server_board.get_local_position()))"
+pyexec "import ui, ui.layout, xml.etree.cElementTree as ET\nfrom metin2 import log\nfor doc in ('<window><label foo=\"1\"/></window>', '<window><label color=\"nope\"/></window>', '<window><button on_click=\"missing\"/></window>', '<window><bogus/></window>', '<window><label anchor=\"middle\"/></window>'):\n  b = ui.layout._Builder('test.xml', ui.style.load(), None)\n  try:\n    root = b.build_root(ET.fromstring(doc), None)\n    b.bind_events()\n    log.trace_error('ERRCHK no error for %s' % doc)\n  except ui.layout.LayoutError as e:\n    log.trace_error('ERRCHK %s' % e)"
+quit

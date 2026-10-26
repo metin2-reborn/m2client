@@ -1,0 +1,15 @@
+# Login screen at interface scale 2 (800x450 logical in a 1600x900 window): text comparison baseline.
+# The scale is put back to automatic before quitting, as the client saves it with its settings.
+resize 1600 900
+waitframes 5
+wait 2500
+screenshot login_1x_1600.png
+pyexec "from metin2 import settings\nsettings.set_ui_scale(2)"
+waitframes 5
+screenshot login_2x_00.png
+click left 700 310
+wait 300
+screenshot login_2x_01.png
+pyexec "from metin2 import settings\nsettings.set_ui_scale(0)"
+waitframes 2
+quit

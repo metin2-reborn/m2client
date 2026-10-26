@@ -49,27 +49,31 @@ namespace metin2::inline graphics {
         float eu = (rect_value.left + (rect_value.right - rect_value.left)) * tex_reverse_width;
         float ev = (rect_value.top + (rect_value.bottom - rect_value.top)) * tex_reverse_height;
 
+        // Half an interface pixel back (the D3D9 convention) in framebuffer pixels, so the quad
+        // covers its texels exactly at every interface scale.
+        const float half = graphic_base::half_pixel();
+
         pdt_vertex vertices[4];
-        vertices[0].position_value.x = position_value_.x - 0.5f;
-        vertices[0].position_value.y = position_value_.y - 0.5f;
+        vertices[0].position_value.x = position_value_.x - half;
+        vertices[0].position_value.y = position_value_.y - half;
         vertices[0].position_value.z = 0.0f;
         vertices[0].tex_coord = texture_coordinate(su, sv);
         vertices[0].diffuse_value = diffuse_color_;
 
-        vertices[1].position_value.x = position_value_.x + fimg_width - 0.5f;
-        vertices[1].position_value.y = position_value_.y - 0.5f;
+        vertices[1].position_value.x = position_value_.x + fimg_width - half;
+        vertices[1].position_value.y = position_value_.y - half;
         vertices[1].position_value.z = 0.0f;
         vertices[1].tex_coord = texture_coordinate(eu, sv);
         vertices[1].diffuse_value = diffuse_color_;
 
-        vertices[2].position_value.x = position_value_.x - 0.5f;
-        vertices[2].position_value.y = position_value_.y + fimg_height - 0.5f;
+        vertices[2].position_value.x = position_value_.x - half;
+        vertices[2].position_value.y = position_value_.y + fimg_height - half;
         vertices[2].position_value.z = 0.0f;
         vertices[2].tex_coord = texture_coordinate(su, ev);
         vertices[2].diffuse_value = diffuse_color_;
 
-        vertices[3].position_value.x = position_value_.x + fimg_width - 0.5f;
-        vertices[3].position_value.y = position_value_.y + fimg_height - 0.5f;
+        vertices[3].position_value.x = position_value_.x + fimg_width - half;
+        vertices[3].position_value.y = position_value_.y + fimg_height - half;
         vertices[3].position_value.z = 0.0f;
         vertices[3].tex_coord = texture_coordinate(eu, ev);
         vertices[3].diffuse_value = diffuse_color_;

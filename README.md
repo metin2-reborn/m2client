@@ -97,6 +97,8 @@ grass_density = 1        # grass on grass and field tiles: 0 off to 3
 font_scale = 1.0         # text size factor
 font_antialias = true    # false gives the original 1-bit glyphs
 ui_scale = 0             # interface magnification 1-3; 0 picks it from the window height
+                         # (text is rasterized at the magnified size, not enlarged; on a scaled
+                         # desktop the window is high-DPI and the automatic choice sees real pixels)
 chat_timestamps = false  # prefix spoken chat lines with [HH:MM]
 
 [keys]                   # optional: rebind game actions (names as in DIK_*, e.g. "F", "NUMPAD1", "GRAVE")

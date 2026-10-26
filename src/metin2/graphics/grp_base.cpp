@@ -29,6 +29,7 @@ namespace metin2::inline graphics {
     uint32_t graphic_base::pnt2vs_ = 0;
 
     math::matrix graphic_base::identity_;
+    float graphic_base::interface_pixel_scale_ = 1.0f;
 
     math::matrix graphic_base::view_;
     math::matrix graphic_base::proj_;

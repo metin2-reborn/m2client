@@ -1,0 +1,29 @@
+# Switching the selected server many times must not stack channel rows (the text got "thicker").
+resize 1280 720
+waitframes 5
+wait 2500
+mousemove 400 200
+click left 520 318
+wait 400
+click left 520 298
+wait 600
+mousemove 400 200
+wait 300
+screenshot list_01_once.png
+click left 520 318
+wait 400
+click left 520 298
+wait 400
+click left 520 318
+wait 400
+click left 520 298
+wait 400
+click left 520 318
+wait 400
+click left 520 298
+wait 600
+mousemove 400 200
+wait 300
+screenshot list_02_many.png
+pyexec "import sys\nf=sys._getframe()\nms=None\nwhile f:\n  ms = f.f_locals.get('main_stream', ms)\n  f=f.f_back\nw=ms.cur_phase_window\nfrom metin2 import log\nlog.trace_error('LSTCHK rows %d children %d' % (len(w.channel_list.items), len(w.channel_list._children)))"
+quit

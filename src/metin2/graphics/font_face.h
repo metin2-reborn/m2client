@@ -28,10 +28,12 @@ namespace metin2::inline graphics {
             std::vector<uint8_t> coverage; // width * rows, 0..255
         };
 
-        // The height is the cell height (ascent + descent) in pixels, as the Windows client asked GDI
-        // for its fonts.
-        auto open(const char *family, int height, bool bold, bool italic) -> bool;
+        // The height is the cell height (ascent + descent) in interface pixels, as the Windows client
+        // asked GDI for its fonts; the glyphs are rasterized at height * pixel_scale, so text drawn
+        // magnified by that factor still gets freshly rendered pixels.
+        auto open(const char *family, int height, bool bold, bool italic, float pixel_scale = 1.0f) -> bool;
         auto is_open() const -> bool { return !faces_.empty(); }
+        auto pixel_scale() const -> float { return pixel_scale_; }
 
         auto glyph_of(char32_t codepoint) -> const glyph &;
 
@@ -51,6 +53,7 @@ namespace metin2::inline graphics {
         bool bold_ = false;
         bool italic_ = false;
         int pixel_size_ = 0;
+        float pixel_scale_ = 1.0f;
         int ascent_ = 0;
         int descent_ = 0;
         std::vector<face *> faces_; // the matched face, then fallbacks as characters need them

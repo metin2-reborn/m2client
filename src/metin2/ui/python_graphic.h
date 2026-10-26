@@ -25,8 +25,12 @@ namespace metin2::inline ui {
         void set_game_render_state();
 
         // The interface is laid out in logical pixels and drawn magnified by an integer factor, so it
-        // stays legible on large displays. Window pixels = interface pixels * scale.
-        void set_interface_scale(int scale) { interface_scale_ = scale < 1 ? 1 : scale; }
+        // stays legible on large displays. Window pixels = interface pixels * scale. Text is
+        // rasterized at the scale (graphic_base::interface_pixel_scale), not magnified.
+        void set_interface_scale(int scale) {
+            interface_scale_ = scale < 1 ? 1 : scale;
+            graphic_base::set_interface_pixel_scale(static_cast<float>(interface_scale_));
+        }
         auto interface_scale() const -> int { return interface_scale_; }
         // A world position in interface pixels (project_position gives window pixels).
         void project_position_to_interface(float x, float y, float z, float *px, float *py, float *pz = nullptr);

@@ -22,7 +22,8 @@ namespace metin2::inline client::inline app {
         if (ext) {
             if ((strcasecmp(ext, ".py") == 0) ||
                 (strcasecmp(ext, ".pyc") == 0) ||
-                (strcasecmp(ext, ".txt") == 0)) {
+                (strcasecmp(ext, ".txt") == 0) ||
+                (strcasecmp(ext, ".xml") == 0)) {
                 mapped_file file;
 
                 const void *data = nullptr;
@@ -35,7 +36,7 @@ namespace metin2::inline client::inline app {
             }
         }
 
-        PyErr_SetString(PyExc_ValueError, "Scripts may only read .py, .pyc and .txt files");
+        PyErr_SetString(PyExc_ValueError, "Scripts may only read .py, .pyc, .txt and .xml files");
         return nullptr;
     }
 

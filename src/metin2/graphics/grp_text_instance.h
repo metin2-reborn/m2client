@@ -6,6 +6,11 @@
 
 namespace metin2::inline graphics {
 
+    // One piece of text drawn with a font atlas. The text is laid out in texels (framebuffer
+    // pixels, see graphic_font_texture) with the pen rounded to a whole texel per glyph, and every
+    // glyph quad covers its atlas cell texel for texel, so point sampling reproduces the
+    // rasterized glyph exactly. The public geometry (position, limit width, caret positions, text
+    // size) is in interface pixels.
     class graphic_text_instance {
       public:
         using pool_type = dynamic_pool<graphic_text_instance>;
@@ -46,7 +51,6 @@ namespace metin2::inline graphics {
         void set_position(float fx, float fy, float fz = 0.0f);
         void set_secret(bool value);
         void set_outline(bool value);
-        void set_feather(bool value);
         void set_multi_line(bool value);
         void set_limit_width(float width_value);
 
@@ -56,8 +60,9 @@ namespace metin2::inline graphics {
 
         auto get_horizontal_align() -> int;
 
-        // Glyph geometry for edit lines, in pixels relative to the aligned origin (see aligned_origin):
-        // the top left of glyph `index` (glyph_count() gives the end of the text), wrapping like render().
+        // Glyph geometry for edit lines, in interface pixels relative to the aligned origin (see
+        // aligned_origin): the pen in front of glyph `index` (glyph_count() gives the end of the
+        // text), wrapping like render().
         void character_position(std::size_t index, float *x, float *y);
         auto character_x(std::size_t index) -> float;
         // The glyph boundary nearest to (x, y), 0..glyph_count(); y picks the wrapped row.
@@ -70,11 +75,15 @@ namespace metin2::inline graphics {
 
       protected:
         void initialize_impl();
-        auto draw_character(graphic_font_texture *font_texture, wchar_t text, uint32_t color) -> int;
+        auto draw_character(graphic_font_texture *font_texture, wchar_t text, uint32_t color) -> float;
+        auto pixel_scale() -> float;
+        void aligned_origin_texels(int *x, int *y);
+        auto wraps(std::size_t index, float pen) -> bool;
+        void pen_at(std::size_t index, float *x, int *y);
 
       protected:
         struct hyperlink {
-            short sx;
+            short sx; // texels from the aligned origin
             short ex;
             std::wstring text;
 
@@ -85,8 +94,8 @@ namespace metin2::inline graphics {
         uint32_t text_color_;
         uint32_t out_line_color_;
 
-        uint16_t text_width_;
-        uint16_t text_height_;
+        float text_width_; // texels
+        int text_height_;  // texels: the line height
 
         uint8_t h_align_;
         uint8_t v_align_;
@@ -98,13 +107,13 @@ namespace metin2::inline graphics {
         bool is_multi_line_;
 
         bool is_outline_;
-        float font_feather_;
 
         std::string text_;
         math::vector3 position_value_;
 
       private:
         bool is_update_;
+        uint32_t font_generation_; // the atlas the glyph pointers belong to
 
         graphic_text::ref ro_text_;
         graphic_font_texture::p_character_infomation_vector char_info_vector_;

@@ -708,7 +708,9 @@ namespace metin2::inline client::inline app {
             }
         }
 
-        if (!create_device(window_width, window_height))
+        // The device draws into the framebuffer, which is larger than the window on a scaled desktop.
+        const point client = size();
+        if (!create_device(client.x, client.y))
             return false;
 
         // Window events are also collected after every frame, so the harness and the window state

@@ -754,9 +754,6 @@ namespace metin2::inline ui {
         void text_line::set_outline(bool flag) {
             text_instance_.set_outline(flag ? true : false);
         }
-        void text_line::set_feather(bool flag) {
-            text_instance_.set_feather(flag ? true : false);
-        }
         void text_line::set_multi_line(bool flag) {
             text_instance_.set_multi_line(flag ? true : false);
         }

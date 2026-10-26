@@ -1266,20 +1266,6 @@ namespace metin2::inline ui {
         typed->set_outline(flag);
         Py_RETURN_NONE;
     }
-    auto wnd_text_set_feather(PyObject *self, PyObject *args) -> PyObject * {
-        widgets::ui_window *window;
-        int flag;
-
-        if (!PyArg_ParseTuple(args, "O&i", window_converter, &window, &flag)) {
-            return nullptr;
-        }
-
-        auto *typed = window_cast<widgets::text_line>(window);
-        if (!typed)
-            return nullptr;
-        typed->set_feather(flag);
-        Py_RETURN_NONE;
-    }
     auto wnd_text_set_multi_line(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *window;
         int flag;
@@ -1991,7 +1977,6 @@ namespace metin2::inline ui {
                 {"set_vertical_align", wnd_text_set_vertical_align, METH_VARARGS},
                 {"set_secret", wnd_text_set_secret, METH_VARARGS},
                 {"set_outline", wnd_text_set_outline, METH_VARARGS},
-                {"set_feather", wnd_text_set_feather, METH_VARARGS},
                 {"set_multi_line", wnd_text_set_multi_line, METH_VARARGS},
                 {"set_text", wnd_text_set_text, METH_VARARGS},
                 {"set_font_name", wnd_text_set_font_name, METH_VARARGS},

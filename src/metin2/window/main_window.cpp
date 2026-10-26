@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -51,9 +52,25 @@ namespace metin2::inline window {
             return glfwGetCurrentContext();
         }
 
+        // Under FLAG_WINDOW_HIGHDPI raylib reports the pointer and the screen size in the window's
+        // logical units on every platform; the client works in framebuffer pixels throughout.
+        auto dpi_scale() -> Vector2 {
+            return GetWindowScaleDPI();
+        }
+
         auto real_mouse_position() -> point {
             const Vector2 position = GetMousePosition();
-            return {static_cast<int>(position.x), static_cast<int>(position.y)};
+            const Vector2 scale = dpi_scale();
+            return {static_cast<int>(lroundf(position.x * scale.x)), static_cast<int>(lroundf(position.y * scale.y))};
+        }
+
+        // SetMousePosition takes raylib's raw cursor units: logical on Wayland, where GLFW's cursor
+        // coordinates are logical, and framebuffer pixels on X11.
+        void set_real_mouse_position(point position) {
+            Vector2 scale = {1.0f, 1.0f};
+            if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+                scale = dpi_scale();
+            SetMousePosition(static_cast<int>(lroundf(static_cast<float>(position.x) / scale.x)), static_cast<int>(lroundf(static_cast<float>(position.y) / scale.y)));
         }
 
         auto any_mouse_button_down() -> bool {
@@ -87,7 +104,9 @@ namespace metin2::inline window {
 
         SetTraceLogCallback(filter_raylib_log);
         SetTraceLogLevel(LOG_WARNING);
-        unsigned flags = FLAG_WINDOW_HIDDEN | (borderless ? FLAG_WINDOW_UNDECORATED : FLAG_WINDOW_RESIZABLE);
+        // High DPI: the framebuffer has the display's real pixels on a scaled desktop instead of being
+        // upscaled by the compositor.
+        unsigned flags = FLAG_WINDOW_HIDDEN | FLAG_WINDOW_HIGHDPI | (borderless ? FLAG_WINDOW_UNDECORATED : FLAG_WINDOW_RESIZABLE);
         if (vsync)
             flags |= FLAG_VSYNC_HINT;
         SetConfigFlags(flags);
@@ -138,8 +157,9 @@ namespace metin2::inline window {
             SetWindowSize(width, height);
     }
 
+    // The framebuffer size: the window's logical size times the desktop's scale.
     auto main_window::size() const -> point {
-        return {GetScreenWidth(), GetScreenHeight()};
+        return {GetRenderWidth(), GetRenderHeight()};
     }
 
     void resize_window(point size) {
@@ -156,8 +176,10 @@ namespace metin2::inline window {
     auto monitor_size() -> point {
         if (!created)
             return {1920, 1080};
+        // In the window's logical units, which SetWindowSize and the display settings use.
         const int monitor = GetCurrentMonitor();
-        return {GetMonitorWidth(monitor), GetMonitorHeight(monitor)};
+        const Vector2 scale = dpi_scale();
+        return {static_cast<int>(lroundf(static_cast<float>(GetMonitorWidth(monitor)) / scale.x)), static_cast<int>(lroundf(static_cast<float>(GetMonitorHeight(monitor)) / scale.y))};
     }
 
     auto display_modes() -> std::vector<display_mode> {
@@ -220,7 +242,7 @@ namespace metin2::inline window {
             const point real = real_mouse_position();
             warp = {position.x - real.x, position.y - real.y};
         } else {
-            SetMousePosition(position.x, position.y);
+            set_real_mouse_position(position);
         }
     }
 
@@ -302,7 +324,7 @@ namespace metin2::inline window {
             lock_pointer(false);
             pointer_locked = false;
             warp = {};
-            SetMousePosition(lock_position.x, lock_position.y);
+            set_real_mouse_position(lock_position);
         }
 
         const float wheel = GetMouseWheelMoveV().y;

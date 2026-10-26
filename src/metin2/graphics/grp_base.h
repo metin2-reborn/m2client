@@ -151,8 +151,17 @@ namespace metin2::inline graphics {
         static auto set_pdt_stream(pdt_vertex_raw *vertices, uint32_t vtx_count) -> bool;
         static auto set_pdt_stream(pdt_vertex *vertices, uint32_t vtx_count) -> bool;
 
+        // Framebuffer pixels per interface pixel: the interface is laid out in its own pixels and
+        // drawn magnified by this factor. Text is rasterized at this scale, and 2D quads place
+        // themselves on framebuffer pixels with it (the vertex shader adds the D3D9 half pixel in
+        // framebuffer units, so a quad subtracts half an interface pixel / scale).
+        static void set_interface_pixel_scale(float scale) { interface_pixel_scale_ = scale > 0.0f ? scale : 1.0f; }
+        static auto interface_pixel_scale() -> float { return interface_pixel_scale_; }
+        static auto half_pixel() -> float { return 0.5f / interface_pixel_scale_; }
+
       protected:
         static math::matrix identity_;
+        static float interface_pixel_scale_;
 
         static math::matrix view_;
         static math::matrix proj_;

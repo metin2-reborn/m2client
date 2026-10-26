@@ -1,16 +1,16 @@
 #include "grp_text_instance.h"
 #include <algorithm>
+#include <cmath>
 #include <metin2/core/utf8.h>
 #include <metin2/core/utils.h>
 #include <metin2/gpu/types.h>
 #include <metin2/log/log.h>
 #include <vector>
+#include "grp_base.h"
 #include "state_manager.h"
 #include "text_tag.h"
 
 namespace metin2::inline graphics {
-
-    const float c_fFontFeather = 0.5f;
 
     dynamic_pool<graphic_text_instance> graphic_text_instance::pool_value;
 
@@ -36,7 +36,14 @@ namespace metin2::inline graphics {
         return static_cast<int>(n);
     }
 
-    auto graphic_text_instance::draw_character(graphic_font_texture *font_texture, wchar_t text, uint32_t color) -> int {
+    auto graphic_text_instance::pixel_scale() -> float {
+        if (ro_text_.is_null())
+            return graphic_base::interface_pixel_scale();
+        graphic_font_texture *font_texture = ro_text_->font_texture_pointer();
+        return font_texture ? font_texture->pixel_scale() : graphic_base::interface_pixel_scale();
+    }
+
+    auto graphic_text_instance::draw_character(graphic_font_texture *font_texture, wchar_t text, uint32_t color) -> float {
         graphic_font_texture::character_infomation *ins_char_info = font_texture->get_character_infomation(text);
 
         if (ins_char_info) {
@@ -44,32 +51,50 @@ namespace metin2::inline graphics {
             char_info_vector_.push_back(ins_char_info);
 
             text_width_ += ins_char_info->advance;
-            text_height_ = std::max<int>(ins_char_info->height, text_height_);
             return ins_char_info->advance;
         }
 
-        return 0;
+        return 0.0f;
+    }
+
+    // Whether glyph `index` starts a new row when the pen (texels from the row start) is in front
+    // of it. Only multi-line text wraps; a glyph that does not fit on an empty row is drawn anyway.
+    auto graphic_text_instance::wraps(std::size_t index, float pen) -> bool {
+        if (!is_multi_line_ || pen <= 0.0f)
+            return false;
+        return pen + char_info_vector_[index]->advance > limit_width_ * pixel_scale();
+    }
+
+    // The pen in front of glyph `index` in texels relative to the aligned origin: x along the row
+    // (fractional, rounded per glyph when drawn), y the row's top.
+    void graphic_text_instance::pen_at(std::size_t index, float *x, int *y) {
+        index = std::min(index, char_info_vector_.size());
+
+        float pen = 0.0f;
+        int row = 0;
+        for (std::size_t i = 0; i < index; ++i) {
+            if (wraps(i, pen)) {
+                pen = 0.0f;
+                row += text_height_;
+            }
+            pen += char_info_vector_[i]->advance;
+        }
+        if (index < char_info_vector_.size() && wraps(index, pen)) {
+            pen = 0.0f;
+            row += text_height_;
+        }
+
+        *x = pen;
+        *y = row;
     }
 
     void graphic_text_instance::character_position(std::size_t index, float *x, float *y) {
-        index = std::min(index, char_info_vector_.size());
-
-        float sx = 0;
-        float sy = 0;
-        float font_max_height = 0;
-
-        for (std::size_t i = 0; i < index; ++i) {
-            if (is_multi_line_ && sx + float(char_info_vector_[i]->width) > limit_width_) {
-                sx = 0;
-                sy += font_max_height;
-            }
-
-            sx += float(char_info_vector_[i]->advance);
-            font_max_height = std::max(float(char_info_vector_[i]->height), font_max_height);
-        }
-
-        *x = sx;
-        *y = sy;
+        float pen = 0.0f;
+        int row = 0;
+        pen_at(index, &pen, &row);
+        const float px = 1.0f / pixel_scale();
+        *x = static_cast<float>(lroundf(pen)) * px;
+        *y = static_cast<float>(row) * px;
     }
 
     auto graphic_text_instance::character_x(std::size_t index) -> float {
@@ -79,56 +104,69 @@ namespace metin2::inline graphics {
     }
 
     auto graphic_text_instance::character_index_at(float x, float y) -> std::size_t {
-        float sx = 0;
-        float sy = 0;
-        float font_max_height = 0;
+        const float scale = pixel_scale();
+        x *= scale;
+        y *= scale;
 
+        float pen = 0.0f;
+        int row = 0;
         for (std::size_t i = 0; i < char_info_vector_.size(); ++i) {
-            const auto width = float(char_info_vector_[i]->width);
-            const auto advance = float(char_info_vector_[i]->advance);
-            if (is_multi_line_ && sx + width > limit_width_) {
-                if (y < sy + font_max_height)
+            const float advance = char_info_vector_[i]->advance;
+            if (wraps(i, pen)) {
+                if (y < static_cast<float>(row + text_height_))
                     return i; // the point is right of this row
-                sx = 0;
-                sy += font_max_height;
+                pen = 0.0f;
+                row += text_height_;
             }
-            font_max_height = std::max(float(char_info_vector_[i]->height), font_max_height);
-            if (y < sy + font_max_height && x < sx + advance / 2.0f)
+            if (y < static_cast<float>(row + text_height_) && x < pen + advance / 2.0f)
                 return i;
-            sx += advance;
+            pen += advance;
         }
         return char_info_vector_.size();
     }
 
-    void graphic_text_instance::aligned_origin(float *x, float *y) {
-        *x = position_value_.x;
-        *y = position_value_.y + 1.0f;
+    // The aligned origin in texels: the interface position, aligned by the text size, rounded to a
+    // whole texel once so every glyph lands on framebuffer pixels.
+    void graphic_text_instance::aligned_origin_texels(int *x, int *y) {
+        const float scale = pixel_scale();
+        float fx = position_value_.x * scale;
+        float fy = (position_value_.y + 1.0f) * scale;
 
         switch (h_align_) {
         case HORIZONTAL_ALIGN_RIGHT:
-            *x -= text_width_;
+            fx -= text_width_;
             break;
         case HORIZONTAL_ALIGN_CENTER:
-            *x -= float(text_width_ / 2);
+            fx -= text_width_ / 2.0f;
             break;
         }
 
         switch (v_align_) {
         case VERTICAL_ALIGN_BOTTOM:
-            *y -= text_height_;
+            fy -= static_cast<float>(text_height_);
             break;
         case VERTICAL_ALIGN_CENTER:
-            *y -= float(text_height_) / 2.0f;
+            fy -= static_cast<float>(text_height_) / 2.0f;
             break;
         }
+
+        *x = static_cast<int>(lroundf(fx));
+        *y = static_cast<int>(lroundf(fy));
+    }
+
+    void graphic_text_instance::aligned_origin(float *x, float *y) {
+        int ox = 0, oy = 0;
+        aligned_origin_texels(&ox, &oy);
+        const float px = 1.0f / pixel_scale();
+        *x = static_cast<float>(ox) * px;
+        *y = static_cast<float>(oy) * px;
     }
 
     void graphic_text_instance::update() {
-        if (is_update_)
-            return;
-
         if (ro_text_.is_null()) {
-            metin2::log::debug("Text has no font");
+            if (!is_update_)
+                metin2::log::debug("Text has no font");
+            is_update_ = true;
             return;
         }
 
@@ -139,16 +177,18 @@ namespace metin2::inline graphics {
         if (!font_texture)
             return;
 
-        graphic_font_texture::character_infomation *space_info = font_texture->get_character_infomation(' ');
-
-        int space_height = space_info ? space_info->height : 12;
+        // The glyph pointers belong to one rasterization of the atlas; another one (the font
+        // changed, or the interface pixel scale did) means laying the text out again.
+        if (is_update_ && font_generation_ == font_texture->generation())
+            return;
+        font_generation_ = font_texture->generation();
 
         char_info_vector_.clear();
         color_info_vector_.clear();
         hyperlink_vector_.clear();
 
-        text_width_ = 0;
-        text_height_ = space_height;
+        text_width_ = 0.0f;
+        text_height_ = font_texture->line_height();
 
         std::wstring text = utf8::to_wide(text_);
         int text_len = static_cast<int>(text.size());
@@ -159,7 +199,7 @@ namespace metin2::inline graphics {
             for (int i = 0; i < text_len; ++i)
                 draw_character(font_texture, '*', color);
         } else {
-            int x = 0;
+            float x = 0.0f;
             int len;
             int hyperlink_step = 0;
             hyperlink hyperlink_value;
@@ -172,9 +212,8 @@ namespace metin2::inline graphics {
                     if (hyperlink_step == 1)
                         hyperlink_buffer.append(1, text[i]);
                     else {
-                        int char_width = draw_character(font_texture, text[i], color);
-                        hyperlink_value.ex += char_width;
-                        x += char_width;
+                        x += draw_character(font_texture, text[i], color);
+                        hyperlink_value.ex = static_cast<short>(lroundf(x));
                     }
                 } else {
                     if (ret == TEXT_TAG_COLOR)
@@ -187,7 +226,7 @@ namespace metin2::inline graphics {
                     } else if (ret == TEXT_TAG_HYPERLINK_END) {
                         if (hyperlink_step == 1) {
                             ++hyperlink_step;
-                            hyperlink_value.ex = hyperlink_value.sx = x; // where the actual text starts
+                            hyperlink_value.ex = hyperlink_value.sx = static_cast<short>(lroundf(x)); // where the actual text starts
                         } else {
                             hyperlink_value.text = hyperlink_buffer;
                             hyperlink_vector_.push_back(hyperlink_value);
@@ -217,12 +256,22 @@ namespace metin2::inline graphics {
         graphic_font_texture *font_texture = text->font_texture_pointer();
         if (!font_texture)
             return;
+        if (font_generation_ != font_texture->generation()) {
+            update();
+            if (font_generation_ != font_texture->generation())
+                return;
+        }
 
-        float stan_x;
-        float stan_y;
-        aligned_origin(&stan_x, &stan_y);
-        const float visible_left = stan_x; // glyphs scrolled out to the left of the aligned origin are skipped
-        stan_x -= scroll_x_;
+        const float scale = font_texture->pixel_scale();
+        const float px = 1.0f / scale;
+        const float half = 0.5f * px;
+
+        int origin_x = 0;
+        int origin_y = 0;
+        aligned_origin_texels(&origin_x, &origin_y);
+        const int scroll = static_cast<int>(lroundf(scroll_x_ * scale));
+        const float limit = (position_value_.x - static_cast<float>(origin_x) * px + limit_width_) * scale; // texels from the origin
+        const int clip_top = clip_rect ? static_cast<int>(lroundf(clip_rect->top * scale)) : 0;
 
         STATEMANAGER.save_render_state(gpu::state::SRC_BLEND, gpu::blend::SRC_ALPHA);
         STATEMANAGER.save_render_state(gpu::state::DEST_BLEND, gpu::blend::INV_SRC_ALPHA);
@@ -240,8 +289,6 @@ namespace metin2::inline graphics {
         STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::ALPHA_OP, gpu::texture_op::MODULATE);
 
         {
-            const float font_half_weight = 1.0f;
-
             // All glyph quads of the text go up in one stream and one draw per atlas page: a draw
             // per glyph (five with the outline) was the most expensive part of a frame.
             static std::vector<vertex> batch;
@@ -263,12 +310,41 @@ namespace metin2::inline graphics {
                 batch.clear();
             };
 
-            // The quad arrives as the strip 0 1 2 3 the single draws used.
-            auto push_quad = [&](const vertex(&quad)[4], uint32_t page) {
-                if (batch_open && page != batch_page)
+            // The cell of glyph `info` with its top left corner at texel (x, y) relative to the
+            // origin, as a quad in interface pixels on framebuffer pixel boundaries.
+            auto push_cell = [&](const graphic_font_texture::character_infomation &info, int x, int y, uint32_t color) {
+                if (batch_open && info.index_value != static_cast<short>(batch_page))
                     flush();
-                batch_page = page;
+                batch_page = static_cast<uint32_t>(info.index_value);
                 batch_open = true;
+
+                const float sx = static_cast<float>(origin_x + x) * px - half;
+                const float sy = static_cast<float>(origin_y + y) * px - half;
+                const float ex = sx + static_cast<float>(info.width) * px;
+                const float ey = sy + static_cast<float>(info.height) * px;
+
+                vertex quad[4];
+                for (vertex &v : quad) {
+                    v.z = position_value_.z;
+                    v.color_value = color;
+                }
+                quad[0].x = sx;
+                quad[0].y = sy;
+                quad[0].u = info.left;
+                quad[0].v = info.top;
+                quad[1].x = sx;
+                quad[1].y = ey;
+                quad[1].u = info.left;
+                quad[1].v = info.bottom;
+                quad[2].x = ex;
+                quad[2].y = sy;
+                quad[2].u = info.right;
+                quad[2].v = info.top;
+                quad[3].x = ex;
+                quad[3].y = ey;
+                quad[3].u = info.right;
+                quad[3].v = info.bottom;
+
                 batch.push_back(quad[0]);
                 batch.push_back(quad[1]);
                 batch.push_back(quad[2]);
@@ -277,182 +353,45 @@ namespace metin2::inline graphics {
                 batch.push_back(quad[3]);
             };
 
-            float cur_x;
-            float cur_y;
-
-            float font_sx;
-            float font_sy;
-            float font_ex;
-            float font_ey;
-            float font_width;
-            float font_height;
-            float font_max_height;
-            float font_advance;
-
-            vertex vertex[4];
-            vertex[0].z = position_value_.z;
-            vertex[1].z = position_value_.z;
-            vertex[2].z = position_value_.z;
-            vertex[3].z = position_value_.z;
-
-            graphic_font_texture::character_infomation *cur_char_info;
+            // Walks the glyphs as laid out, with the cell origin of each one that is drawn.
+            auto each_glyph = [&](auto &&draw) {
+                float pen = 0.0f;
+                int row = 0;
+                for (std::size_t i = 0; i < char_info_vector_.size(); ++i) {
+                    const graphic_font_texture::character_infomation &info = *char_info_vector_[i];
+                    if (wraps(i, pen)) {
+                        pen = 0.0f;
+                        row += text_height_;
+                    }
+                    const int x = static_cast<int>(lroundf(pen)) - scroll;
+                    pen += info.advance;
+                    if (x < 0)
+                        continue; // scrolled out to the left
+                    if (!is_multi_line_ && static_cast<float>(x) + info.advance > limit)
+                        break; // single-line text is clipped at limit_width_
+                    if (clip_rect && origin_y + row <= clip_top)
+                        continue;
+                    if (info.width == 0)
+                        continue;
+                    draw(i, info, x + info.bearing_x, row + info.bearing_y);
+                }
+            };
 
             if (is_outline_) {
-                cur_x = stan_x;
-                cur_y = stan_y;
-                font_max_height = 0.0f;
-
-                graphic_font_texture::p_character_infomation_vector::iterator i;
-                for (i = char_info_vector_.begin(); i != char_info_vector_.end(); ++i) {
-                    cur_char_info = *i;
-
-                    font_width = float(cur_char_info->width);
-                    font_height = float(cur_char_info->height);
-                    font_advance = float(cur_char_info->advance);
-
-                    if (cur_x < visible_left) {
-                        cur_x += font_advance;
-                        continue;
-                    }
-
-                    // Text is clipped (or wrapped) at limit_width_.
-                    if ((cur_x + font_width) - position_value_.x > limit_width_) {
-                        if (is_multi_line_) {
-                            cur_x = stan_x;
-                            cur_y += font_max_height;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    if (clip_rect) {
-                        if (cur_y <= clip_rect->top) {
-                            cur_x += font_advance;
-                            continue;
-                        }
-                    }
-
-                    font_sx = cur_x - 0.5f;
-                    font_sy = cur_y - 0.5f;
-                    font_ex = font_sx + font_width;
-                    font_ey = font_sy + font_height;
-
-                    vertex[0].u = cur_char_info->left;
-                    vertex[0].v = cur_char_info->top;
-                    vertex[1].u = cur_char_info->left;
-                    vertex[1].v = cur_char_info->bottom;
-                    vertex[2].u = cur_char_info->right;
-                    vertex[2].v = cur_char_info->top;
-                    vertex[3].u = cur_char_info->right;
-                    vertex[3].v = cur_char_info->bottom;
-
-                    vertex[3].color_value = vertex[2].color_value = vertex[1].color_value = vertex[0].color_value = out_line_color_;
-
-                    float feather = 0.0f;
-
-                    vertex[0].y = font_sy - feather;
-                    vertex[1].y = font_ey + feather;
-                    vertex[2].y = font_sy - feather;
-                    vertex[3].y = font_ey + feather;
-
-                    vertex[0].x = font_sx - font_half_weight - feather;
-                    vertex[1].x = font_sx - font_half_weight - feather;
-                    vertex[2].x = font_ex - font_half_weight + feather;
-                    vertex[3].x = font_ex - font_half_weight + feather;
-                    push_quad(vertex, cur_char_info->index_value);
-
-                    vertex[0].x = font_sx + font_half_weight - feather;
-                    vertex[1].x = font_sx + font_half_weight - feather;
-                    vertex[2].x = font_ex + font_half_weight + feather;
-                    vertex[3].x = font_ex + font_half_weight + feather;
-                    push_quad(vertex, cur_char_info->index_value);
-
-                    vertex[0].x = font_sx - feather;
-                    vertex[1].x = font_sx - feather;
-                    vertex[2].x = font_ex + feather;
-                    vertex[3].x = font_ex + feather;
-
-                    vertex[0].y = font_sy - font_half_weight - feather;
-                    vertex[1].y = font_ey - font_half_weight + feather;
-                    vertex[2].y = font_sy - font_half_weight - feather;
-                    vertex[3].y = font_ey - font_half_weight + feather;
-                    push_quad(vertex, cur_char_info->index_value);
-
-                    vertex[0].y = font_sy + font_half_weight - feather;
-                    vertex[1].y = font_ey + font_half_weight + feather;
-                    vertex[2].y = font_sy + font_half_weight - feather;
-                    vertex[3].y = font_ey + font_half_weight + feather;
-                    push_quad(vertex, cur_char_info->index_value);
-
-                    cur_x += font_advance;
-                }
+                // One framebuffer pixel of outline per interface pixel, on whole texels.
+                const int weight = std::max(1, static_cast<int>(lroundf(scale)));
+                each_glyph([&](std::size_t, const graphic_font_texture::character_infomation &info, int x, int y) {
+                    push_cell(info, x - weight, y, out_line_color_);
+                    push_cell(info, x + weight, y, out_line_color_);
+                    push_cell(info, x, y - weight, out_line_color_);
+                    push_cell(info, x, y + weight, out_line_color_);
+                });
                 flush();
             }
 
-            cur_x = stan_x;
-            cur_y = stan_y;
-            font_max_height = 0.0f;
-
-            for (size_t i = 0; i < char_info_vector_.size(); ++i) {
-                cur_char_info = char_info_vector_[i];
-
-                font_width = float(cur_char_info->width);
-                font_height = float(cur_char_info->height);
-                font_max_height = std::max<float>(font_height, cur_char_info->height);
-                font_advance = float(cur_char_info->advance);
-
-                if (cur_x < visible_left) {
-                    cur_x += font_advance;
-                    continue;
-                }
-
-                // Text is clipped (or wrapped) at limit_width_.
-                if ((cur_x + font_width) - position_value_.x > limit_width_) {
-                    if (is_multi_line_) {
-                        cur_x = stan_x;
-                        cur_y += font_max_height;
-                    } else {
-                        break;
-                    }
-                }
-
-                if (clip_rect) {
-                    if (cur_y <= clip_rect->top) {
-                        cur_x += font_advance;
-                        continue;
-                    }
-                }
-
-                font_sx = cur_x - 0.5f;
-                font_sy = cur_y - 0.5f;
-                font_ex = font_sx + font_width;
-                font_ey = font_sy + font_height;
-
-                vertex[0].x = font_sx;
-                vertex[0].y = font_sy;
-                vertex[0].u = cur_char_info->left;
-                vertex[0].v = cur_char_info->top;
-
-                vertex[1].x = font_sx;
-                vertex[1].y = font_ey;
-                vertex[1].u = cur_char_info->left;
-                vertex[1].v = cur_char_info->bottom;
-
-                vertex[2].x = font_ex;
-                vertex[2].y = font_sy;
-                vertex[2].u = cur_char_info->right;
-                vertex[2].v = cur_char_info->top;
-
-                vertex[3].x = font_ex;
-                vertex[3].y = font_ey;
-                vertex[3].u = cur_char_info->right;
-                vertex[3].v = cur_char_info->bottom;
-
-                vertex[0].color_value = vertex[1].color_value = vertex[2].color_value = vertex[3].color_value = color_info_vector_[i];
-                push_quad(vertex, cur_char_info->index_value);
-
-                cur_x += font_advance;
-            }
+            each_glyph([&](std::size_t i, const graphic_font_texture::character_infomation &info, int x, int y) {
+                push_cell(info, x, y, color_info_vector_[i]);
+            });
             flush();
         }
 
@@ -463,10 +402,10 @@ namespace metin2::inline graphics {
         STATEMANAGER.set_render_state(gpu::state::LIGHTING, lighting);
 
         if (hyperlink_vector_.size() != 0) {
-            int lx = mx - position_value_.x;
-            int ly = my - position_value_.y;
+            const int lx = static_cast<int>(lroundf((static_cast<float>(mx) - position_value_.x) * scale));
+            const int ly = static_cast<int>(lroundf((static_cast<float>(my) - position_value_.y) * scale));
 
-            if (lx >= 0 && ly >= 0 && lx < text_width_ && ly < text_height_) {
+            if (lx >= 0 && ly >= 0 && static_cast<float>(lx) < text_width_ && ly < text_height_) {
                 auto it = hyperlink_vector_.begin();
 
                 while (it != hyperlink_vector_.end()) {
@@ -519,14 +458,6 @@ namespace metin2::inline graphics {
         is_outline_ = value;
     }
 
-    void graphic_text_instance::set_feather(bool value) {
-        if (value) {
-            font_feather_ = c_fFontFeather;
-        } else {
-            font_feather_ = 0.0f;
-        }
-    }
-
     void graphic_text_instance::set_multi_line(bool value) {
         is_multi_line_ = value;
     }
@@ -574,32 +505,23 @@ namespace metin2::inline graphics {
     }
 
     auto graphic_text_instance::text_line_count() -> uint16_t {
-        graphic_font_texture::character_infomation *cur_char_info;
-        graphic_font_texture::p_character_infomation_vector::iterator itor;
-
-        float fx = 0.0f;
+        float pen = 0.0f;
         uint16_t line_count = 1;
-        for (itor = char_info_vector_.begin(); itor != char_info_vector_.end(); ++itor) {
-            cur_char_info = *itor;
-
-            auto font_width = float(cur_char_info->width);
-            auto font_advance = float(cur_char_info->advance);
-
-            // Text is clipped (or wrapped) at limit_width_.
-            if (fx + font_width > limit_width_) {
-                fx = 0.0f;
+        for (std::size_t i = 0; i < char_info_vector_.size(); ++i) {
+            if (wraps(i, pen)) {
+                pen = 0.0f;
                 ++line_count;
             }
-
-            fx += font_advance;
+            pen += char_info_vector_[i]->advance;
         }
 
         return line_count;
     }
 
     void graphic_text_instance::text_size(int *ret_width, int *ret_height) {
-        *ret_width = text_width_;
-        *ret_height = text_height_;
+        const float scale = pixel_scale();
+        *ret_width = static_cast<int>(ceilf(text_width_ / scale - 0.001f));
+        *ret_height = static_cast<int>(ceilf(static_cast<float>(text_height_) / scale - 0.001f));
     }
 
     auto graphic_text_instance::get_horizontal_align() -> int {
@@ -619,11 +541,11 @@ namespace metin2::inline graphics {
         is_multi_line_ = false;
 
         is_outline_ = false;
-        font_feather_ = c_fFontFeather;
 
         is_update_ = false;
+        font_generation_ = 0;
 
-        text_width_ = 0;
+        text_width_ = 0.0f;
         text_height_ = 0;
 
         position_value_.x = position_value_.y = position_value_.z = 0.0f;

@@ -1,6 +1,7 @@
 #include "grp_text.h"
 #include <metin2/core/parse.h>
 #include <metin2/core/utils.h>
+#include "grp_base.h"
 
 namespace metin2::inline graphics {
 
@@ -18,6 +19,8 @@ namespace metin2::inline graphics {
     }
 
     auto graphic_text::font_texture_pointer() -> graphic_font_texture * {
+        if (!font_texture_.is_empty() && font_texture_.pixel_scale() != graphic_base::interface_pixel_scale())
+            font_texture_.create(font_name_.c_str(), font_size_, italic_);
         return &font_texture_;
     }
 
@@ -58,10 +61,10 @@ namespace metin2::inline graphics {
             size = 12;
         }
 
-        if (!font_texture_.create(name.c_str(), size, italic))
-            return false;
-
-        return true;
+        font_name_ = name;
+        font_size_ = size;
+        italic_ = italic;
+        return font_texture_.create(name.c_str(), size, italic);
     }
 
     void graphic_text::on_clear() {

@@ -103,12 +103,13 @@ namespace metin2::inline graphics {
         }
     }
 
-    auto font_face::open(const char *family, int height, bool bold, bool italic) -> bool {
+    auto font_face::open(const char *family, int height, bool bold, bool italic, float pixel_scale) -> bool {
         library &lib = get_library();
 
         family_ = family && *family ? family : "Tahoma";
         bold_ = bold;
         italic_ = italic;
+        pixel_scale_ = pixel_scale > 0.0f ? pixel_scale : 1.0f;
         faces_.clear();
         glyphs_.clear();
 
@@ -116,7 +117,7 @@ namespace metin2::inline graphics {
         // proportions with whatever font fontconfig picked.
         const float em = height > 0 ? static_cast<float>(height) * 2048.0f / 2472.0f : height < 0 ? static_cast<float>(-height)
                                                                                                   : 10.0f;
-        pixel_size_ = std::max(1, static_cast<int>(lroundf(em * lib.scale)));
+        pixel_size_ = std::max(1, static_cast<int>(lroundf(em * lib.scale * pixel_scale_)));
 
         std::string path;
         int index = 0;

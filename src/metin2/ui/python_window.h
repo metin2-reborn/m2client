@@ -274,7 +274,6 @@ namespace metin2::inline ui {
             void set_vertical_align(int type);
             virtual void set_secret(bool flag);
             void set_outline(bool flag);
-            void set_feather(bool flag);
             virtual void set_multi_line(bool flag);
             void set_font_name(const char *font_name);
             void set_font_color(uint32_t color);

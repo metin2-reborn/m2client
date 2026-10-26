@@ -1,11 +1,16 @@
 #include <metin2/core/stl.h>
 #include <metin2/core/utf8.h>
+#include "grp_base.h"
 #include "grp_text.h"
 
 #include <cmath>
 #include <metin2/core/util.h>
 
 namespace metin2::inline graphics {
+
+    namespace {
+        uint32_t next_generation = 0;
+    }
 
     graphic_font_texture::graphic_font_texture() {
         initialize();
@@ -49,6 +54,7 @@ namespace metin2::inline graphics {
 
         font_size_ = font_size;
         italic_ = italic;
+        generation_ = ++next_generation;
 
         x_ = 0;
         y_ = 0;
@@ -63,7 +69,7 @@ namespace metin2::inline graphics {
         if (!dib_.create(width_value, height))
             return false;
 
-        face_.open(font_name, font_size, false, italic);
+        face_.open(font_name, font_size, false, italic, graphic_base::interface_pixel_scale());
 
         if (!append_texture())
             return false;
@@ -130,93 +136,61 @@ namespace metin2::inline graphics {
 
         const font_face::glyph &glyph = face_.glyph_of(code);
 
-        // The glyph's box: its ink plus any overhang on either side, and one pixel of spacing.
-        float ink_left = 0.0f;
-        float ink_width = 0.0f;
-        float ink_right = glyph.advance;
-        if (glyph.width != 0) {
-            ink_left = static_cast<float>(glyph.left);
-            ink_width = static_cast<float>(glyph.width);
-            ink_right = glyph.advance - glyph.left - glyph.width;
-        }
+        // The cell is the ink box with one empty texel around it, wherever the ink lies relative to
+        // the pen: an overhang to the left (j, italics) or above the ascent (stacked accents) must
+        // not be cut off or land in a neighbour's cell. Point sampling never reads the padding, so
+        // cells can sit side by side.
+        const bool has_ink = glyph.width > 0 && glyph.rows > 0;
+        const int cell_width = has_ink ? glyph.width + 2 : 0;
+        const int cell_height = has_ink ? glyph.rows + 2 : 0;
 
-        struct {
-            int cx;
-            int cy;
-        } size;
-        size.cx = static_cast<int>(ink_width);
-        if (ink_left > 0.0f)
-            size.cx += static_cast<int>(ceilf(ink_left));
-        if (ink_right > 0.0f)
-            size.cx += static_cast<int>(ceilf(ink_right));
-        size.cx++;
-        size.cy = face_.cell_height();
+        const int width_value = dib_.width();
+        const int height = dib_.height();
 
-        int32_t advance = static_cast<int32_t>(ceilf(ink_left + ink_width + ink_right));
-
-        int width_value = dib_.width();
-        int height = dib_.height();
-
-        if (x_ + size.cx >= (width_value - 1)) {
-            y_ += (step_ + 1);
+        if (x_ + cell_width > width_value) {
+            y_ += step_;
             step_ = 0;
             x_ = 0;
-
-            if (y_ + size.cy >= (height - 1)) {
-                if (!update_texture()) {
-                    return nullptr;
-                }
-
-                if (!append_texture())
-                    return nullptr;
-
-                y_ = 0;
-            }
+        }
+        if (y_ + cell_height > height) {
+            // A full page goes to its texture as it is; the next page starts from a clean buffer.
+            if (!update_texture())
+                return nullptr;
+            if (!append_texture())
+                return nullptr;
+            std::fill_n(dib_.pixels(), static_cast<size_t>(width_value) * height, 0u);
+            y_ = 0;
         }
 
-        const char32_t character = code;
-        face_.draw(dib_.pixels(), dib_.width(), dib_.height(), x_, y_, std::u32string_view(&character, 1), 0x00ffffff, 0);
-
-        int chr_x;
-        int chr_y;
-        int chr_width = size.cx;
-        int chr_height = size.cy;
-        int dib_width = dib_.width();
-
-        auto *dib_data = (uint32_t *)dib_.pointer();
-        uint32_t *dib_base = dib_data + dib_width * y_ + x_;
-        uint32_t *dib_row;
-
-        // The glyph was drawn white on black, so each channel holds its coverage. The atlas is
-        // A8R8G8B8: white with the coverage as alpha (1-bit glyphs give 0 or 0xffffffff).
-        dib_row = dib_base;
-        for (chr_y = 0; chr_y < chr_height; ++chr_y, dib_row += dib_width) {
-            for (chr_x = 0; chr_x < chr_width; ++chr_x) {
-                const uint32_t coverage = dib_row[chr_x] & 0xff;
-                dib_row[chr_x] = coverage ? (coverage << 24) | 0x00ffffff : 0;
+        if (has_ink) {
+            // White with the coverage as alpha (1-bit glyphs give 0 or 0xffffffff).
+            uint32_t *row = dib_.pixels() + static_cast<size_t>(y_ + 1) * width_value + x_ + 1;
+            for (int gy = 0; gy < glyph.rows; ++gy, row += width_value) {
+                const uint8_t *coverage = glyph.coverage.data() + static_cast<size_t>(gy) * glyph.width;
+                for (int gx = 0; gx < glyph.width; ++gx)
+                    row[gx] = coverage[gx] ? (static_cast<uint32_t>(coverage[gx]) << 24) | 0x00ffffff : 0;
             }
+            is_dirty_ = true;
         }
 
-        float rhwidth = 1.0f / float(width_value);
-        float rhheight = 1.0f / float(height);
+        const float rhwidth = 1.0f / float(width_value);
+        const float rhheight = 1.0f / float(height);
 
         character_infomation &new_char_info = char_info_map_[code];
 
         new_char_info.index_value = static_cast<short>(font_texture_vector_.size() - 1);
-        new_char_info.width = size.cx;
-        new_char_info.height = size.cy;
+        new_char_info.width = static_cast<short>(cell_width);
+        new_char_info.height = static_cast<short>(cell_height);
+        new_char_info.bearing_x = static_cast<short>(glyph.left - 1);
+        new_char_info.bearing_y = static_cast<short>(face_.ascent() - glyph.top - 1);
         new_char_info.left = float(x_) * rhwidth;
         new_char_info.top = float(y_) * rhheight;
-        new_char_info.right = float(x_ + size.cx) * rhwidth;
-        new_char_info.bottom = float(y_ + size.cy) * rhheight;
-        new_char_info.advance = (float)advance;
+        new_char_info.right = float(x_ + cell_width) * rhwidth;
+        new_char_info.bottom = float(y_ + cell_height) * rhheight;
+        new_char_info.advance = glyph.advance;
 
-        x_ += size.cx;
-
-        if (step_ < size.cy)
-            step_ = size.cy;
-
-        is_dirty_ = true;
+        x_ += cell_width;
+        step_ = std::max(step_, cell_height);
 
         return &new_char_info;
     }
