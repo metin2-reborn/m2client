@@ -62,11 +62,10 @@ namespace metin2::inline client::inline characters {
         return name_colors[name_color];
     }
 
-    void instance_base::add_damage_effect(uint32_t damage, uint8_t flag, bool self, bool target) {
+    void instance_base::add_damage_effect(uint32_t damage, uint8_t flag, bool self) {
         if (get_python_system().is_show_damage()) {
             effect_damage s_damage;
             s_damage.self = self;
-            s_damage.target = target;
             s_damage.damage = damage;
             s_damage.flag = flag;
             damage_queue_.push_back(s_damage);
@@ -86,6 +85,11 @@ namespace metin2::inline client::inline characters {
         }
         damage_pop_time_ = std::min(damage_pop_time_ - POP_INTERVAL, POP_INTERVAL);
 
+        camera *camera = get_camera_manager().current_camera();
+        if (!camera) {
+            return;
+        }
+
         effect_damage s_damage = damage_queue_.front();
 
         damage_queue_.pop_front();
@@ -93,12 +97,6 @@ namespace metin2::inline client::inline characters {
         uint32_t damage = s_damage.damage;
         uint8_t flag = s_damage.flag;
         bool self = s_damage.self;
-        bool target = s_damage.target;
-
-        camera *camera = get_camera_manager().current_camera();
-        if (!camera) {
-            return;
-        }
         float camera_angle = get_degree_from_position2(camera->target().x, camera->target().y, camera->eye().x, camera->eye().y);
 
         uint32_t font_width = 30;
@@ -130,11 +128,8 @@ namespace metin2::inline client::inline characters {
                 else
                     crc_eft = EFFECT_DAMAGE_SELFDAMAGE2;
                 damage_effect_type_ = !damage_effect_type_;
-            } else if (target == false) {
-                damage_type = "nontarget_";
-                crc_eft = EFFECT_DAMAGE_NOT_TARGET;
-                return; // Non-target damage is not shown for now.
             } else {
+                // The server sends a hit on someone else only to its attacker, so it is always ours.
                 damage_type = "target_";
                 crc_eft = EFFECT_DAMAGE_TARGET;
             }
@@ -143,7 +138,8 @@ namespace metin2::inline client::inline characters {
         uint32_t index = 0;
         uint32_t num = 0;
         std::vector<std::string> textures;
-        while (damage > 0) {
+        // do-while so an absorbed hit still shows a 0.
+        do {
             if (index > 7) {
                 metin2::log::error("Possible endless loop while processing damage");
                 break;
@@ -171,7 +167,7 @@ namespace metin2::inline client::inline characters {
             textures.clear();
 
             index++;
-        }
+        } while (damage > 0);
     }
 
     void instance_base::attach_special_effect(uint32_t effect) {

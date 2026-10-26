@@ -949,7 +949,6 @@ namespace metin2::inline client::inline characters {
             uint32_t damage;
             uint8_t flag;
             bool self;
-            bool target;
         };
 
         using command_damage_queue = std::list<effect_damage>;
@@ -960,7 +959,7 @@ namespace metin2::inline client::inline characters {
         void process_damage();
 
       public:
-        void add_damage_effect(uint32_t damage, uint8_t flag, bool self, bool target);
+        void add_damage_effect(uint32_t damage, uint8_t flag, bool self);
 
       protected:
         struct warrior {

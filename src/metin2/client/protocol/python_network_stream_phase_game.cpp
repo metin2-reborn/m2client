@@ -1814,12 +1814,11 @@ namespace metin2::inline client::inline protocol {
 
         instance_base *inst_target = get_python_character_manager().instance_ptr(damage_info_packet.vid);
         bool self = (inst_target == get_python_character_manager().main_instance_ptr());
-        bool target = (inst_target == inst_target_);
         if (inst_target) {
             if (damage_info_packet.damage >= 0)
-                inst_target->add_damage_effect(damage_info_packet.damage, damage_info_packet.flag, self, target);
+                inst_target->add_damage_effect(damage_info_packet.damage, damage_info_packet.flag, self);
             else
-                metin2::log::warn("Damage info with a damage of zero or less is skipped");
+                metin2::log::warn("Damage info with a negative damage is skipped");
         }
 
         return true;
