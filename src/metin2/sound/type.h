@@ -12,6 +12,10 @@ namespace metin2::inline sound {
             float time;
             std::string sound_file_name;
         };
+        // Cue times are kept as frames of this fixed rate (the original's 60 Hz frame loop), so a
+        // player of the cues must count frames by elapsed time, not by rendered frames.
+        inline constexpr float CUE_FRAMES_PER_SECOND = 60.0f;
+
         struct sound_instance_entry {
             uint32_t frame;
             std::string sound_file_name;

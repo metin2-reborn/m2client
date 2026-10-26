@@ -54,7 +54,7 @@ namespace metin2::inline sound {
         if (sound_data_vector_value.empty())
             return;
 
-        const float frame_time_value = 1.0f / 60.0f;
+        const float frame_time_value = 1.0f / CUE_FRAMES_PER_SECOND;
 
         sound_instance_vector_value->clear();
         sound_instance_vector_value->resize(sound_data_vector_value.size());

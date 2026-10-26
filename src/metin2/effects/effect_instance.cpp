@@ -37,11 +37,18 @@ namespace metin2::inline effects {
     }
 
     void effect_instance::update_sound() {
+        // The cues are frames of a fixed rate; every frame the elapsed time has reached is played
+        // once, so the schedule is the same at any frame rate.
+        sound_time_ += get_timer().elapsed_second();
+        const auto reached = static_cast<uint32_t>(sound_time_ * sound_types::CUE_FRAMES_PER_SECOND);
         if (sound_instance_vector_value_) {
             sound_manager &snd_mgr = get_sound_manager();
-            snd_mgr.update_sound_instance(global_._41, global_._42, global_._43, frame_, sound_instance_vector_value_);
+            for (; next_sound_frame_ <= reached; ++next_sound_frame_) {
+                snd_mgr.update_sound_instance(global_._41, global_._42, global_._43, next_sound_frame_, sound_instance_vector_value_);
+            }
+        } else {
+            next_sound_frame_ = reached + 1;
         }
-        ++frame_;
     }
 
     struct effect_updator_fn {
@@ -223,7 +230,8 @@ namespace metin2::inline effects {
 
     void effect_instance::initialize_impl() {
         is_alive_ = false;
-        frame_ = 0;
+        sound_time_ = 0.0f;
+        next_sound_frame_ = 0;
         sound_instance_vector_value_ = nullptr;
         bounding_sphere_radius_ = 0.0f;
         bounding_sphere_position_.x = bounding_sphere_position_.y = bounding_sphere_position_.z = 0.0f;

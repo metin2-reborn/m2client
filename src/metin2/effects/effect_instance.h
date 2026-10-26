@@ -62,7 +62,8 @@ namespace metin2::inline effects {
 
       protected:
         bool is_alive_;
-        uint32_t frame_;
+        float sound_time_;          // seconds the effect has played, for its sound cues
+        uint32_t next_sound_frame_; // the first cue frame not played yet
         math::matrix global_;
 
         effect_data *eft_data_;
