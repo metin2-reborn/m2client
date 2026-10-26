@@ -93,7 +93,7 @@ namespace metin2::inline client::inline inventory {
         void render();
         void update(int mouse_x, int mouse_y);
 
-        void create_item(uint32_t virtual_id, uint32_t virtual_number, float x, float y, float z, bool drop = true);
+        void create_item(uint32_t virtual_id, uint32_t virtual_number, uint32_t count, float x, float y, float z, bool drop = true);
         void delete_item(uint32_t virtual_id);
         void set_ownership(uint32_t vid, const char *name);
         auto ownership(uint32_t vid, const char **name) -> bool;

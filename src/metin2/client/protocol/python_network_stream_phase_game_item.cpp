@@ -246,6 +246,7 @@ namespace metin2::inline client::inline protocol {
 
         get_python_item().create_item(packet_item_ground_add.vid,
             packet_item_ground_add.vnum,
+            packet_item_ground_add.count,
             packet_item_ground_add.x,
             packet_item_ground_add.y,
             packet_item_ground_add.z);

@@ -10,7 +10,31 @@
 #include <metin2/ui/python_graphic.h>
 #include "python_item.h"
 
+#include <format>
+#include <string>
+
 namespace metin2::inline client::inline inventory {
+
+    namespace {
+
+        // The label of an item on the ground: "54 Yang", "Spear" rather than "Spear+0", and
+        // "Red Potion(S) (3 ea)" for a stack.
+        auto ground_item_label(const char *name, uint32_t virtual_number, uint32_t count) -> std::string {
+            std::string label = name;
+
+            if (virtual_number == python_item::VNUM_MONEY)
+                return std::format("{} {}", count, label);
+
+            if (label.ends_with("+0"))
+                label.resize(label.size() - 2);
+
+            if (count > 1)
+                label += std::format(" ({} ea)", count);
+
+            return label;
+        }
+
+    }
 
     std::string python_item::ground_item_instance::drop_sound_file_name[DROPSOUND_NUM];
 
@@ -235,7 +259,7 @@ namespace metin2::inline client::inline inventory {
         return USESOUND_DEFAULT;
     }
 
-    void python_item::create_item(uint32_t virtual_id, uint32_t virtual_number, float x, float y, float z, bool drop) {
+    void python_item::create_item(uint32_t virtual_id, uint32_t virtual_number, uint32_t count, float x, float y, float z, bool drop) {
 
         item_data *item_data;
         if (!get_item_manager().item_data_pointer(virtual_number, &item_data))
@@ -376,7 +400,7 @@ namespace metin2::inline client::inline inventory {
         python_text_tail &text_tail = get_python_text_tail();
         text_tail.register_item_text_tail(
             virtual_id,
-            item_data->get_name(),
+            ground_item_label(item_data->get_name(), virtual_number, count).c_str(),
             &ground_item_instance_value->thing_instance);
     }
 

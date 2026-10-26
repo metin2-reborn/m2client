@@ -1318,6 +1318,7 @@ namespace metin2::inline client::inline protocol {
 
         uint32_t vid;
         uint32_t vnum;
+        uint32_t count; // the amount for yang
     };
     using packet_gc_item_ground_add = packet_ground_add_item;
 
@@ -2146,7 +2147,7 @@ namespace metin2::inline client::inline protocol {
     static_assert(sizeof(packet_gc_item_set2) == 51);
     static_assert(sizeof(packet_gc_item_del) == 2);
     static_assert(sizeof(packet_gc_item_update) == 38);
-    static_assert(sizeof(packet_gc_item_ground_add) == 21);
+    static_assert(sizeof(packet_gc_item_ground_add) == 25);
     static_assert(sizeof(packet_gc_item_ground_del) == 5);
     static_assert(sizeof(packet_gc_item_ownership) == 30);
     static_assert(sizeof(packet_gc_quick_slot_add) == 4);
