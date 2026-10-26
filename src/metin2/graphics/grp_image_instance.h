@@ -21,10 +21,15 @@ namespace metin2::inline graphics {
 
         void set_diffuse_color(float fr, float fg, float fb, float fa);
         void set_position(float fx, float fy);
+        // The size a nine patch is drawn at (its region size until set); a plain image is always
+        // drawn at its own size.
+        void set_size(int width, int height);
 
         void set_image_pointer(graphic_image *image);
         auto is_empty() const -> bool;
+        auto is_nine_patch() const -> bool;
 
+        // The drawn size: the image size, or the set size of a nine patch.
         auto width() -> int;
         auto height() -> int;
 
@@ -42,9 +47,13 @@ namespace metin2::inline graphics {
 
         virtual auto on_is_type(uint32_t type) -> bool;
 
+        void render_nine_patch();
+
       protected:
         math::color diffuse_color_;
         math::vector2 position_value_;
+        int width_ = 0; // the drawn size of a nine patch; 0 until set
+        int height_ = 0;
 
         graphic_image::ref ro_image_;
 

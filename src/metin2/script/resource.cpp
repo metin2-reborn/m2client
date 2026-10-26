@@ -5,6 +5,7 @@
 #include <metin2/graphics/attribute_data.h>
 #include <metin2/graphics/grp_expanded_image_instance.h>
 #include <metin2/graphics/grp_mark_instance.h>
+#include <metin2/graphics/grp_nine_patch.h>
 #include <metin2/graphics/grp_sub_image.h>
 #include <metin2/graphics/grp_text.h>
 #include <metin2/graphics/grp_text_instance.h>
@@ -31,6 +32,10 @@ namespace metin2::inline script {
 
     static auto new_sub_image(const char *file_name) -> resource * {
         return new graphic_sub_image(file_name);
+    }
+
+    static auto new_nine_patch(const char *file_name) -> resource * {
+        return new graphic_nine_patch(file_name);
     }
 
     static auto new_text(const char *file_name) -> resource * {
@@ -78,6 +83,7 @@ namespace metin2::inline script {
 
     python_resource::python_resource() {
         get_resource_manager().register_asset_new_function_pointer("SubImage", new_sub_image);
+        get_resource_manager().register_asset_new_function_pointer("NinePatch", new_nine_patch);
         get_resource_manager().register_resource_new_function_pointer("dds", new_image);
         get_resource_manager().register_resource_new_function_pointer("jpg", new_image);
         get_resource_manager().register_resource_new_function_pointer("tga", new_image);

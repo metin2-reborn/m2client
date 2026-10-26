@@ -951,6 +951,12 @@ namespace metin2::inline ui {
             return true;
         }
 
+        void image_box::set_size(int32_t width_value, int32_t height_value) {
+            ui_window::set_size(width_value, height_value);
+            if (image_instance_)
+                image_instance_->set_size(width_value, height_value);
+        }
+
         void image_box::set_diffuse_color(float fr, float fg, float fb, float fa) {
             if (!image_instance_)
                 return;
@@ -1237,7 +1243,10 @@ namespace metin2::inline ui {
             if (up_visual_.is_empty())
                 return false;
 
-            set_size(up_visual_.width(), up_visual_.height());
+            if (!up_visual_.is_nine_patch())
+                set_size(up_visual_.width(), up_visual_.height());
+            else
+                up_visual_.set_size(width_, height_);
             set_current_visual(&up_visual_);
 
             return true;
@@ -1251,7 +1260,10 @@ namespace metin2::inline ui {
             if (over_visual_.is_empty())
                 return false;
 
-            set_size(over_visual_.width(), over_visual_.height());
+            if (!over_visual_.is_nine_patch())
+                set_size(over_visual_.width(), over_visual_.height());
+            else
+                over_visual_.set_size(width_, height_);
 
             return true;
         }
@@ -1264,7 +1276,10 @@ namespace metin2::inline ui {
             if (down_visual_.is_empty())
                 return false;
 
-            set_size(down_visual_.width(), down_visual_.height());
+            if (!down_visual_.is_nine_patch())
+                set_size(down_visual_.width(), down_visual_.height());
+            else
+                down_visual_.set_size(width_, height_);
 
             return true;
         }
@@ -1277,9 +1292,18 @@ namespace metin2::inline ui {
             if (disable_visual_.is_empty())
                 return false;
 
-            set_size(disable_visual_.width(), disable_visual_.height());
+            if (!disable_visual_.is_nine_patch())
+                set_size(disable_visual_.width(), disable_visual_.height());
+            else
+                disable_visual_.set_size(width_, height_);
 
             return true;
+        }
+
+        void button::set_size(int32_t width_value, int32_t height_value) {
+            ui_window::set_size(width_value, height_value);
+            for (graphic_image_instance *visual : {&up_visual_, &over_visual_, &down_visual_, &disable_visual_})
+                visual->set_size(width_value, height_value);
         }
 
         auto button::up_visual_file_name() -> const char * {

@@ -60,7 +60,7 @@ namespace metin2::inline ui {
 
             void set_name(const char *name);
             auto get_name() -> const char * { return name_value_.c_str(); }
-            void set_size(int32_t width_value, int32_t height);
+            virtual void set_size(int32_t width_value, int32_t height);
             auto width() -> int32_t { return width_; }
             auto height() -> int32_t { return height_; }
 
@@ -332,6 +332,9 @@ namespace metin2::inline ui {
             auto width() -> int;
             auto height() -> int;
 
+            // A nine patch is drawn at the window size.
+            void set_size(int32_t width_value, int32_t height) override;
+
           protected:
             virtual void on_create_instance();
             virtual void on_destroy_instance();
@@ -431,10 +434,14 @@ namespace metin2::inline ui {
 
             ~button() override;
 
+            // A sub image visual sizes the button; a nine patch visual is drawn at the button size,
+            // which the script sets.
             auto set_up_visual(const char *file_name) -> bool;
             auto set_over_visual(const char *file_name) -> bool;
             auto set_down_visual(const char *file_name) -> bool;
             auto set_disable_visual(const char *file_name) -> bool;
+
+            void set_size(int32_t width_value, int32_t height) override;
 
             auto up_visual_file_name() -> const char *;
             auto over_visual_file_name() -> const char *;

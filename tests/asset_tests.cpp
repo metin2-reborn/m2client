@@ -4,6 +4,7 @@
 #include <metin2/effects/effect_data.h>
 #include <metin2/files/asset_toml.h>
 #include <metin2/files/eter_file_manager.h>
+#include <metin2/graphics/grp_nine_patch.h>
 #include <metin2/graphics/grp_sub_image.h>
 #include <metin2/sound/type.h>
 #include <metin2/world/actors/race_data.h>
@@ -471,6 +472,51 @@ TEST(sub_image_rejects_bad_scripts) {
     CHECK(!graphic_sub_image::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nimage = \"a.dds\"\nrect = [0, 0, 1]\n", "a.toml", image, rect));
     CHECK(!graphic_sub_image::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nimage = \"a.dds\"\nrect = [0, 0, 1.5, 2]\n", "a.toml", image, rect));
     CHECK(!graphic_sub_image::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nrect = [0, 0, 1, 2]\n", "a.toml", image, rect));
+}
+
+TEST(nine_patch_reads_the_region_and_margins) {
+    std::string image;
+    int region[4] = {};
+    graphic_nine_patch::margins margins;
+    CHECK(graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"ui:default/sheet.png\"\nregion_rect = [32, 0, 32, 32]\npatch_margins = [5, 6, 7, 8]\n", "a.toml", image, region, margins));
+    CHECK_EQ(image, std::string("ui:default/sheet.png"));
+    CHECK_EQ(region[0], 32);
+    CHECK_EQ(region[2], 32);
+    CHECK_EQ(margins.left, 5);
+    CHECK_EQ(margins.top, 6);
+    CHECK_EQ(margins.right, 7);
+    CHECK_EQ(margins.bottom, 8);
+}
+
+TEST(nine_patch_rejects_bad_scripts) {
+    std::string image;
+    int region[4] = {};
+    graphic_nine_patch::margins margins;
+    // A sub image, a region without a size, margins wider than the region, a missing key, a negative margin.
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nimage = \"a.png\"\nrect = [0, 0, 1, 2]\n", "a.toml", image, region, margins));
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 0, 32]\npatch_margins = [0, 0, 0, 0]\n", "a.toml", image, region, margins));
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [20, 0, 20, 0]\n", "a.toml", image, region, margins));
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\n", "a.toml", image, region, margins));
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [5, -1, 5, 5]\n", "a.toml", image, region, margins));
+    // An unknown key is only warned about, as for every asset.
+    CHECK(graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [5, 5, 5, 5]\ntile = true\n", "a.toml", image, region, margins));
+}
+
+TEST(nine_patch_cuts_keep_the_margins_and_shrink_them_when_they_do_not_fit) {
+    const auto wide = graphic_nine_patch::cuts(5, 7, 100);
+    CHECK_EQ(wide[0], 0.0f);
+    CHECK_EQ(wide[1], 5.0f);
+    CHECK_EQ(wide[2], 93.0f);
+    CHECK_EQ(wide[3], 100.0f);
+    const auto exact = graphic_nine_patch::cuts(5, 7, 12);
+    CHECK_EQ(exact[1], 5.0f);
+    CHECK_EQ(exact[2], 5.0f);
+    const auto narrow = graphic_nine_patch::cuts(6, 6, 6);
+    CHECK_EQ(narrow[1], 3.0f);
+    CHECK_EQ(narrow[2], 3.0f);
+    CHECK_EQ(narrow[3], 6.0f);
+    const auto none = graphic_nine_patch::cuts(0, 0, 0);
+    CHECK_EQ(none[3], 0.0f);
 }
 
 namespace {

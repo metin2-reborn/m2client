@@ -1,8 +1,11 @@
 #include "grp_image_instance.h"
+#include "grp_nine_patch.h"
 #include "state_manager.h"
 
 #include <metin2/core/crc32.h>
 #include <metin2/gpu/types.h>
+
+#include <array>
 
 namespace metin2::inline graphics {
 
@@ -35,6 +38,11 @@ namespace metin2::inline graphics {
     }
 
     void graphic_image_instance::on_render() {
+        if (is_nine_patch()) {
+            render_nine_patch();
+            return;
+        }
+
         graphic_image *image = ro_image_.pointer();
         graphic_texture *texture = image->texture_pointer();
 
@@ -89,6 +97,61 @@ namespace metin2::inline graphics {
         }
     }
 
+    void graphic_image_instance::render_nine_patch() {
+        auto *patch = static_cast<graphic_nine_patch *>(ro_image_.pointer());
+        graphic_texture *texture = patch->texture_pointer();
+        const rectangle &region = patch->rect_reference();
+        const graphic_nine_patch::margins &margins = patch->patch_margins();
+
+        // Cut positions in interface pixels (relative to the position) and the matching texels.
+        const std::array<float, 4> xs = graphic_nine_patch::cuts(margins.left, margins.right, width());
+        const std::array<float, 4> ys = graphic_nine_patch::cuts(margins.top, margins.bottom, height());
+        const float tex_reverse_width = 1.0f / float(texture->width());
+        const float tex_reverse_height = 1.0f / float(texture->height());
+        const std::array<float, 4> us = {float(region.left) * tex_reverse_width, float(region.left + margins.left) * tex_reverse_width,
+            float(region.right - margins.right) * tex_reverse_width, float(region.right) * tex_reverse_width};
+        const std::array<float, 4> vs = {float(region.top) * tex_reverse_height, float(region.top + margins.top) * tex_reverse_height,
+            float(region.bottom - margins.bottom) * tex_reverse_height, float(region.bottom) * tex_reverse_height};
+
+        // Half an interface pixel back (the D3D9 convention) in framebuffer pixels, as for a plain
+        // image; the cuts are whole pixels, so every corner texel lands on one framebuffer pixel.
+        const float half = graphic_base::half_pixel();
+        const float x0 = position_value_.x - half;
+        const float y0 = position_value_.y - half;
+
+        // Two triangles per patch (wound as the text quads are, the other way round is culled),
+        // skipping the ones a margin of zero or a small size leaves empty.
+        std::array<pdt_vertex, 9 * 6> vertices;
+        size_t count = 0;
+        auto vertex = [&](float x, float y, float u, float v) -> void {
+            pdt_vertex &out = vertices[count++];
+            out.position_value = {x0 + x, y0 + y, 0.0f};
+            out.tex_coord = texture_coordinate(u, v);
+            out.diffuse_value = diffuse_color_;
+        };
+        for (size_t row = 0; row < 3; ++row) {
+            for (size_t column = 0; column < 3; ++column) {
+                if (xs[column + 1] <= xs[column] || ys[row + 1] <= ys[row]) {
+                    continue;
+                }
+                vertex(xs[column], ys[row], us[column], vs[row]);
+                vertex(xs[column], ys[row + 1], us[column], vs[row + 1]);
+                vertex(xs[column + 1], ys[row], us[column + 1], vs[row]);
+                vertex(xs[column + 1], ys[row], us[column + 1], vs[row]);
+                vertex(xs[column], ys[row + 1], us[column], vs[row + 1]);
+                vertex(xs[column + 1], ys[row + 1], us[column + 1], vs[row + 1]);
+            }
+        }
+        if (count == 0) {
+            return;
+        }
+
+        STATEMANAGER.set_texture(0, texture->gpu_texture());
+        STATEMANAGER.set_texture(1, nullptr);
+        STATEMANAGER.set_vertex_shader(gpu::fvf::XYZ | gpu::fvf::DIFFUSE | gpu::fvf::TEX1);
+        STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_LIST, static_cast<uint32_t>(count / 3), vertices.data(), sizeof(pdt_vertex));
+    }
+
     auto graphic_image_instance::texture_reference() const -> const graphic_texture & {
         return ro_image_->texture_reference();
     }
@@ -106,14 +169,23 @@ namespace metin2::inline graphics {
         if (is_empty())
             return 0;
 
-        return ro_image_->width();
+        return width_ > 0 && is_nine_patch() ? width_ : ro_image_->width();
     }
 
     auto graphic_image_instance::height() -> int {
         if (is_empty())
             return 0;
 
-        return ro_image_->height();
+        return height_ > 0 && is_nine_patch() ? height_ : ro_image_->height();
+    }
+
+    void graphic_image_instance::set_size(int width, int height) {
+        width_ = width;
+        height_ = height;
+    }
+
+    auto graphic_image_instance::is_nine_patch() const -> bool {
+        return !ro_image_.is_null() && ro_image_->is_type(graphic_nine_patch::type());
     }
 
     void graphic_image_instance::set_diffuse_color(float fr, float fg, float fb, float fa) {
@@ -166,6 +238,7 @@ namespace metin2::inline graphics {
     void graphic_image_instance::initialize() {
         diffuse_color_.r = diffuse_color_.g = diffuse_color_.b = diffuse_color_.a = 1.0f;
         position_value_.x = position_value_.y = 0.0f;
+        width_ = height_ = 0;
     }
 
     void graphic_image_instance::destroy() {
