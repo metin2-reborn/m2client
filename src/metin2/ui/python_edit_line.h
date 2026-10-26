@@ -1,5 +1,6 @@
 #pragma once
 
+#include <metin2/graphics/grp_image_instance.h>
 #include "python_window.h"
 #include "text_edit_buffer.h"
 
@@ -8,7 +9,8 @@ namespace metin2::inline ui::widgets {
     // A single-line (or, for the whisper dialog, wrapping) text box: typing, caret, selection with
     // Shift and the mouse, word jumps with Ctrl, clipboard with Ctrl+C/X/V. Python learns about
     // changes through the usual callbacks (on_ime_update, on_ime_return, on_ime_tab,
-    // on_press_escape_key); keys the line does not use still reach on_ime_key_down.
+    // on_press_escape_key); keys the line does not use still reach on_ime_key_down. An optional
+    // background image (a nine patch stretches to the box) is drawn behind the text.
     class edit_line : public text_line {
       public:
         explicit edit_line(PyObject *handler);
@@ -20,6 +22,8 @@ namespace metin2::inline ui::widgets {
         void set_number_mode(bool on);
         void set_secret(bool on) override;
         void set_multi_line(bool on) override;
+        auto set_background(const char *file_name) -> bool;
+        void set_size(int32_t width_value, int32_t height) override;
 
         void set_caret(int visible_index); // -1 puts the caret at the end
         auto caret() -> int;
@@ -49,6 +53,7 @@ namespace metin2::inline ui::widgets {
         void render_bar(float left, float top, float right, float bottom, uint32_t color);
 
         text_edit_buffer buffer_;
+        graphic_image_instance background_;
         float scroll_x_ = 0.0f;
         bool focused_ = false;
         bool selecting_ = false;

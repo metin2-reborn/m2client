@@ -46,6 +46,16 @@ namespace metin2::inline script {
         Py_RETURN_NONE;
     }
 
+    static auto dbg_warn(PyObject *self, PyObject *args) -> PyObject * {
+        char *msg;
+        if (!PyArg_ParseTuple(args, "s", &msg)) {
+            return nullptr;
+        }
+
+        metin2::log::warn("{}", msg);
+        Py_RETURN_NONE;
+    }
+
     static auto dbg_register_exception_string(PyObject *self, PyObject *args) -> PyObject * {
         char *msg;
         if (!PyArg_ParseTuple(args, "s", &msg)) {
@@ -64,6 +74,7 @@ namespace metin2::inline script {
             {"trace", dbg_trace, METH_VARARGS},
             {"tracen", dbg_tracen, METH_VARARGS},
             {"trace_error", dbg_trace_error, METH_VARARGS},
+            {"warn", dbg_warn, METH_VARARGS},
             {"register_exception_string", dbg_register_exception_string, METH_VARARGS},
             {nullptr, nullptr},
         };

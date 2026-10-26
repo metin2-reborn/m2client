@@ -1122,6 +1122,21 @@ namespace metin2::inline ui {
         line->set_max_bytes(bytes);
         Py_RETURN_NONE;
     }
+    auto wnd_edit_set_background(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        char *file_name;
+        if (!PyArg_ParseTuple(args, "O&s", window_converter, &window, &file_name)) {
+            return nullptr;
+        }
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        if (!line->set_background(file_name)) {
+            PyErr_Format(PyExc_IOError, "Cannot load image %s", file_name);
+            return nullptr;
+        }
+        Py_RETURN_NONE;
+    }
     auto wnd_edit_set_user_max(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *window;
         int bytes;
@@ -1986,6 +2001,7 @@ namespace metin2::inline ui {
                 {"get_text_size", wnd_text_get_text_size, METH_VARARGS},
                 // EditLine
                 {"set_max", wnd_edit_set_max, METH_VARARGS},
+                {"set_background", wnd_edit_set_background, METH_VARARGS},
                 {"set_user_max", wnd_edit_set_user_max, METH_VARARGS},
                 {"set_number_mode", wnd_edit_set_number_mode, METH_VARARGS},
                 {"set_caret", wnd_edit_set_caret, METH_VARARGS},

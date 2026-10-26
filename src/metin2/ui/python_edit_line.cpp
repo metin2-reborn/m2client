@@ -2,6 +2,7 @@
 
 #include <metin2/core/timer.h>
 #include <metin2/core/utf8.h>
+#include <metin2/graphics/resource_manager.h>
 #include <metin2/input/input.h>
 #include <metin2/input/keys.h>
 #include <metin2/window/main_window.h>
@@ -27,6 +28,25 @@ namespace metin2::inline ui::widgets {
     }
 
     edit_line::edit_line(PyObject *handler) : text_line(handler) {
+    }
+
+    auto edit_line::set_background(const char *file_name) -> bool {
+        resource *resource = get_resource_manager().resource_pointer(file_name);
+        if (!resource || !resource->is_type(graphic_image::type()))
+            return false;
+
+        background_.set_image_pointer(static_cast<graphic_image *>(resource));
+        if (background_.is_empty())
+            return false;
+
+        background_.set_size(width_, height_);
+        background_.set_position(static_cast<float>(rect_.left), static_cast<float>(rect_.top));
+        return true;
+    }
+
+    void edit_line::set_size(int32_t width_value, int32_t height_value) {
+        text_line::set_size(width_value, height_value);
+        background_.set_size(width_value, height_value);
     }
 
     void edit_line::set_max_bytes(int bytes) {
@@ -191,6 +211,7 @@ namespace metin2::inline ui::widgets {
 
     void edit_line::on_change_position() {
         text_line::on_change_position();
+        background_.set_position(static_cast<float>(rect_.left), static_cast<float>(rect_.top));
         if (!multi_line_ && width_ > 0)
             text_instance_.set_limit_width(static_cast<float>(width_));
     }
@@ -259,6 +280,9 @@ namespace metin2::inline ui::widgets {
     void edit_line::on_render() {
         if (!is_show())
             return;
+
+        if (!background_.is_empty())
+            background_.render();
 
         float origin_x = 0.0f, origin_y = 0.0f;
         text_instance_.aligned_origin(&origin_x, &origin_y);
