@@ -1,6 +1,8 @@
 # Metin2 Linux port — build/run helpers.
-# `just build` configures + builds (RelWithDebInfo), `just run` launches the client inside a
-# bubblewrap sandbox whose game directory is an overlay (writes land in run/overlay/upper).
+# `just build` configures + builds (RelWithDebInfo), `just run` launches the client from the game
+# directory as a normal process (~/.metin2 for settings and logs), `just run-sandbox` and the
+# automation recipes launch it inside a bubblewrap sandbox whose game directory is an overlay
+# (writes land in run/overlay/upper) with HOME under run/.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
@@ -52,8 +54,12 @@ seed-config:
         printf '[display]\nwidth = 1280\nheight = 720\nbpp = 32\nfrequency = 60\nwindowed = true\ngamma = 3\nsoftware_cursor = true\n\n[graphics]\nvisibility = 3\nobject_culling = true\nshadow_level = 3\n\n[sound]\nmusic_volume = 0.5\nvoice_volume = 1\n' > "{{root}}/run/home/.metin2/metin2.toml"; \
         echo "seeded run/home/.metin2/metin2.toml (windowed 1280x720)"; fi
 
-# Build if needed, then run the client in the sandbox. Extra arguments go to the client.
-run *ARGS: build seed-config
+# Build if needed, then run the client from the game directory with your own ~/.metin2 (extra arguments go to the client).
+run *ARGS: build
+    cd "{{client}}" && PYTHONHOME="{{pyhome}}" "{{build}}/bin/client" {{ARGS}}
+
+# Development run in the bubblewrap sandbox: overlay game directory, HOME=run/home, socket and screenshots under run/ (used by run-auto).
+run-sandbox *ARGS: build seed-config
     @command -v bwrap >/dev/null || { echo "bubblewrap (bwrap) is required to protect the game directory" >&2; exit 1; }
     bwrap --dev-bind / / --tmpfs /tmp \
         --overlay-src "{{client}}" --overlay "{{root}}/run/overlay/upper" "{{root}}/run/overlay/work" "{{client}}" \
@@ -71,7 +77,7 @@ run *ARGS: build seed-config
 
 # Run with the automation harness driven by a script file (path relative to the repo).
 run-auto SCRIPT *ARGS: build seed-config
-    METIN2_AUTOMATION=1 METIN2_AUTOMATION_SCRIPT="{{root}}/{{SCRIPT}}" just run {{ARGS}}
+    METIN2_AUTOMATION=1 METIN2_AUTOMATION_SCRIPT="{{root}}/{{SCRIPT}}" just run-sandbox {{ARGS}}
 
 # Send one command line to a running client's automation socket (needs socat).
 send CMD:

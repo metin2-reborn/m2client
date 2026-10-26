@@ -51,18 +51,19 @@ The client ends up in `build/bin/client`.
 ## Running
 
 The client needs the game data (`data/`, the bootstrap in `data/system`, the game scripts in
-`data/game` and the `data/ui` package, `pack/`...). `just run`
-starts it in a bubblewrap sandbox with the game directory mounted as an overlay, so nothing can modify
-it, and `HOME` set to `run/home`. The game directory defaults to an `m2game` checkout next to this
-repository; set `METIN2_CLIENT_DIR` to use another one:
+`data/game` and the `data/ui` package, `pack/`...). `just run` starts it from the game directory as
+a normal process, with your own `~/.metin2`. The game directory defaults to an `m2game` checkout
+next to this repository; set `METIN2_CLIENT_DIR` to use another one:
 
 ```sh
 just run
 METIN2_CLIENT_DIR=/path/to/client-data just run
 ```
 
-On first use `just run` writes a windowed `run/home/.metin2/metin2.toml`. The server address is part of
-the game scripts' server list.
+`just run-sandbox` starts it in a bubblewrap sandbox instead: the game directory is mounted as an
+overlay, so nothing can modify it, and `HOME` is `run/home` (a windowed
+`run/home/.metin2/metin2.toml` is written on first use). The automation recipes below use the
+sandbox. The server address is part of the game scripts' server list.
 
 ### ~/.metin2
 
@@ -146,8 +147,9 @@ Scripts, commands and their results are logged to `run/automation.log`.
 |-------------------|---------------------------------------------------------------------|
 | `build`           | configure if needed, then build                                     |
 | `test`            | build, then run the unit tests                                      |
-| `run`             | run the client in the sandbox                                       |
-| `run-auto SCRIPT` | run with an automation script                                       |
+| `run`             | run the client from the game directory                              |
+| `run-sandbox`     | run the client in the overlay sandbox with `HOME=run/home`          |
+| `run-auto SCRIPT` | run in the sandbox with an automation script                        |
 | `smoke`, `login`, `world` | the automation smoke tests                                  |
 | `grn-dump`        | load every Granny file in the game data and summarize failures       |
 | `checksum`, `verify-gamedir` | record and check a manifest of the game directory        |
