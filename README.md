@@ -7,14 +7,14 @@
 [![Issues](https://img.shields.io/github/issues/metin2-reborn/m2client)](https://github.com/metin2-reborn/m2client/issues)
 
 The Metin2 game client, ported to Linux and cleaned up to the same standard as the server. It builds
-with Clang or GCC and CMake, renders through its own renderer interface on OpenGL, plays sound through
+with Clang and CMake, renders through its own renderer interface on OpenGL, plays sound through
 OpenAL Soft and runs the Python 2.7 game scripts maintained in the `m2game` repository.
 
 ## Requirements
 
 - Linux on x86-64
-- Clang or GCC with C++23 support (developed with Clang 23 and GCC 16). Clang 19 cannot build
-  OpenAL Soft; CI uses Clang 22.
+- Clang with C++23 support (developed with Clang 23; CI uses Clang 22). Clang 19 cannot build
+  OpenAL Soft. Clang is the only supported compiler.
 - CMake 3.25+ and Ninja
 - [just](https://github.com/casey/just) and [bubblewrap](https://github.com/containers/bubblewrap)
   (for the recipes and the sandbox below)
@@ -40,7 +40,7 @@ Python 2.7 are downloaded and built by CMake on the first configure.
 ```sh
 just build                    # RelWithDebInfo build into build/
 BUILD_TYPE=Debug just build   # Debug, with -Werror
-CC=gcc CXX=g++ just build     # GCC instead of Clang
+CC=clang-22 CXX=clang++-22 just build   # a specific Clang (the default is `clang`)
 SANITIZE=1 just build         # AddressSanitizer + UndefinedBehaviorSanitizer into build-sanitize/
 just test                     # build, then run the unit tests
 just clean
@@ -82,8 +82,8 @@ A minimal `metin2.toml`:
 ```toml
 [display]
 width = 1280
-height = 720
-windowed = true
+height = 720             # the window size; windowed = false is a borderless full screen on the
+windowed = true          # current monitor at the desktop's resolution (no mode switch, no chrome)
 vsync = true
 fps_limit = 0            # 0: no cap beyond vsync; e.g. 144
 gamma = 3                # 1 (darker) to 5 (brighter), 3 is neutral
@@ -177,7 +177,7 @@ and protected data members, `UPPER_CASE` for constants and enumerators. `clang-t
 - Wire structures in `client/protocol/packet.h` are packed and checked with `static_assert`; their
   sizes must match the server's.
 - Comments explain what the code cannot: pitfalls, ordering, lifetimes, protocol facts.
-- Build with both Clang and GCC, run `just test`, and run the smoke tests before sending a change.
+- Build in Debug (`-Werror`), run `just test`, and run the smoke tests before sending a change.
 
 ## Third-party software
 

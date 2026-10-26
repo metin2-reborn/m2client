@@ -9,22 +9,12 @@ permissions:
 
 jobs:
   build:
-    name: Build and test (${{ matrix.compiler }})
+    name: Build and test
     runs-on: ubuntu-latest
     container: docker.io/library/debian:13-slim
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - compiler: clang
-            cc: clang-22
-            cxx: clang++-22
-          - compiler: gcc
-            cc: gcc
-            cxx: g++
     env:
-      CC: ${{ matrix.cc }}
-      CXX: ${{ matrix.cxx }}
+      CC: clang-22
+      CXX: clang++-22
     steps:
       - name: Install packages
         run: |
@@ -41,7 +31,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .deps
-          key: deps-${{ matrix.compiler }}-${{ hashFiles('vendor/*.cmake') }}
+          key: deps-${{ hashFiles('vendor/*.cmake') }}
 
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DFETCHCONTENT_BASE_DIR="$PWD/.deps"
