@@ -36,9 +36,6 @@ namespace metin2::inline graphics {
     math::matrix graphic_base::inverse_view_;
     math::matrix graphic_base::inverse_view_y_axis_;
 
-    math::matrix graphic_base::world_;
-    math::matrix graphic_base::world_view_;
-
     math::matrix graphic_base::screen0_;
     math::matrix graphic_base::screen1_;
     math::matrix graphic_base::screen2_;
@@ -161,9 +158,6 @@ namespace metin2::inline graphics {
         camera->move(math::vector3(fx, fy, fz));
 
         update_view_matrix();
-
-        STATEMANAGER.get_transform(gpu::transform::WORLD, &world_);
-        world_view_ = world_ * view_;
     }
 
     void graphic_base::set_ortho2d(float hres, float vres, float zres) {

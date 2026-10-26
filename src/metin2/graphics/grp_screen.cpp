@@ -436,7 +436,7 @@ namespace metin2::inline graphics {
     void screen::project_position(float x, float y, float z, float *pf_x, float *pf_y) {
         math::vector3 input(x, y, z);
         math::vector3 output;
-        output = math::project(input, {static_cast<float>(viewport_.x), static_cast<float>(viewport_.y), static_cast<float>(viewport_.width), static_cast<float>(viewport_.height), viewport_.min_z, viewport_.max_z}, &proj_, &view_, &world_);
+        output = math::project(input, {static_cast<float>(viewport_.x), static_cast<float>(viewport_.y), static_cast<float>(viewport_.width), static_cast<float>(viewport_.height), viewport_.min_z, viewport_.max_z}, &proj_, &view_, nullptr);
 
         *pf_x = output.x;
         *pf_y = output.y;
@@ -445,7 +445,7 @@ namespace metin2::inline graphics {
     void screen::project_position(float x, float y, float z, float *pf_x, float *pf_y, float *pf_z) {
         math::vector3 input(x, y, z);
         math::vector3 output;
-        output = math::project(input, {static_cast<float>(viewport_.x), static_cast<float>(viewport_.y), static_cast<float>(viewport_.width), static_cast<float>(viewport_.height), viewport_.min_z, viewport_.max_z}, &proj_, &view_, &world_);
+        output = math::project(input, {static_cast<float>(viewport_.x), static_cast<float>(viewport_.y), static_cast<float>(viewport_.width), static_cast<float>(viewport_.height), viewport_.min_z, viewport_.max_z}, &proj_, &view_, nullptr);
 
         *pf_x = output.x;
         *pf_y = output.y;

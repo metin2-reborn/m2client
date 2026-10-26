@@ -8,7 +8,10 @@ namespace metin2::inline graphics {
         if (!enable_)
             return;
 
-        STATEMANAGER.save_transform(gpu::transform::PROJECTION, &identity_);
+        // A local matrix: set_ortho2d would overwrite the shared proj_, which the text tails and
+        // the pick position are projected with after the scene.
+        const math::matrix ortho = math::matrix_ortho_off_center_rh(0.0f, static_cast<float>(width_), static_cast<float>(height_), 0.0f, 0.0f, 400.0f);
+        STATEMANAGER.save_transform(gpu::transform::PROJECTION, &ortho);
         STATEMANAGER.save_transform(gpu::transform::VIEW, &identity_);
         STATEMANAGER.set_transform(gpu::transform::WORLD, &identity_);
         STATEMANAGER.save_render_state(gpu::state::ALPHA_BLEND_ENABLE, true);
@@ -19,7 +22,6 @@ namespace metin2::inline graphics {
         STATEMANAGER.save_render_state(gpu::state::FOG_ENABLE, false);
         STATEMANAGER.save_render_state(gpu::state::LIGHTING, false);
 
-        set_ortho2d(screen::width_, screen::height_, 400.0f);
         set_diffuse_color(color_value_.r, color_value_.g, color_value_.b, color_value_.a);
         render_bar2d(0, 0, screen::width_, screen::height_);
 

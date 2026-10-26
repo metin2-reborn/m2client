@@ -168,9 +168,6 @@ namespace metin2::inline graphics {
         static math::matrix inverse_view_;
         static math::matrix inverse_view_y_axis_;
 
-        static math::matrix world_;
-        static math::matrix world_view_;
-
       protected:
         void update_pipe_line_matrix();
 

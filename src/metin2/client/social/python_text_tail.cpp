@@ -9,6 +9,8 @@
 #include <metin2/log/log.h>
 #include <metin2/ui/python_graphic.h>
 
+#include <algorithm>
+
 namespace metin2::inline client::inline social {
 
     const math::color c_TextTail_Item_Color = math::color(1.0f, 1.0f, 1.0f, 1.0f);
@@ -16,7 +18,8 @@ namespace metin2::inline client::inline social {
     const math::color c_TextTail_Info_Color = math::color(1.0f, 0.785f, 0.785f, 1.0f);
     const math::color c_TextTail_Guild_Name_Color = 0xFFEFD3FF;
     const float c_TextTail_Name_Position = -10.0f;
-    const float c_fxMarkPosition = 1.5f;
+    const float c_fxMarkGap = 3.0f;    // between the guild mark and the guild name
+    const float c_fxSegmentGap = 4.0f; // between level, title and name
     const float c_fyGuildNamePosition = 15.0f;
     const float c_fyMarkPosition = 15.0f + 11.0f;
     bool pk_title_enable = true;
@@ -103,11 +106,8 @@ namespace metin2::inline client::inline social {
         if (!text_tail_value->owner)
             return;
 
-        python_graphic &rpy_graphic = get_python_graphic();
-        rpy_graphic.identity();
-
         const math::vector3 &position = text_tail_value->owner->get_position();
-        rpy_graphic.project_position_to_interface(position.x,
+        get_python_graphic().project_position_to_interface(position.x,
             position.y,
             position.z + text_tail_value->height,
             &text_tail_value->x,
@@ -175,63 +175,52 @@ namespace metin2::inline client::inline social {
             }
         }
 
+        // Every segment of a character tail is left-aligned so each row can be centred as a whole
+        // on the projected x; the widths are whole interface pixels, so are the positions.
         for (itor = character_text_tail_list_.begin(); itor != character_text_tail_list_.end(); ++itor) {
             text_tail *text_tail_value = *itor;
-
-            float fx_add = 0.0f;
+            const float x = text_tail_value->x;
+            const float y = text_tail_value->y;
+            const float z = text_tail_value->z;
 
             graphic_mark_instance *mark_instance = text_tail_value->mark_instance;
             graphic_text_instance *guild_name_instance = text_tail_value->guild_name_text_instance;
             if (mark_instance && guild_name_instance) {
-                int width_value, height;
-                int image_half_size = mark_instance->width() / 2 + c_fxMarkPosition;
-                guild_name_instance->text_size(&width_value, &height);
+                int guild_width, guild_height;
+                guild_name_instance->text_size(&guild_width, &guild_height);
+                const float mark_width = static_cast<float>(mark_instance->width()); // 0 without a mark image
+                const float mark_gap = mark_width > 0.0f ? c_fxMarkGap : 0.0f;
+                const float left = floorf(x - (mark_width + mark_gap + static_cast<float>(guild_width)) / 2.0f);
 
-                mark_instance->set_position(text_tail_value->x - width_value / 2 - image_half_size, text_tail_value->y - c_fyMarkPosition);
-                guild_name_instance->set_position(text_tail_value->x + image_half_size, text_tail_value->y - c_fyGuildNamePosition, text_tail_value->z);
+                mark_instance->set_position(left, y - c_fyMarkPosition);
+                guild_name_instance->set_position(left + mark_width + mark_gap, y - c_fyGuildNamePosition, z);
                 guild_name_instance->update();
             }
 
-            int name_width, name_height;
-            text_tail_value->text_instance->text_size(&name_width, &name_height);
-
-            graphic_text_instance *title = text_tail_value->title_text_instance;
-            if (title) {
-                int title_width, title_height;
-                title->text_size(&title_width, &title_height);
-
-                fx_add = 8.0f;
-
-                title->set_position(text_tail_value->x - ((name_width / 2) - 4.0f), text_tail_value->y, text_tail_value->z); // space between level and alignment
-
-                title->update();
-
-                graphic_text_instance *level = text_tail_value->level_text_instance;
-                if (level) {
-                    int level_width, level_height;
-                    level->text_size(&level_width, &level_height);
-
-                    level->set_position(text_tail_value->x - (name_width / 2) - title_width, text_tail_value->y, text_tail_value->z);
-
-                    level->update();
-                }
-            } else {
-                fx_add = 4.0f;
-
-                graphic_text_instance *level = text_tail_value->level_text_instance;
-                if (level) {
-                    int level_width, level_height;
-                    level->text_size(&level_width, &level_height);
-
-                    level->set_position(text_tail_value->x - (name_width / 2), text_tail_value->y, text_tail_value->z);
-
-                    level->update();
-                }
+            graphic_text_instance *const segments[] = {text_tail_value->level_text_instance, text_tail_value->title_text_instance, text_tail_value->text_instance};
+            float total = 0.0f;
+            int count = 0;
+            for (graphic_text_instance *segment : segments) {
+                if (!segment)
+                    continue;
+                int width_value, height;
+                segment->text_size(&width_value, &height);
+                total += static_cast<float>(width_value);
+                ++count;
             }
+            total += c_fxSegmentGap * static_cast<float>(std::max(0, count - 1));
 
             text_tail_value->text_instance->set_color(text_tail_value->color_value.r, text_tail_value->color_value.g, text_tail_value->color_value.b);
-            text_tail_value->text_instance->set_position(text_tail_value->x + fx_add, text_tail_value->y, text_tail_value->z);
-            text_tail_value->text_instance->update();
+            float left = floorf(x - total / 2.0f);
+            for (graphic_text_instance *segment : segments) {
+                if (!segment)
+                    continue;
+                int width_value, height;
+                segment->text_size(&width_value, &height);
+                segment->set_position(left, y, z);
+                segment->update();
+                left += static_cast<float>(width_value) + c_fxSegmentGap;
+            }
         }
 
         for (auto itor_chat = chat_tail_map_value_.begin(); itor_chat != chat_tail_map_value_.end();) {
@@ -404,6 +393,7 @@ namespace metin2::inline client::inline social {
 
         graphic_text_instance *text_instance = text_tail_value->text_instance;
         text_instance->set_outline(true);
+        text_instance->set_horizonal_align(graphic_text_instance::HORIZONTAL_ALIGN_LEFT);
         text_instance->set_vertical_align(graphic_text_instance::VERTICAL_ALIGN_BOTTOM);
 
         text_tail_value->mark_instance = nullptr;
@@ -434,7 +424,7 @@ namespace metin2::inline client::inline social {
             guild_name_instance = graphic_text_instance::new_value();
             guild_name_instance->set_text_pointer(font);
             guild_name_instance->set_outline(true);
-            guild_name_instance->set_horizonal_align(graphic_text_instance::HORIZONTAL_ALIGN_CENTER);
+            guild_name_instance->set_horizonal_align(graphic_text_instance::HORIZONTAL_ALIGN_LEFT);
             guild_name_instance->set_vertical_align(graphic_text_instance::VERTICAL_ALIGN_BOTTOM);
             guild_name_instance->set_value(guild_name.c_str());
             guild_name_instance->set_color(c_TextTail_Guild_Name_Color.r, c_TextTail_Guild_Name_Color.g, c_TextTail_Guild_Name_Color.b);
@@ -732,7 +722,7 @@ namespace metin2::inline client::inline social {
             title->set_text_pointer(font);
             title->set_outline(true);
 
-            title->set_horizonal_align(graphic_text_instance::HORIZONTAL_ALIGN_RIGHT);
+            title->set_horizonal_align(graphic_text_instance::HORIZONTAL_ALIGN_LEFT);
 
             title->set_vertical_align(graphic_text_instance::VERTICAL_ALIGN_BOTTOM);
         }
@@ -763,9 +753,6 @@ namespace metin2::inline client::inline social {
     }
 
     void python_text_tail::attach_level(uint32_t vid, const char *text, const math::color &color) {
-        if (!pk_title_enable)
-            return;
-
         auto itor = character_text_tail_map_.find(vid);
         if (character_text_tail_map_.end() == itor)
             return;
@@ -778,7 +765,7 @@ namespace metin2::inline client::inline social {
             level->set_text_pointer(font);
             level->set_outline(true);
 
-            level->set_horizonal_align(graphic_text_instance::HORIZONTAL_ALIGN_RIGHT);
+            level->set_horizonal_align(graphic_text_instance::HORIZONTAL_ALIGN_LEFT);
             level->set_vertical_align(graphic_text_instance::VERTICAL_ALIGN_BOTTOM);
         }
 

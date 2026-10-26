@@ -110,7 +110,9 @@ namespace metin2::inline client::inline protocol {
         net_actor_data_value.mount_vnum = 0;
         ;
 
-        net_actor_data_value.level_value = 0; // monster levels are not shown
+        // The server sends a level only with a player's additional info; monsters take theirs
+        // from the mob table so the name tag can show it.
+        net_actor_data_value.level_value = 0;
 
         if (net_actor_data_value.type_value != actor_instance::TYPE_PC &&
             net_actor_data_value.type_value != actor_instance::TYPE_NPC) {
@@ -118,6 +120,12 @@ namespace metin2::inline client::inline protocol {
             python_non_player &non_player = get_python_non_player();
             if (non_player.get_name(net_actor_data_value.race, &name))
                 net_actor_data_value.name_value = name;
+
+            if (net_actor_data_value.type_value == actor_instance::TYPE_ENEMY ||
+                net_actor_data_value.type_value == actor_instance::TYPE_STONE) {
+                if (const python_non_player::mob_table *table = non_player.table(net_actor_data_value.race))
+                    net_actor_data_value.level_value = table->level_value;
+            }
 
             recv_character_append_packet_impl(&net_actor_data_value);
         } else {

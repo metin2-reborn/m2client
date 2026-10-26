@@ -735,7 +735,7 @@ namespace metin2::inline models {
             return 0.0f;
         }
 
-        math::vector3 vt_min, vt_max;
+        math::vector3 vt_min{}, vt_max{}; // get_bound_box writes nothing without a Granny instance
         model_instance->get_bound_box(&vt_min, &vt_max);
 
         return fabs(vt_min.z - vt_max.z);
