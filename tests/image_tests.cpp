@@ -3,17 +3,18 @@
 #include <metin2/client/guilds/mark_image.h>
 #include <metin2/graphics/image_file.h>
 
+#include <chrono>
 #include <cstdlib>
+#include <filesystem>
 #include <string>
-#include <unistd.h>
 #include <vector>
 
 using namespace metin2;
 
 namespace {
     auto temp_path(const char *name) -> std::string {
-        const char *dir = getenv("TMPDIR");
-        return std::string(dir && *dir ? dir : "/tmp") + "/metin2_image_tests_" + std::to_string(getpid()) + "_" + name;
+        static const auto unique = std::chrono::steady_clock::now().time_since_epoch().count();
+        return (std::filesystem::temp_directory_path() / ("metin2_image_tests_" + std::to_string(unique) + "_" + name)).string();
     }
 }
 
@@ -27,7 +28,7 @@ TEST(tga_round_trips_bgra_pixels) {
     CHECK_EQ(image.width, 3);
     CHECK_EQ(image.height, 2);
     CHECK(image.pixels == pixels);
-    unlink(path.c_str());
+    std::filesystem::remove(path);
 }
 
 TEST(missing_image_does_not_load) {
@@ -43,7 +44,7 @@ TEST(jpeg_is_written) {
     CHECK(load_image_file(path.c_str(), image));
     CHECK_EQ(image.width, 16);
     CHECK_EQ(image.height, 8);
-    unlink(path.c_str());
+    std::filesystem::remove(path);
 }
 
 TEST(guild_mark_image_keeps_marks_through_a_file) {
@@ -67,5 +68,5 @@ TEST(guild_mark_image_keeps_marks_through_a_file) {
     std::vector<uint32_t> empty(guild_mark::SIZE, 1);
     image.get_data(0, 0, guild_mark::WIDTH, guild_mark::HEIGHT, empty.data());
     CHECK(empty == std::vector<uint32_t>(guild_mark::SIZE, 0));
-    unlink(path.c_str());
+    std::filesystem::remove(path);
 }

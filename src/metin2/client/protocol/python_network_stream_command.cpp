@@ -5,12 +5,12 @@
 #include <metin2/client/characters/instance_base.h>
 #include <metin2/client/characters/python_non_player.h>
 #include <metin2/core/parse.h>
+#include <metin2/core/string_case.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
 #include "python_network_stream.h"
 
 #include <metin2/window/events.h>
-#include <strings.h>
 
 namespace metin2::inline client::inline protocol {
 
@@ -120,7 +120,7 @@ namespace metin2::inline client::inline protocol {
 
     void python_network_stream::server_command(char *command) {
         // The console window is disabled.
-        if (strcasecmp(command, "ConsoleEnable") == 0)
+        if (iequals(command, "ConsoleEnable"))
             return;
 
         if (apo_phase_wnd_[PHASE_WINDOW_GAME]) {
@@ -151,17 +151,17 @@ namespace metin2::inline client::inline protocol {
 
         const char *cmd = token_vector[0].c_str();
 
-        if (!strcasecmp(cmd, "quit")) {
+        if (iequals(cmd, "quit")) {
             window::request_quit();
-        } else if (!strcasecmp(cmd, "BettingMoney")) {
+        } else if (iequals(cmd, "BettingMoney")) {
             if (2 != token_vector.size()) {
                 metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
                 return;
             }
 
-        } else if (!strcasecmp(cmd, "gift")) {
+        } else if (iequals(cmd, "gift")) {
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "gift_show", Py_BuildValue("()"));
-        } else if (!strcasecmp(cmd, "cube")) {
+        } else if (iequals(cmd, "cube")) {
             if (token_vector.size() < 2) {
                 metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
                 return;
@@ -224,7 +224,7 @@ namespace metin2::inline client::inline protocol {
 
                 py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "cube_material_info", Py_BuildValue("(iis)", request_start_index, result_count, token_vector[4].c_str()));
             }
-        } else if (!strcasecmp(cmd, "ObserverCount")) {
+        } else if (iequals(cmd, "ObserverCount")) {
             if (2 != token_vector.size()) {
                 metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
                 return;
@@ -235,7 +235,7 @@ namespace metin2::inline client::inline protocol {
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
                 "betting_guild_war_update_observer_count",
                 Py_BuildValue("(i)", observer_count));
-        } else if (!strcasecmp(cmd, "ObserverMode")) {
+        } else if (iequals(cmd, "ObserverMode")) {
             if (2 != token_vector.size()) {
                 metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
                 return;
@@ -249,8 +249,8 @@ namespace metin2::inline client::inline protocol {
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME],
                 "betting_guild_war_set_observer_mode",
                 Py_BuildValue("(i)", mode));
-        } else if (!strcasecmp(cmd, "ObserverTeamInfo")) {
-        } else if (!strcasecmp(cmd, "StoneDetect")) {
+        } else if (iequals(cmd, "ObserverTeamInfo")) {
+        } else if (iequals(cmd, "StoneDetect")) {
             if (4 != token_vector.size()) {
                 metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
                 return;
@@ -299,7 +299,7 @@ namespace metin2::inline client::inline protocol {
                 break;
             }
 
-        } else if (!strcasecmp(cmd, "StartStaminaConsume")) {
+        } else if (iequals(cmd, "StartStaminaConsume")) {
             if (3 != token_vector.size()) {
                 metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
                 return;
@@ -312,7 +312,7 @@ namespace metin2::inline client::inline protocol {
             r_player.start_stamina_consume(consume_per_sec, current_stamina);
         }
 
-        else if (!strcasecmp(cmd, "StopStaminaConsume")) {
+        else if (iequals(cmd, "StopStaminaConsume")) {
             if (2 != token_vector.size()) {
                 metin2::log::warn("Server command {}: unexpected parameter count {}", command, token_vector.size());
                 return;
@@ -322,18 +322,18 @@ namespace metin2::inline client::inline protocol {
 
             abstract_player &player = get_abstract_player();
             player.stop_stamina_consume(current_stamina);
-        } else if (!strcasecmp(cmd, "messenger_auth")) {
+        } else if (iequals(cmd, "messenger_auth")) {
             const std::string &name = token_vector[1].c_str();
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_messenger_add_friend_question", Py_BuildValue("(s)", name.c_str()));
-        } else if (!strcasecmp(cmd, "combo")) {
+        } else if (iequals(cmd, "combo")) {
             int flag = metin2::to_number<int>(token_vector[1].c_str());
             abstract_player &player = get_abstract_player();
             player.set_combo_skill_flag(flag);
             combo_skill_flag_ = flag ? true : false;
-        } else if (!strcasecmp(cmd, "setblockmode")) {
+        } else if (iequals(cmd, "setblockmode")) {
             int flag = metin2::to_number<int>(token_vector[1].c_str());
             py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "on_block_mode", Py_BuildValue("(i)", flag));
-        } else if (!strcasecmp(cmd, "french_kiss")) {
+        } else if (iequals(cmd, "french_kiss")) {
             int vid1 = metin2::to_number<int>(token_vector[1].c_str());
             int vid2 = metin2::to_number<int>(token_vector[2].c_str());
 
@@ -342,7 +342,7 @@ namespace metin2::inline client::inline protocol {
             instance_base *instance2 = chr_mgr.instance_ptr(vid2);
             if (instance1 && instance2)
                 instance1->act_dual_emotion(*instance2, race_motion_data::NAME_FRENCH_KISS_START, race_motion_data::NAME_FRENCH_KISS_START);
-        } else if (!strcasecmp(cmd, "kiss")) {
+        } else if (iequals(cmd, "kiss")) {
             int vid1 = metin2::to_number<int>(token_vector[1].c_str());
             int vid2 = metin2::to_number<int>(token_vector[2].c_str());
 
@@ -351,7 +351,7 @@ namespace metin2::inline client::inline protocol {
             instance_base *instance2 = chr_mgr.instance_ptr(vid2);
             if (instance1 && instance2)
                 instance1->act_dual_emotion(*instance2, race_motion_data::NAME_KISS_START, race_motion_data::NAME_KISS_START);
-        } else if (!strcasecmp(cmd, "slap")) {
+        } else if (iequals(cmd, "slap")) {
             int vid1 = metin2::to_number<int>(token_vector[1].c_str());
             int vid2 = metin2::to_number<int>(token_vector[2].c_str());
 
@@ -360,37 +360,37 @@ namespace metin2::inline client::inline protocol {
             instance_base *instance2 = chr_mgr.instance_ptr(vid2);
             if (instance1 && instance2)
                 instance1->act_dual_emotion(*instance2, race_motion_data::NAME_SLAP_HURT_START, race_motion_data::NAME_SLAP_HIT_START);
-        } else if (!strcasecmp(cmd, "clap")) {
+        } else if (iequals(cmd, "clap")) {
             int i_vid = metin2::to_number<int>(token_vector[1].c_str());
             abstract_character_manager &chr_mgr = get_abstract_character_manager();
             instance_base *instance = chr_mgr.instance_ptr(i_vid);
             if (instance)
                 instance->act_emotion(race_motion_data::NAME_CLAP);
-        } else if (!strcasecmp(cmd, "cheer1")) {
+        } else if (iequals(cmd, "cheer1")) {
             int vid = metin2::to_number<int>(token_vector[1].c_str());
             abstract_character_manager &chr_mgr = get_abstract_character_manager();
             instance_base *instance = chr_mgr.instance_ptr(vid);
             if (instance)
                 instance->act_emotion(race_motion_data::NAME_CHEERS_1);
-        } else if (!strcasecmp(cmd, "cheer2")) {
+        } else if (iequals(cmd, "cheer2")) {
             int vid = metin2::to_number<int>(token_vector[1].c_str());
             abstract_character_manager &chr_mgr = get_abstract_character_manager();
             instance_base *instance = chr_mgr.instance_ptr(vid);
             if (instance)
                 instance->act_emotion(race_motion_data::NAME_CHEERS_2);
-        } else if (!strcasecmp(cmd, "dance1")) {
+        } else if (iequals(cmd, "dance1")) {
             int vid = metin2::to_number<int>(token_vector[1].c_str());
             abstract_character_manager &chr_mgr = get_abstract_character_manager();
             instance_base *instance = chr_mgr.instance_ptr(vid);
             if (instance)
                 instance->act_emotion(race_motion_data::NAME_DANCE_1);
-        } else if (!strcasecmp(cmd, "dance2")) {
+        } else if (iequals(cmd, "dance2")) {
             int vid = metin2::to_number<int>(token_vector[1].c_str());
             abstract_character_manager &chr_mgr = get_abstract_character_manager();
             instance_base *instance = chr_mgr.instance_ptr(vid);
             if (instance)
                 instance->act_emotion(race_motion_data::NAME_DANCE_2);
-        } else if (!strcasecmp(cmd, "dig_motion")) {
+        } else if (iequals(cmd, "dig_motion")) {
             int vid = metin2::to_number<int>(token_vector[1].c_str());
             abstract_character_manager &chr_mgr = get_abstract_character_manager();
             instance_base *instance = chr_mgr.instance_ptr(vid);

@@ -2,6 +2,7 @@
 
 #include <metin2/log/log.h>
 
+#include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -9,8 +10,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-
-#include <unistd.h>
 
 using namespace metin2;
 
@@ -20,7 +19,13 @@ namespace {
     struct temp_log {
         fs::path directory;
 
-        temp_log() : directory(fs::temp_directory_path() / ("m2_client_log_test_" + std::to_string(::getpid()))) {
+        // One directory per test process: the runs of a test share it.
+        static auto process_directory() -> fs::path {
+            static const fs::path value = fs::temp_directory_path() / ("m2_client_log_test_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+            return value;
+        }
+
+        temp_log() : directory(process_directory()) {
             metin2::log::set_level(metin2::log::level::info);
             metin2::log::init(directory.string());
         }

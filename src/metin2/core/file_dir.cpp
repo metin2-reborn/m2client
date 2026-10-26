@@ -1,11 +1,12 @@
 #include "file_dir.h"
 
-#include <cstring>
-#include <string>
+#include "string_case.h"
 
-#include <dirent.h>
-#include <strings.h>
-#include <sys/stat.h>
+#include <cstring>
+#include <filesystem>
+#include <string>
+#include <string_view>
+#include <system_error>
 
 namespace metin2::inline core {
 
@@ -20,61 +21,50 @@ namespace metin2::inline core {
             }
         }
 
-        DIR *dir = opendir(st_path.empty() ? "." : st_path.c_str());
-        if (!dir) {
+        std::error_code error;
+        std::filesystem::directory_iterator entries(st_path.empty() ? "." : st_path, error);
+        if (error) {
             return true; // like FindFirstFile failing: nothing to visit
         }
 
-        bool result = true;
-        while (const dirent *entry = readdir(dir)) {
-            const char *name = entry->d_name;
+        for (const std::filesystem::directory_entry &entry : entries) {
+            const std::string name = entry.path().filename().string();
 
-            if (!name[0] || name[0] == '.') {
+            if (name.empty() || name[0] == '.') {
                 continue;
             }
 
-            struct stat st;
-            if (stat((st_path + name).c_str(), &st) != 0) {
-                continue;
-            }
-
-            if (S_ISDIR(st.st_mode)) {
-                if (!on_folder(c_sz_filter, st_path.c_str(), name)) {
-                    result = false;
-                    break;
+            if (entry.is_directory(error)) {
+                if (!on_folder(c_sz_filter, st_path.c_str(), name.c_str())) {
+                    return false;
                 }
             } else {
-                const char *extension = strchr(name, '.');
-                if (!extension) {
+                const std::string::size_type dot = name.find('.');
+                if (dot == std::string::npos) {
                     continue;
                 }
+                const std::string_view extension(name.c_str() + dot + 1);
 
                 // TODO: checked_extension should always be on, once every caller passes the filter as bare
                 // extensions ("wav;gr2").
                 if (checked_extension) {
-                    std::string str_filter = c_sz_filter;
-                    size_t pos = str_filter.find_first_of(';', 0);
-                    if (pos != std::string::npos && pos > 0) {
-                        std::string first_filter = str_filter.substr(0, pos);
-                        std::string second_filter = str_filter.substr(pos + 1);
-                        if (0 != first_filter.compare(extension + 1) && 0 != second_filter.compare(extension + 1)) {
+                    const std::string_view filter = c_sz_filter;
+                    const std::string_view::size_type pos = filter.find(';');
+                    if (pos != std::string_view::npos && pos > 0) {
+                        if (filter.substr(0, pos) != extension && filter.substr(pos + 1) != extension) {
                             continue;
                         }
-                    } else {
-                        if (0 != strcasecmp(extension + 1, c_sz_filter)) {
-                            continue;
-                        }
+                    } else if (!iequals(extension, filter)) {
+                        continue;
                     }
                 }
 
-                if (!on_file(st_path.c_str(), name)) {
-                    result = false;
-                    break;
+                if (!on_file(st_path.c_str(), name.c_str())) {
+                    return false;
                 }
             }
         }
 
-        closedir(dir);
-        return result;
+        return true;
     }
 }

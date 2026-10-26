@@ -12,7 +12,12 @@ target_compile_options(metin2 PUBLIC ${M2_GAME_COMPILE_OPTIONS})
 target_link_libraries(metin2 PUBLIC
     opengr2ndma
     python27 lzo2 monocypher tomlplusplus asio
-    raylib OpenAL minimp3 dr_libs freetype PkgConfig::FONTCONFIG ZLIB::ZLIB Threads::Threads ${CMAKE_DL_LIBS})
+    raylib OpenAL minimp3 dr_libs freetype ZLIB::ZLIB Threads::Threads ${CMAKE_DL_LIBS})
+if(WIN32)
+    target_link_libraries(metin2 PUBLIC dbghelp) # the crash handler's symbols
+else()
+    target_link_libraries(metin2 PUBLIC PkgConfig::FONTCONFIG)
+endif()
 target_compile_options(metin2 PRIVATE ${M2_CLEAN_WARNINGS})
 # The window code calls GLFW (raylib's window backend) for the pointer lock and custom cursors, and
 # the OpenGL renderer calls GL through raylib's glad; the cursor files are read from the source tree.

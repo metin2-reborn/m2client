@@ -1,3 +1,4 @@
+#include <metin2/core/string_case.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
@@ -389,27 +390,27 @@ namespace metin2::inline ui {
         }
 
         if (flag && *flag) {
-            if (!strcasecmp(flag, "movable"))
+            if (iequals(flag, "movable"))
                 win->add_flag(widgets::ui_window::FLAG_MOVABLE);
-            else if (!strcasecmp(flag, "limit"))
+            else if (iequals(flag, "limit"))
                 win->add_flag(widgets::ui_window::FLAG_LIMIT);
-            else if (!strcasecmp(flag, "dragable"))
+            else if (iequals(flag, "dragable"))
                 win->add_flag(widgets::ui_window::FLAG_DRAGABLE);
-            else if (!strcasecmp(flag, "attach"))
+            else if (iequals(flag, "attach"))
                 win->add_flag(widgets::ui_window::FLAG_ATTACH);
-            else if (!strcasecmp(flag, "restrict_x"))
+            else if (iequals(flag, "restrict_x"))
                 win->add_flag(widgets::ui_window::FLAG_RESTRICT_X);
-            else if (!strcasecmp(flag, "restrict_y"))
+            else if (iequals(flag, "restrict_y"))
                 win->add_flag(widgets::ui_window::FLAG_RESTRICT_Y);
-            else if (!strcasecmp(flag, "float"))
+            else if (iequals(flag, "float"))
                 win->add_flag(widgets::ui_window::FLAG_FLOAT);
-            else if (!strcasecmp(flag, "not_pick"))
+            else if (iequals(flag, "not_pick"))
                 win->add_flag(widgets::ui_window::FLAG_NOT_PICK);
-            else if (!strcasecmp(flag, "ignore_size"))
+            else if (iequals(flag, "ignore_size"))
                 win->add_flag(widgets::ui_window::FLAG_IGNORE_SIZE);
-            else if (!strcasecmp(flag, "rtl"))
+            else if (iequals(flag, "rtl"))
                 win->add_flag(widgets::ui_window::FLAG_RTL);
-            else if (!strcasecmp(flag, "ltr"))
+            else if (iequals(flag, "ltr"))
                 win->remove_flag(widgets::ui_window::FLAG_RTL);
             else
                 metin2::log::error("Unknown window flag {}", flag);

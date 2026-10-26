@@ -1,19 +1,25 @@
 #include "state_dir.h"
 
 #include <cstdlib>
-#include <sys/stat.h>
+#include <filesystem>
+#include <system_error>
 
 namespace metin2::state {
     void make_directories(const std::string &path) {
-        for (std::size_t slash = path.find('/', 1); slash != std::string::npos; slash = path.find('/', slash + 1))
-            mkdir(path.substr(0, slash).c_str(), 0755);
-        mkdir(path.c_str(), 0755);
+        std::error_code error;
+        std::filesystem::create_directories(path, error);
     }
 
     auto directory() -> const std::string & {
         static const std::string value = [] -> std::string {
+#ifdef _WIN32
+            // %APPDATA%\metin2, as Windows applications keep their settings there.
+            const char *base = std::getenv("APPDATA");
+            std::string dir = std::string(base && *base ? base : ".") + "/metin2";
+#else
             const char *home = std::getenv("HOME");
             std::string dir = std::string(home && *home ? home : ".") + "/.metin2";
+#endif
             make_directories(dir);
             return dir;
         }();

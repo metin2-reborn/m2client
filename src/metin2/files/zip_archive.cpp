@@ -6,10 +6,6 @@
 #include <cstring>
 #include <vector>
 
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <zlib.h>
 
 namespace metin2::inline files {
@@ -45,33 +41,17 @@ namespace metin2::inline files {
         }
     }
 
-    zip_archive::~zip_archive() {
-        if (data_value_)
-            munmap(const_cast<std::uint8_t *>(data_value_), size_);
-    }
+    zip_archive::~zip_archive() = default;
 
     auto zip_archive::open(const std::string &path) -> bool {
         path_ = path;
 
-        int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC);
-        if (fd < 0)
+        const void *data = nullptr;
+        if (!map_.create(path.c_str()) || map_.map(&data, 0, 0) <= 0 || !data)
             return false;
 
-        struct stat st{};
-        if (fstat(fd, &st) != 0 || st.st_size <= 0) {
-            close(fd);
-            return false;
-        }
-
-        void *map = mmap(nullptr, static_cast<std::size_t>(st.st_size), PROT_READ, MAP_PRIVATE, fd, 0);
-        close(fd);
-        if (map == MAP_FAILED) {
-            metin2::log::error("Cannot map archive {}: {}", path.c_str(), strerror(errno));
-            return false;
-        }
-
-        data_value_ = static_cast<const std::uint8_t *>(map);
-        size_ = static_cast<std::size_t>(st.st_size);
+        data_value_ = static_cast<const std::uint8_t *>(data);
+        size_ = map_.size();
 
         if (!read_central_directory()) {
             metin2::log::error("Archive {} is not a valid zip archive", path.c_str());

@@ -48,11 +48,31 @@ just clean
 
 The client ends up in `build/bin/client`.
 
+### Windows
+
+The same sources build on Windows with clang-cl, the MSVC-compatible Clang driver that ships with
+Visual Studio (Desktop development with C++, with the "C++ Clang tools for Windows" component), CMake
+and Ninja. From a Visual Studio developer prompt:
+
+```sh
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER=lld-link
+cmake --build build
+ctest --test-dir build
+```
+
+Nothing has to be installed besides the toolchain: zlib, LZO and Python 2.7.18 are built from
+source, Python as a static library like on Linux, so `client.exe` has no DLLs beside it. Fonts are
+looked up in the Windows font folders by family name instead of through fontconfig, and the
+settings, logs and screenshots live in `%APPDATA%\metin2`. The automation harness runs scripts on
+Windows too, but its command socket is Linux only.
+
 ## Running
 
-The client needs the game data (`data/`, the bootstrap in `data/system`, the game scripts in
-`data/game` and the `data/ui` package, `pack/`...). `just run` starts it from the game directory as
-a normal process, with your own `~/.metin2`. The game directory defaults to an `m2game` checkout
+The client needs the game directory: `data/` (the bootstrap in `data/system`, the game scripts in
+`data/game`, the `data/ui` package, the archives) and `lib/`, the Python 2.7 standard library as
+`.pyc` files, which is the only standard library the embedded Python ever sees (no `PYTHONHOME`,
+no `site`). An installation is the executable, `data/` and `lib/`, nothing else. `just run` starts
+it from the game directory as a normal process, with your own `~/.metin2`. The game directory defaults to an `m2game` checkout
 next to this repository; set `METIN2_CLIENT_DIR` to use another one:
 
 ```sh

@@ -9,9 +9,6 @@
 #include <filesystem>
 #include <system_error>
 
-#include <sys/stat.h>
-#include <unistd.h>
-
 namespace metin2::inline core {
 
     void get_file_extension(const char *file, int len, std::string *pst_ext) {
@@ -96,7 +93,8 @@ namespace metin2::inline core {
     }
 
     auto is_file(const char *filename) -> bool {
-        return access(filename, F_OK) == 0;
+        std::error_code error;
+        return std::filesystem::exists(filename, error);
     }
 
     auto is_global_file_name(const char *file_name) -> bool {
@@ -107,15 +105,9 @@ namespace metin2::inline core {
         if (!path || !*path)
             return;
 
-        // Create each prefix that ends at a separator, in order ("a/b/c/" -> a, a/b, a/b/c).
-        std::string prefix;
-        for (const char *p = path; *p; ++p) {
-            if (*p == '/' || *p == '\\') {
-                if (!prefix.empty())
-                    mkdir(prefix.c_str(), 0755);
-            }
-            prefix += *p;
-        }
+        // Every directory on the path ("a/b/c/" -> a, a/b, a/b/c).
+        std::error_code error;
+        std::filesystem::create_directories(path, error);
     }
 
     auto split_line(const char *c_sz_line, const char *delimeter, std::vector<std::string> *vec_token) -> bool {

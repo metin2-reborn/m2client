@@ -15,8 +15,10 @@ set(PLATFORM "Desktop" CACHE STRING "" FORCE)
 
 option(M2_WAYLAND "Build raylib/GLFW with Wayland support" ON)
 
-set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
-set(GLFW_BUILD_WAYLAND ${M2_WAYLAND} CACHE BOOL "" FORCE)
+if(NOT WIN32)
+    set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_WAYLAND ${M2_WAYLAND} CACHE BOOL "" FORCE)
+endif()
 
 FetchContent_Declare(raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git

@@ -3,9 +3,10 @@
 
 #include <raylib.h>
 
+#include <metin2/core/string_case.h>
+
 #include <charconv>
 #include <string>
-#include <strings.h>
 
 namespace metin2::inline input {
 
@@ -187,10 +188,10 @@ namespace metin2::inline input {
 
         const std::string key(name);
         for (const key_entry &entry : key_table)
-            if (strcasecmp(entry.name, key.c_str()) == 0)
+            if (iequals(entry.name, key.c_str()))
                 return entry.dik;
         for (const key_alias &alias : key_aliases)
-            if (strcasecmp(alias.name, key.c_str()) == 0)
+            if (iequals(alias.name, key.c_str()))
                 return alias.dik;
 
         const auto [end, ec] = std::from_chars(name.data(), name.data() + name.size(), value);

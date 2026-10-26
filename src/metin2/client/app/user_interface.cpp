@@ -20,8 +20,9 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
+#include <system_error>
 #include <thread>
-#include <unistd.h>
 
 namespace metin2::inline client::inline app {
     bool is_test_server_mode = false;
@@ -46,7 +47,8 @@ namespace metin2::inline client::inline app {
             std::string filename = "lib/";
             filename += python_library_file_names[i];
 
-            if (access(filename.c_str(), F_OK) != 0) {
+            std::error_code error;
+            if (!std::filesystem::exists(filename, error)) {
                 return false;
             }
         }

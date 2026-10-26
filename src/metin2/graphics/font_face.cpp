@@ -4,13 +4,21 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include <fontconfig/fontconfig.h>
 
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+
+#ifdef _WIN32
+#include <filesystem>
+#include <metin2/core/string_case.h>
+#include <system_error>
+#include <vector>
+#else
+#include <fontconfig/fontconfig.h>
+#endif
 
 namespace metin2::inline graphics {
 
@@ -19,9 +27,25 @@ namespace metin2::inline graphics {
     };
 
     namespace {
+#ifdef _WIN32
+        // One face of an installed font file.
+        struct installed_font {
+            std::string path;
+            int index = 0;
+            std::string family;
+            bool bold = false;
+            bool italic = false;
+        };
+#endif
+
         struct library {
             FT_Library ft = nullptr;
+#ifdef _WIN32
+            std::vector<installed_font> installed;                     // every face of the Windows font folders
+            std::map<char32_t, std::pair<std::string, int>> fallbacks; // per character: the file that has it
+#else
             FcConfig *fc = nullptr;
+#endif
             bool antialias = false;
             float scale = 1.0f;
             // Faces are shared by every font of the same file, index and size, and live until exit.
@@ -29,8 +53,46 @@ namespace metin2::inline graphics {
 
             library() {
                 FT_Init_FreeType(&ft);
+#ifdef _WIN32
+                scan_installed_fonts();
+#else
                 fc = FcInitLoadConfigAndFonts();
+#endif
             }
+
+#ifdef _WIN32
+            // Windows has no fontconfig: the system and per-user font folders are read once with
+            // FreeType for the family name and style of every face.
+            void scan_installed_fonts() {
+                std::vector<std::string> folders;
+                if (const char *windir = std::getenv("WINDIR"); windir && *windir)
+                    folders.push_back(std::string(windir) + "\\Fonts");
+                if (const char *local = std::getenv("LOCALAPPDATA"); local && *local)
+                    folders.push_back(std::string(local) + "\\Microsoft\\Windows\\Fonts");
+                for (const std::string &folder : folders) {
+                    std::error_code error;
+                    for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(folder, error)) {
+                        const std::string extension = entry.path().extension().string();
+                        if (!(iequals(extension, ".ttf") || iequals(extension, ".ttc") || iequals(extension, ".otf")))
+                            continue;
+                        const std::string path = entry.path().string();
+                        FT_Face probe = nullptr;
+                        if (FT_New_Face(ft, path.c_str(), -1, &probe) != 0)
+                            continue;
+                        const long count = probe->num_faces;
+                        FT_Done_Face(probe);
+                        for (long index = 0; index < count; ++index) {
+                            FT_Face face = nullptr;
+                            if (FT_New_Face(ft, path.c_str(), index, &face) != 0)
+                                continue;
+                            if (face->family_name)
+                                installed.push_back({path, static_cast<int>(index), face->family_name, (face->style_flags & FT_STYLE_FLAG_BOLD) != 0, (face->style_flags & FT_STYLE_FLAG_ITALIC) != 0});
+                            FT_Done_Face(face);
+                        }
+                    }
+                }
+            }
+#endif
         };
 
         auto get_library() -> library & {
@@ -67,6 +129,56 @@ namespace metin2::inline graphics {
             return raw;
         }
 
+#ifdef _WIN32
+        // The best file for the family and style, or for the one character when it is given: the
+        // family in the wanted style, the family in any style, then (for a character) the first
+        // installed face that has it, then the usual UI families.
+        auto match_font(const std::string &family, bool bold, bool italic, std::optional<char32_t> codepoint, std::string &path, int &index) -> bool {
+            library &lib = get_library();
+            auto pick = [&](const installed_font &font) -> bool {
+                path = font.path;
+                index = font.index;
+                return true;
+            };
+            auto find_family = [&](std::string_view name, bool exact_style) -> const installed_font * {
+                for (const installed_font &font : lib.installed)
+                    if (iequals(font.family, name) && (!exact_style || (font.bold == bold && font.italic == italic)))
+                        return &font;
+                return nullptr;
+            };
+            if (codepoint) {
+                if (auto it = lib.fallbacks.find(*codepoint); it != lib.fallbacks.end()) {
+                    path = it->second.first;
+                    index = it->second.second;
+                    return !path.empty();
+                }
+                for (const installed_font &font : lib.installed) {
+                    FT_Face face = nullptr;
+                    if (FT_New_Face(lib.ft, font.path.c_str(), font.index, &face) != 0)
+                        continue;
+                    const bool has = FT_Get_Char_Index(face, *codepoint) != 0;
+                    FT_Done_Face(face);
+                    if (has) {
+                        lib.fallbacks[*codepoint] = {font.path, font.index};
+                        return pick(font);
+                    }
+                }
+                lib.fallbacks[*codepoint] = {};
+                return false;
+            }
+            if (const installed_font *font = find_family(family, true))
+                return pick(*font);
+            if (const installed_font *font = find_family(family, false))
+                return pick(*font);
+            for (const char *fallback : {"Tahoma", "Segoe UI", "Arial", "Verdana"}) {
+                if (const installed_font *font = find_family(fallback, true))
+                    return pick(*font);
+                if (const installed_font *font = find_family(fallback, false))
+                    return pick(*font);
+            }
+            return !lib.installed.empty() && pick(lib.installed.front());
+        }
+#else
         // The best file for the family and style, or for the one character when it is given.
         auto match_font(const std::string &family, bool bold, bool italic, std::optional<char32_t> codepoint, std::string &path, int &index) -> bool {
             library &lib = get_library();
@@ -101,6 +213,7 @@ namespace metin2::inline graphics {
             FcPatternDestroy(match);
             return found;
         }
+#endif
     }
 
     auto font_face::open(const char *family, int height, bool bold, bool italic, float pixel_scale) -> bool {
@@ -123,7 +236,7 @@ namespace metin2::inline graphics {
         int index = 0;
         face *f = match_font(family_, bold_, italic_, std::nullopt, path, index) ? load_face(path, index, pixel_size_) : nullptr;
         if (!f) {
-            metin2::log::error("No usable font for {} (fontconfig)", family_);
+            metin2::log::error("No usable font for {}", family_);
             return false;
         }
 

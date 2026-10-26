@@ -17,3 +17,7 @@ target_include_directories(asio
 
 target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
 target_link_libraries(asio INTERFACE Threads::Threads)
+if(WIN32)
+    target_compile_definitions(asio INTERFACE _WIN32_WINNT=0x0A00)
+    target_link_libraries(asio INTERFACE ws2_32)
+endif()

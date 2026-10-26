@@ -1,3 +1,4 @@
+#include <metin2/core/string_case.h>
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/script/python_module.h>
 #include <metin2/script/python_utils.h>
@@ -20,10 +21,10 @@ namespace metin2::inline client::inline app {
 
         const char *ext = strrchr(path, '.');
         if (ext) {
-            if ((strcasecmp(ext, ".py") == 0) ||
-                (strcasecmp(ext, ".pyc") == 0) ||
-                (strcasecmp(ext, ".txt") == 0) ||
-                (strcasecmp(ext, ".xml") == 0)) {
+            if (iequals(ext, ".py") ||
+                iequals(ext, ".pyc") ||
+                iequals(ext, ".txt") ||
+                iequals(ext, ".xml")) {
                 mapped_file file;
 
                 const void *data = nullptr;

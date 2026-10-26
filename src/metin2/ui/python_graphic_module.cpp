@@ -1,6 +1,7 @@
 #include "python_graphic.h"
 
 #include <metin2/config/state_dir.h>
+#include <metin2/core/time_utils.h>
 #include <metin2/graphics/camera.h>
 #include <metin2/graphics/text_bar.h>
 #include <metin2/log/log.h>
@@ -11,7 +12,6 @@
 #include <cstdlib>
 #include <ctime>
 #include <string>
-#include <sys/stat.h>
 
 namespace metin2::inline ui {
     auto grp_create_text_bar(PyObject *self, PyObject *args) -> PyObject * {
@@ -302,9 +302,7 @@ namespace metin2::inline ui {
     namespace {
         // "MMDD_hhmmss.jpg", appended to the directory.
         auto make_screen_shot_path(const std::string &directory) -> std::string {
-            const time_t ct = time(nullptr);
-            struct tm tm_now;
-            localtime_r(&ct, &tm_now);
+            const struct tm tm_now = local_time(time(nullptr));
 
             char name[32];
 

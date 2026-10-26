@@ -1,7 +1,10 @@
 #include "random.h"
 
-#include <sys/random.h>
 #include <utility>
+
+#ifndef _WIN32
+#include <sys/random.h>
+#endif
 
 namespace metin2::random {
     auto engine() -> std::mt19937 & {
@@ -32,9 +35,14 @@ namespace metin2::random {
     }
 
     auto secure_u32() -> uint32_t {
+#ifdef _WIN32
+        // The MSVC random_device is the system's cryptographic generator.
+        return static_cast<uint32_t>(std::random_device{}());
+#else
         uint32_t value = 0;
         if (getrandom(&value, sizeof(value), 0) != sizeof(value))
             value = static_cast<uint32_t>(std::random_device{}());
         return value;
+#endif
     }
 }

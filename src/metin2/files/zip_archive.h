@@ -2,15 +2,13 @@
 
 #include "asset_name.h"
 
+#include <metin2/core/mapped_file.h>
+
 #include <cstdint>
 #include <functional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-
-namespace metin2::inline core {
-    class mapped_file;
-}
 
 namespace metin2::inline files {
 
@@ -44,6 +42,7 @@ namespace metin2::inline files {
         auto read_central_directory() -> bool;
 
         std::string path_;
+        core::mapped_file map_;
         const std::uint8_t *data_value_ = nullptr;
         std::size_t size_ = 0;
         std::unordered_map<std::string, entry, assets::case_insensitive_hash, assets::case_insensitive_equal> entries_;

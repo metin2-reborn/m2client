@@ -17,11 +17,13 @@
 #include <metin2/graphics/grp_base.h>
 #include <metin2/graphics/image_file.h>
 #include <metin2/window/main_window.h>
+#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#endif
 #include <cstring>
 #include <deque>
 #include <string>
@@ -56,8 +58,10 @@ std::string g_logPath, g_screenshotDir, g_socketPath;
 FILE* g_log = nullptr;
 std::deque<Command> g_queue;
 Pending g_pending;
+#ifndef _WIN32
 int g_listenFd = -1;
 std::vector<std::pair<int, std::string>> g_clients;  // fd, partial line buffer
+#endif
 py_exec_function g_pyExec;
 bool g_quit = false;
 std::vector<std::string> g_screenshotRequests;  // consumed in OnPresent
@@ -79,11 +83,13 @@ void LogLine(const char* fmt, ...) {
 
 void Reply(const Command& c, const std::string& text) {
     LogLine("%s -> %s", c.line.c_str(), text.c_str());
+#ifndef _WIN32
     if (c.client >= 0) {
         std::string out = text + "\n";
         ssize_t r = send(c.client, out.data(), out.size(), MSG_NOSIGNAL);
         (void)r;
     }
+#endif
 }
 
 std::vector<std::string> Tokenize(const std::string& line) {
@@ -248,6 +254,12 @@ void LoadScript(const char* path) {
     LogLine("loaded script %s (%zu commands)", path, g_queue.size());
 }
 
+// The command socket is a Unix domain socket (socat on the developer's machine); on Windows only
+// scripts drive the harness.
+#ifdef _WIN32
+void OpenSocket() {}
+void PollSocket() {}
+#else
 void OpenSocket() {
     if (g_socketPath.empty()) return;
     unlink(g_socketPath.c_str());
@@ -296,6 +308,7 @@ void PollSocket() {
         ++i;
     }
 }
+#endif
 
 }  // namespace
 

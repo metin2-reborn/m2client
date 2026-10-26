@@ -2,6 +2,7 @@
 
 #include <metin2/config/state_dir.h>
 #include <metin2/core/random.h>
+#include <metin2/core/string_case.h>
 #include <metin2/core/tea.h>
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/graphics/camera.h>
@@ -11,9 +12,9 @@
 #include <metin2/world/actors/game_util.h>
 
 #include <algorithm>
-#include <dirent.h>
-#include <fnmatch.h>
-#include <strings.h>
+#include <filesystem>
+#include <string_view>
+#include <system_error>
 #include <vector>
 
 namespace metin2::inline client::inline characters {
@@ -22,6 +23,31 @@ namespace metin2::inline client::inline characters {
 
 namespace metin2::inline client::inline player {
     extern bool skill_effect_upgrade_enable;
+}
+
+namespace {
+    // A file mask such as "*.mp3" against a name, case-insensitive: * is any run, ? one character.
+    auto matches_mask(std::string_view mask, std::string_view name) -> bool {
+        using metin2::to_lower_ascii;
+        std::size_t m = 0, n = 0, star = std::string_view::npos, after_star = 0;
+        while (n < name.size()) {
+            if (m < mask.size() && (mask[m] == '?' || to_lower_ascii(mask[m]) == to_lower_ascii(name[n]))) {
+                ++m;
+                ++n;
+            } else if (m < mask.size() && mask[m] == '*') {
+                star = m++;
+                after_star = n;
+            } else if (star != std::string_view::npos) {
+                m = star + 1;
+                n = ++after_star;
+            } else {
+                return false;
+            }
+        }
+        while (m < mask.size() && mask[m] == '*')
+            ++m;
+        return m == mask.size();
+    }
 }
 
 namespace metin2::inline client::inline social {
@@ -227,7 +253,7 @@ namespace metin2::inline client::inline app {
         // own guild mark images, which the mark uploader reads from disk, so it is listed there.
         std::string st_filter(filter);
         std::ranges::replace(st_filter, '\\', '/');
-        if (strncasecmp(st_filter.c_str(), "upload/", 7) != 0) {
+        if (!istarts_with(st_filter, "upload/")) {
             auto asset_path = eter_file_manager::parse_path(st_filter);
             std::string::size_type slash = asset_path.path.rfind('/');
             std::string folder = slash == std::string::npos ? std::string() : asset_path.path.substr(0, slash + 1);
@@ -236,7 +262,7 @@ namespace metin2::inline client::inline app {
             std::vector<std::string> names_value;
             get_file_manager().for_each(asset_path.archive_value, folder, [&](const std::string &c_rst_name) -> void {
                 std::string st_name = c_rst_name.substr(folder.size());
-                if (st_name.find('/') == std::string::npos && fnmatch(mask.c_str(), st_name.c_str(), FNM_CASEFOLD) == 0) {
+                if (st_name.find('/') == std::string::npos && matches_mask(mask, st_name)) {
                     names_value.push_back(st_name);
                 }
             });
@@ -255,16 +281,14 @@ namespace metin2::inline client::inline app {
         const auto folder = st_filter.substr(0, slash);
         const auto mask = st_filter.substr(slash + 1);
 
-        if (DIR *dir = opendir(folder.c_str())) {
-            while (const dirent *entry = readdir(dir)) {
-                if (fnmatch(mask.c_str(), entry->d_name, FNM_CASEFOLD) == 0) {
-                    PyObject *file_name = PyString_FromString(entry->d_name);
-                    PyList_Append(list, file_name);
-                    Py_DECREF(file_name);
-                }
+        std::error_code error;
+        for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(folder, error)) {
+            const std::string name = entry.path().filename().string();
+            if (matches_mask(mask, name)) {
+                PyObject *file_name = PyString_FromString(name.c_str());
+                PyList_Append(list, file_name);
+                Py_DECREF(file_name);
             }
-
-            closedir(dir);
         }
 
         return list;

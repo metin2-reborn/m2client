@@ -7,8 +7,8 @@
 #include <metin2/log/log.h>
 
 #include <cstdlib>
-
-#include <unistd.h>
+#include <filesystem>
+#include <system_error>
 
 namespace metin2::inline files {
 
@@ -52,10 +52,11 @@ namespace metin2::inline files {
 
     auto eter_mark_manager::get(mapped_file &mapped_file, const char *filename, const void **data) -> bool {
         const std::string full_path = path(filename);
-        return access(full_path.c_str(), F_OK) == 0 && mapped_file.create(full_path.c_str(), data, 0, 0);
+        return is_exist(filename) && mapped_file.create(full_path.c_str(), data, 0, 0);
     }
 
     auto eter_mark_manager::is_exist(const char *filename) -> bool {
-        return access(path(filename).c_str(), F_OK) == 0;
+        std::error_code error;
+        return std::filesystem::exists(path(filename), error);
     }
 }

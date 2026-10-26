@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and test
+    name: Build and test (Linux)
     runs-on: ubuntu-latest
     container: docker.io/library/debian:13-slim
     env:
@@ -38,6 +38,30 @@ jobs:
 
       - name: Build
         run: cmake --build build --parallel "$(nproc)"
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  windows:
+    name: Build and test (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # clang-cl and lld-link from the Visual Studio installation, with the Windows SDK on the path.
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Cache third-party downloads
+        uses: actions/cache@v4
+        with:
+          path: .deps
+          key: deps-windows-${{ hashFiles('vendor/*.cmake') }}
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER=lld-link -DFETCHCONTENT_BASE_DIR="${{ github.workspace }}/.deps"
+
+      - name: Build
+        run: cmake --build build --parallel
 
       - name: Test
         run: ctest --test-dir build --output-on-failure

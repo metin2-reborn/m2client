@@ -1,7 +1,9 @@
 #include "python_launcher.h"
 
 #include <cstring>
+#include <filesystem>
 #include <string>
+#include <system_error>
 
 #include <metin2/core/mapped_file.h>
 #include <metin2/files/eter_file_manager.h>
@@ -10,7 +12,22 @@
 namespace metin2::inline script {
 
     python_launcher::python_launcher() : module_(nullptr), dic_(nullptr) {
+        // The standard library is the game directory's lib/ (the working directory is the game
+        // directory), nothing else: no site module, no PYTHON* environment, no Python install
+        // searched for, no .pyc written into the read-only game directory. The home only keeps
+        // Py_Initialize from looking for an install; sys.path is set afterwards.
+        Py_NoSiteFlag = 1;
+        Py_IgnoreEnvironmentFlag = 1;
+        Py_DontWriteBytecodeFlag = 1;
+        static char home[] = ".";
+        Py_SetPythonHome(home);
         Py_Initialize();
+
+        std::error_code error;
+        std::string lib = std::filesystem::absolute("lib", error).string();
+        if (error)
+            lib = "lib";
+        PySys_SetPath(lib.data());
     }
 
     python_launcher::~python_launcher() {

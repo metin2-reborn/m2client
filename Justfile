@@ -11,7 +11,6 @@ root   := justfile_directory()
 build  := root / if env("SANITIZE", "") != "" { "build-sanitize" } else { "build" }
 # Game data: the m2game checkout next to this repo unless METIN2_CLIENT_DIR points elsewhere.
 client := env("METIN2_CLIENT_DIR", clean(root / ".." / "m2game"))
-pyhome := build / "python27-install"
 
 default: build
 
@@ -56,7 +55,7 @@ seed-config:
 
 # Build if needed, then run the client from the game directory with your own ~/.metin2 (extra arguments go to the client).
 run *ARGS: build
-    cd "{{client}}" && PYTHONHOME="{{pyhome}}" "{{build}}/bin/client" {{ARGS}}
+    cd "{{client}}" && "{{build}}/bin/client" {{ARGS}}
 
 # Development run in the bubblewrap sandbox: overlay game directory, HOME=run/home, socket and screenshots under run/ (used by run-auto).
 run-sandbox *ARGS: build seed-config
@@ -65,7 +64,6 @@ run-sandbox *ARGS: build seed-config
         --overlay-src "{{client}}" --overlay "{{root}}/run/overlay/upper" "{{root}}/run/overlay/work" "{{client}}" \
         --bind "{{root}}/run" "{{root}}/run" \
         --chdir "{{client}}" \
-        --setenv PYTHONHOME "{{pyhome}}" \
         --setenv HOME "{{root}}/run/home" \
         --setenv METIN2_RUN_DIR "{{root}}/run" \
         --setenv METIN2_AUTOMATION_LOG "{{root}}/run/automation.log" \

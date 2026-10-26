@@ -2,7 +2,8 @@
 
 #include <cstdio>
 
-#include <sys/stat.h>
+#include <filesystem>
+#include <system_error>
 
 namespace metin2::inline core {
 
@@ -154,9 +155,8 @@ namespace metin2::inline core {
     }
 
     auto get_file_size(const char *file_name) -> uint32_t {
-        struct stat st;
-        if (stat(file_name, &st) != 0)
-            return 0;
-        return static_cast<uint32_t>(st.st_size);
+        std::error_code error;
+        const auto size = std::filesystem::file_size(file_name, error);
+        return error ? 0 : static_cast<uint32_t>(size);
     }
 }

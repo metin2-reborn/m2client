@@ -7,7 +7,7 @@
 namespace metin2::inline client::inline guilds {
 
 #define thecore_memcpy memcpy
-#define itertype(cont) typeof((cont).begin())
+#define itertype(cont) decltype((cont).begin())
 
     auto guild_mark_manager::new_image() -> guild_mark_image * {
         return new guild_mark_image;
