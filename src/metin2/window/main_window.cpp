@@ -46,6 +46,10 @@ namespace metin2::inline window {
 
         constexpr int VK_ALT = 0x12;
 
+        // Full screen is applied when the window is first shown: GLFW on Wayland drops a fullscreen
+        // request made before the surface is mapped.
+        bool fullscreen_requested = false;
+
         // raylib's GetWindowHandle() is the native X11 or Wayland handle; its GLFW window is the one
         // that owns the current OpenGL context.
         auto glfw_window() -> GLFWwindow * {
@@ -98,7 +102,7 @@ namespace metin2::inline window {
 
     main_window::~main_window() = default;
 
-    auto main_window::create(const char *title, int width, int height, bool vsync, bool borderless) -> bool {
+    auto main_window::create(const char *title, int width, int height, bool vsync, bool fullscreen) -> bool {
         if (created)
             return true;
 
@@ -106,13 +110,15 @@ namespace metin2::inline window {
         SetTraceLogLevel(LOG_WARNING);
         // High DPI: the framebuffer has the display's real pixels on a scaled desktop instead of being
         // upscaled by the compositor.
-        unsigned flags = FLAG_WINDOW_HIDDEN | FLAG_WINDOW_HIGHDPI | (borderless ? FLAG_WINDOW_UNDECORATED : FLAG_WINDOW_RESIZABLE);
+        unsigned flags = FLAG_WINDOW_HIDDEN | FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE;
         if (vsync)
             flags |= FLAG_VSYNC_HINT;
         SetConfigFlags(flags);
         InitWindow(width > 0 ? width : 800, height > 0 ? height : 600, title);
         if (!IsWindowReady())
             return false;
+
+        fullscreen_requested = fullscreen;
 
         SetExitKey(KEY_NULL);
         SetTargetFPS(0);
@@ -132,6 +138,14 @@ namespace metin2::inline window {
 
     void main_window::show() {
         ClearWindowState(FLAG_WINDOW_HIDDEN);
+        // Full screen is the monitor's current mode as a fullscreen toplevel (no decoration, no mode
+        // switch), not an undecorated window the compositor may still frame. raylib keeps this a
+        // "window mode" for high DPI, so sizes and the pointer stay in the window's logical units;
+        // the framebuffer takes the monitor's size through the resize event that follows.
+        if (fullscreen_requested) {
+            fullscreen_requested = false;
+            ToggleBorderlessWindowed();
+        }
         is_visible_ = true;
         if (!shown) {
             shown = true;

@@ -17,9 +17,9 @@ namespace metin2::inline window {
         virtual ~main_window();
 
         // Creates the window hidden, together with the OpenGL context the graphics device renders to.
-        // With vsync the buffer swap waits for the display. A borderless window has no decorations
-        // and is meant to cover the monitor (full screen without a mode change).
-        auto create(const char *title, int width, int height, bool vsync, bool borderless) -> bool;
+        // With vsync the buffer swap waits for the display. Full screen covers the monitor at its
+        // current mode as a fullscreen toplevel (no decorations, no mode change).
+        auto create(const char *title, int width, int height, bool vsync, bool fullscreen) -> bool;
         void destroy();
 
         // The first show reports the window size (resize_event), which ends the minimized state the

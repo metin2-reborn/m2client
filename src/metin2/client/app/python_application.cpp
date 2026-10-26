@@ -682,19 +682,21 @@ namespace metin2::inline client::inline app {
             return false;
         }
 
-        // Full screen is a borderless window covering the monitor; the display mode is not changed
-        // and the configured size applies to the windowed mode only.
+        // Full screen covers the monitor at its current mode (main_window::create); the configured
+        // size applies to the windowed mode only. A fullscreen window is not resized here: on X11
+        // that would ask for a video mode of the logical size.
         int window_width = get_python_system().width();
         int window_height = get_python_system().height();
         if (!is_windowed_) {
             const point monitor = monitor_size();
             window_width = monitor.x;
             window_height = monitor.y;
+        } else {
+            set_size(window_width, window_height);
+            set_position(0, 0);
         }
         width_ = window_width;
         height_ = window_height;
-        set_size(window_width, window_height);
-        set_position(0, 0);
 
         if (!create_cursors()) {
             metin2::log::error("Cannot create the cursors");
