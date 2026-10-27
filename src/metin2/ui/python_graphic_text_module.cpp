@@ -58,18 +58,18 @@ namespace metin2::inline ui {
         Py_RETURN_NONE;
     }
 
-    auto grp_text_set_font_name(PyObject *self, PyObject *args) -> PyObject * {
+    auto grp_text_set_font(PyObject *self, PyObject *args) -> PyObject * {
         graphic_text_instance *text_instance;
-        char *sz_font_name;
+        char *family;
+        int size;
+        int weight;
+        int italic;
 
-        if (!PyArg_ParseTuple(args, "O&s", text_instance_converter, &text_instance, &sz_font_name)) {
+        if (!PyArg_ParseTuple(args, "O&siii", text_instance_converter, &text_instance, &family, &size, &weight, &italic)) {
             return nullptr;
         }
 
-        std::string st_font_name = sz_font_name;
-        st_font_name += ".fnt";
-
-        resource *resource = get_resource_manager().resource_pointer(st_font_name.c_str());
+        resource *resource = get_resource_manager().resource_pointer(graphic_text::resource_name(font_spec{family, size, weight, italic != 0}).c_str());
         text_instance->set_text_pointer(static_cast<graphic_text *>(resource));
         Py_RETURN_NONE;
     }
@@ -174,7 +174,7 @@ namespace metin2::inline ui {
         static PyMethodDef s_methods[] =
             {
                 {"generate", grp_text_generate, METH_VARARGS},
-                {"set_font_name", grp_text_set_font_name, METH_VARARGS},
+                {"set_font", grp_text_set_font, METH_VARARGS},
                 {"set_font_color", grp_text_set_font_color, METH_VARARGS},
                 {"set_outline", grp_text_outline, METH_VARARGS},
                 {"set_text", grp_text_set_text, METH_VARARGS},

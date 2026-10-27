@@ -1,12 +1,14 @@
 #include "cursor.h"
 
+#include <metin2/core/mapped_file.h>
+#include <metin2/files/eter_file_manager.h>
 #include <metin2/log/log.h>
 
 #include <GLFW/glfw3.h>
 #include <raylib.h>
 
-#include <cstdio>
 #include <cstdlib>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -23,16 +25,7 @@ namespace metin2::inline window {
 
         // A .cur file is an ICO container whose entries hold a BITMAPINFOHEADER image (twice the height:
         // colour rows, then the 1-bit transparency mask), stored bottom-up.
-        auto load_cur_file(const std::string &path, cursor_image &image) -> bool {
-            FILE *file = fopen(path.c_str(), "rb");
-            if (!file)
-                return false;
-            std::vector<unsigned char> data;
-            unsigned char buffer[4096];
-            size_t read;
-            while ((read = fread(buffer, 1, sizeof(buffer), file)) > 0)
-                data.insert(data.end(), buffer, buffer + read);
-            fclose(file);
+        auto load_cur_file(std::span<const unsigned char> data, cursor_image &image) -> bool {
             if (data.size() < 22)
                 return false;
 
@@ -168,10 +161,12 @@ namespace metin2::inline window {
             return nullptr;
         }
 
-        const std::string path = std::string(M2_SOURCE_DIR "/src/metin2/client/app/cursors/") + file_name;
+        const std::string path = std::string("ui:cursor/") + file_name;
 
+        mapped_file file;
+        const void *data = nullptr;
         cursor_image image;
-        if (!load_cur_file(path, image)) {
+        if (!get_file_manager().get(file, path.c_str(), &data) || !load_cur_file({static_cast<const unsigned char *>(data), file.size()}, image)) {
             metin2::log::error("Cannot load the cursor {}", path);
             return nullptr;
         }

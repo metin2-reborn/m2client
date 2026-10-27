@@ -3,9 +3,12 @@
 #include <metin2/effects/effect_instance.h>
 #include <metin2/effects/effect_mesh.h>
 #include <metin2/graphics/attribute_data.h>
+#include <metin2/graphics/font_family.h>
 #include <metin2/graphics/grp_expanded_image_instance.h>
 #include <metin2/graphics/grp_mark_instance.h>
 #include <metin2/graphics/grp_nine_patch.h>
+#include <metin2/graphics/grp_particles.h>
+#include <metin2/graphics/grp_pixel_shader.h>
 #include <metin2/graphics/grp_sub_image.h>
 #include <metin2/graphics/grp_text.h>
 #include <metin2/graphics/grp_text_instance.h>
@@ -38,8 +41,20 @@ namespace metin2::inline script {
         return new graphic_nine_patch(file_name);
     }
 
+    static auto new_particles(const char *file_name) -> resource * {
+        return new graphic_particles(file_name);
+    }
+
+    static auto new_pixel_shader(const char *file_name) -> resource * {
+        return new graphic_pixel_shader(file_name);
+    }
+
     static auto new_text(const char *file_name) -> resource * {
         return new graphic_text(file_name);
+    }
+
+    static auto new_font_family(const char *file_name) -> resource * {
+        return new font_family(file_name);
     }
 
     static auto new_thing(const char *file_name) -> resource * {
@@ -84,12 +99,15 @@ namespace metin2::inline script {
     python_resource::python_resource() {
         get_resource_manager().register_asset_new_function_pointer("SubImage", new_sub_image);
         get_resource_manager().register_asset_new_function_pointer("NinePatch", new_nine_patch);
+        get_resource_manager().register_asset_new_function_pointer("Particles", new_particles);
+        get_resource_manager().register_asset_new_function_pointer("Font", new_font_family);
         get_resource_manager().register_resource_new_function_pointer("dds", new_image);
         get_resource_manager().register_resource_new_function_pointer("jpg", new_image);
         get_resource_manager().register_resource_new_function_pointer("tga", new_image);
         get_resource_manager().register_resource_new_function_pointer("bmp", new_image);
         get_resource_manager().register_resource_new_function_pointer("png", new_image);
         get_resource_manager().register_resource_new_function_pointer("fnt", new_text);
+        get_resource_manager().register_resource_new_function_pointer("glsl", new_pixel_shader);
         get_resource_manager().register_resource_new_function_pointer("gr2", new_thing);
         get_resource_manager().register_resource_new_function_pointer("mde", new_effect_mesh);
         get_resource_manager().register_resource_new_function_pointer("mdatr", new_attribute_data);

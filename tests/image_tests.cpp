@@ -1,6 +1,7 @@
 #include "check.h"
 
 #include <metin2/client/guilds/mark_image.h>
+#include <metin2/graphics/grp_expanded_image_instance.h>
 #include <metin2/graphics/image_file.h>
 
 #include <chrono>
@@ -69,4 +70,37 @@ TEST(guild_mark_image_keeps_marks_through_a_file) {
     image.get_data(0, 0, guild_mark::WIDTH, guild_mark::HEIGHT, empty.data());
     CHECK(empty == std::vector<uint32_t>(guild_mark::SIZE, 0));
     std::filesystem::remove(path);
+}
+
+TEST(image_fit_stretches_covers_and_contains) {
+    using fit = graphic_expanded_image_instance;
+    // 1024x768 into 1280x720.
+    const fit::fit_rect stretched = fit::fit(fit::FIT_STRETCH, 1024, 768, 1280, 720);
+    CHECK_EQ(stretched.x, 0.0f);
+    CHECK_EQ(stretched.width, 1280.0f);
+    CHECK_EQ(stretched.height, 720.0f);
+    CHECK_EQ(stretched.u0, 0.0f);
+    CHECK_EQ(stretched.v1, 1.0f);
+
+    // Cover scales by 1.25 (1280x960): the full width, 240 image rows cropped as 120 drawn rows each side.
+    const fit::fit_rect covered = fit::fit(fit::FIT_COVER, 1024, 768, 1280, 720);
+    CHECK_EQ(covered.x, 0.0f);
+    CHECK_EQ(covered.y, 0.0f);
+    CHECK_EQ(covered.width, 1280.0f);
+    CHECK_EQ(covered.height, 720.0f);
+    CHECK_EQ(covered.u0, 0.0f);
+    CHECK_EQ(covered.u1, 1.0f);
+    CHECK_EQ(covered.v0, 0.125f);
+    CHECK_EQ(covered.v1, 0.875f);
+
+    // Contain scales by 0.9375 (960x720): centred with 160 px margins at the sides.
+    const fit::fit_rect contained = fit::fit(fit::FIT_CONTAIN, 1024, 768, 1280, 720);
+    CHECK_EQ(contained.x, 160.0f);
+    CHECK_EQ(contained.y, 0.0f);
+    CHECK_EQ(contained.width, 960.0f);
+    CHECK_EQ(contained.height, 720.0f);
+    CHECK_EQ(contained.u0, 0.0f);
+    CHECK_EQ(contained.v1, 1.0f);
+
+    CHECK_EQ(fit::fit(fit::FIT_COVER, 0, 768, 1280, 720).width, 0.0f);
 }

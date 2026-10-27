@@ -127,7 +127,7 @@ namespace metin2::inline client::inline inventory {
 
     inline auto get_python_item() -> python_item & {
         static python_item instance;
-        
+
         return instance;
     }
 }

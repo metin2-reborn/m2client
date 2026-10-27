@@ -10,7 +10,8 @@ namespace metin2::inline ui::widgets {
     // Shift and the mouse, word jumps with Ctrl, clipboard with Ctrl+C/X/V. Python learns about
     // changes through the usual callbacks (on_ime_update, on_ime_return, on_ime_tab,
     // on_press_escape_key); keys the line does not use still reach on_ime_key_down. An optional
-    // background image (a nine patch stretches to the box) is drawn behind the text.
+    // background image (a nine patch stretches to the box) is drawn behind the text. A single line
+    // is centred vertically in the box and kept `padding` pixels off its left and right sides.
     class edit_line : public text_line {
       public:
         explicit edit_line(PyObject *handler);
@@ -24,6 +25,7 @@ namespace metin2::inline ui::widgets {
         void set_multi_line(bool on) override;
         auto set_background(const char *file_name) -> bool;
         void set_size(int32_t width_value, int32_t height) override;
+        void set_padding(int padding);
 
         void set_caret(int visible_index); // -1 puts the caret at the end
         auto caret() -> int;
@@ -49,12 +51,16 @@ namespace metin2::inline ui::widgets {
         void text_changed();
         void caret_moved();
         void scroll_to_caret();
+        void place_text();
+        auto text_left() const -> float;
+        auto text_right() const -> float;
         auto mouse_visible_index() -> std::size_t;
         void render_bar(float left, float top, float right, float bottom, uint32_t color);
 
         text_edit_buffer buffer_;
         graphic_image_instance background_;
         float scroll_x_ = 0.0f;
+        int padding_ = 0;
         bool focused_ = false;
         bool selecting_ = false;
         bool multi_line_ = false;

@@ -1,5 +1,5 @@
 # Libraries from the system. Linux takes them from the distribution; Windows has no package manager
-# to rely on, so zlib is built from source there and fonts are found without fontconfig.
+# to rely on, so zlib is built from source there.
 find_package(Threads REQUIRED)
 find_package(OpenGL REQUIRED)
 
@@ -15,7 +15,5 @@ if(WIN32)
     target_include_directories(zlibstatic PUBLIC "${zlib_SOURCE_DIR}" "${zlib_BINARY_DIR}")
     add_library(ZLIB::ZLIB ALIAS zlibstatic)
 else()
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(FONTCONFIG REQUIRED IMPORTED_TARGET GLOBAL fontconfig)
     find_package(ZLIB REQUIRED)
 endif()

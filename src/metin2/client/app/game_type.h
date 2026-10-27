@@ -1,4 +1,5 @@
 #pragma once
+#include <metin2/graphics/grp_text.h>
 #include <metin2/world/items/item_data.h>
 
 namespace metin2::inline client::inline app {
@@ -284,7 +285,10 @@ namespace metin2::inline client::inline app {
 
     void default_font_startup();
     void default_font_cleanup();
-    void default_font_set_name(const char *font_name);
+    // The font of chat lines, name tags and quest text, set by the game scripts from the stylesheet;
+    // the italic one (GM whispers) is the same spec in italic. Null before it is set.
+    void default_font_set(const font_spec &font);
+    auto default_font_spec() -> const font_spec &;
     auto default_font_get_resource() -> resource *;
     auto default_italic_font_get_resource() -> resource *;
 

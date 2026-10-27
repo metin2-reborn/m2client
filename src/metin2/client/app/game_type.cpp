@@ -1,14 +1,16 @@
 #include "game_type.h"
 #include <metin2/core/utils.h>
+#include <metin2/graphics/grp_text.h>
 #include <metin2/graphics/resource_manager.h>
+#include <metin2/log/log.h>
 
 namespace metin2::inline client::inline app {
     std::string image_path = "ui:";
 
     std::string guild_symbol_path_name = "mark/10/";
 
-    static std::string default_font_name = "굴림체:12.fnt";
-    static std::string default_italic_font_name = "굴림체:12i.fnt";
+    static font_spec default_font_value;
+    static bool is_default_font_set = false;
     static resource *default_font = nullptr;
     static resource *default_italic_font = nullptr;
 
@@ -24,26 +26,26 @@ namespace metin2::inline client::inline app {
         }
     }
 
-    void default_font_set_name(const char *font_name) {
-        default_font_name = font_name;
-        default_font_name += ".fnt";
-
-        default_italic_font_name = font_name;
-        if (strchr(font_name, ':')) {
-            default_italic_font_name += "i";
-        }
-
-        default_italic_font_name += ".fnt";
-
+    void default_font_set(const font_spec &font) {
+        default_font_value = font;
+        is_default_font_set = true;
         is_reload_default_font = true;
     }
 
+    auto default_font_spec() -> const font_spec & {
+        return default_font_value;
+    }
+
     auto reload_default_fonts() -> bool {
+        if (!is_default_font_set) {
+            metin2::log::error("No default font set");
+            return false;
+        }
         resource_manager &res_mgr = get_resource_manager();
 
         is_reload_default_font = false;
 
-        resource *new_font = res_mgr.resource_pointer(default_font_name.c_str());
+        resource *new_font = res_mgr.resource_pointer(graphic_text::resource_name(default_font_value).c_str());
         new_font->add_reference();
         if (default_font) {
             default_font->release();
@@ -51,7 +53,9 @@ namespace metin2::inline client::inline app {
 
         default_font = new_font;
 
-        resource *new_italic_font = res_mgr.resource_pointer(default_italic_font_name.c_str());
+        font_spec italic = default_font_value;
+        italic.italic = true;
+        resource *new_italic_font = res_mgr.resource_pointer(graphic_text::resource_name(italic).c_str());
         new_italic_font->add_reference();
         if (default_italic_font) {
             default_italic_font->release();

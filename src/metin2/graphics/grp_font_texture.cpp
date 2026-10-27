@@ -23,7 +23,6 @@ namespace metin2::inline graphics {
     void graphic_font_texture::initialize() {
         graphic_texture::initialize();
         is_dirty_ = false;
-        italic_ = false;
     }
 
     auto graphic_font_texture::is_empty() const -> bool {
@@ -49,11 +48,9 @@ namespace metin2::inline graphics {
     void graphic_font_texture::destroy_device_objects() {
     }
 
-    auto graphic_font_texture::create(const char *font_name, int font_size, bool italic) -> bool {
+    auto graphic_font_texture::create(const std::string &file, int size) -> bool {
         destroy();
 
-        font_size_ = font_size;
-        italic_ = italic;
         generation_ = ++next_generation;
 
         x_ = 0;
@@ -69,7 +66,8 @@ namespace metin2::inline graphics {
         if (!dib_.create(width_value, height))
             return false;
 
-        face_.open(font_name, font_size, false, italic, graphic_base::interface_pixel_scale());
+        if (!face_.open(file, size, graphic_base::interface_pixel_scale()))
+            return false;
 
         if (!append_texture())
             return false;
@@ -182,7 +180,7 @@ namespace metin2::inline graphics {
         new_char_info.width = static_cast<short>(cell_width);
         new_char_info.height = static_cast<short>(cell_height);
         new_char_info.bearing_x = static_cast<short>(glyph.left - 1);
-        new_char_info.bearing_y = static_cast<short>(face_.ascent() - glyph.top - 1);
+        new_char_info.bearing_y = static_cast<short>(face_.baseline() - glyph.top - 1);
         new_char_info.left = float(x_) * rhwidth;
         new_char_info.top = float(y_) * rhheight;
         new_char_info.right = float(x_ + cell_width) * rhwidth;

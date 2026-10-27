@@ -6,10 +6,10 @@ waitframes 5
 wait 2500
 screenshot login_00.png
 audio
-# pick channel 1, then "OK" on the server board
+# pick channel 1, then "OK" on the server board (380x410, bottom margin 80: OK is at y 574-600)
 click left 760 299
 wait 300
-click left 775 606
+click left 770 585
 wait 1000
 screenshot login_01.png
 # ID field, then password field (edit lines at (610,324)/(610,351), 120x18)

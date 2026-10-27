@@ -5,7 +5,9 @@
 #include <metin2/core/crc32.h>
 #include <metin2/gpu/types.h>
 
+#include <algorithm>
 #include <array>
+#include <vector>
 
 namespace metin2::inline graphics {
 
@@ -102,54 +104,80 @@ namespace metin2::inline graphics {
         graphic_texture *texture = patch->texture_pointer();
         const rectangle &region = patch->rect_reference();
         const graphic_nine_patch::margins &margins = patch->patch_margins();
+        const bool tiled = patch->tiled();
 
         // Cut positions in interface pixels (relative to the position) and the matching texels.
         const std::array<float, 4> xs = graphic_nine_patch::cuts(margins.left, margins.right, width());
         const std::array<float, 4> ys = graphic_nine_patch::cuts(margins.top, margins.bottom, height());
+        const std::array<float, 4> us = {float(region.left), float(region.left + margins.left), float(region.right - margins.right), float(region.right)};
+        const std::array<float, 4> vs = {float(region.top), float(region.top + margins.top), float(region.bottom - margins.bottom), float(region.bottom)};
         const float tex_reverse_width = 1.0f / float(texture->width());
         const float tex_reverse_height = 1.0f / float(texture->height());
-        const std::array<float, 4> us = {float(region.left) * tex_reverse_width, float(region.left + margins.left) * tex_reverse_width,
-            float(region.right - margins.right) * tex_reverse_width, float(region.right) * tex_reverse_width};
-        const std::array<float, 4> vs = {float(region.top) * tex_reverse_height, float(region.top + margins.top) * tex_reverse_height,
-            float(region.bottom - margins.bottom) * tex_reverse_height, float(region.bottom) * tex_reverse_height};
 
         // Half an interface pixel back (the D3D9 convention) in framebuffer pixels, as for a plain
-        // image; the cuts are whole pixels, so every corner texel lands on one framebuffer pixel.
+        // image; the cuts and tiles are whole pixels, so every texel lands on one framebuffer pixel.
         const float half = graphic_base::half_pixel();
         const float x0 = position_value_.x - half;
         const float y0 = position_value_.y - half;
 
-        // Two triangles per patch (wound as the text quads are, the other way round is culled),
-        // skipping the ones a margin of zero or a small size leaves empty.
-        std::array<pdt_vertex, 9 * 6> vertices;
-        size_t count = 0;
+        // Two triangles per quad, wound as the text quads are (the other way round is culled).
+        static std::vector<pdt_vertex> vertices;
+        vertices.clear();
         auto vertex = [&](float x, float y, float u, float v) -> void {
-            pdt_vertex &out = vertices[count++];
+            pdt_vertex &out = vertices.emplace_back();
             out.position_value = {x0 + x, y0 + y, 0.0f};
-            out.tex_coord = texture_coordinate(u, v);
+            out.tex_coord = texture_coordinate(u * tex_reverse_width, v * tex_reverse_height);
             out.diffuse_value = diffuse_color_;
+        };
+        auto quad = [&](float x, float y, float w, float h, float u, float v, float uw, float vh) -> void {
+            vertex(x, y, u, v);
+            vertex(x, y + h, u, v + vh);
+            vertex(x + w, y, u + uw, v);
+            vertex(x + w, y, u + uw, v);
+            vertex(x, y + h, u, v + vh);
+            vertex(x + w, y + h, u + uw, v + vh);
         };
         for (size_t row = 0; row < 3; ++row) {
             for (size_t column = 0; column < 3; ++column) {
-                if (xs[column + 1] <= xs[column] || ys[row + 1] <= ys[row]) {
+                const float w = xs[column + 1] - xs[column];
+                const float h = ys[row + 1] - ys[row];
+                if (w <= 0.0f || h <= 0.0f) {
                     continue;
                 }
-                vertex(xs[column], ys[row], us[column], vs[row]);
-                vertex(xs[column], ys[row + 1], us[column], vs[row + 1]);
-                vertex(xs[column + 1], ys[row], us[column + 1], vs[row]);
-                vertex(xs[column + 1], ys[row], us[column + 1], vs[row]);
-                vertex(xs[column], ys[row + 1], us[column], vs[row + 1]);
-                vertex(xs[column + 1], ys[row + 1], us[column + 1], vs[row + 1]);
+                const float uw = us[column + 1] - us[column];
+                const float vh = vs[row + 1] - vs[row];
+                // The middle column and row repeat their texels (a partial tile at the far side);
+                // a stretched patch is one quad.
+                const bool tile_x = tiled && column == 1 && uw > 0.0f;
+                const bool tile_y = tiled && row == 1 && vh > 0.0f;
+                for (float y = 0.0f; y < h; y += vh) {
+                    const float tile_h = tile_y ? std::min(vh, h - y) : h;
+                    for (float x = 0.0f; x < w; x += uw) {
+                        const float tile_w = tile_x ? std::min(uw, w - x) : w;
+                        quad(xs[column] + x, ys[row] + y, tile_w, tile_h, us[column], vs[row], tile_x ? tile_w : uw, tile_y ? tile_h : vh);
+                        if (!tile_x) {
+                            break;
+                        }
+                    }
+                    if (!tile_y) {
+                        break;
+                    }
+                }
             }
         }
-        if (count == 0) {
+        if (vertices.empty()) {
             return;
         }
 
         STATEMANAGER.set_texture(0, texture->gpu_texture());
         STATEMANAGER.set_texture(1, nullptr);
         STATEMANAGER.set_vertex_shader(gpu::fvf::XYZ | gpu::fvf::DIFFUSE | gpu::fvf::TEX1);
-        STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_LIST, static_cast<uint32_t>(count / 3), vertices.data(), sizeof(pdt_vertex));
+        // Longer runs than the user stream holds go in slices (each a whole number of triangles).
+        constexpr size_t MAX_VERTICES = 4096 * 6;
+        for (size_t at = 0; at < vertices.size(); at += MAX_VERTICES) {
+            const size_t count = std::min(MAX_VERTICES, vertices.size() - at);
+            STATEMANAGER.draw_primitive_up(gpu::primitive::TRIANGLE_LIST, static_cast<uint32_t>(count / 3), vertices.data() + at, sizeof(pdt_vertex));
+        }
     }
 
     auto graphic_image_instance::texture_reference() const -> const graphic_texture & {

@@ -154,7 +154,8 @@ void main() {
 }
 )GLSL";
 
-        auto compile_shader(GLenum type, const char *source) -> GLuint {
+        // The compiler's message goes to error when given, to stderr otherwise.
+        auto compile_shader(GLenum type, const char *source, std::string *error = nullptr) -> GLuint {
             GLuint shader = glCreateShader(type);
             glShaderSource(shader, 1, &source, nullptr);
             glCompileShader(shader);
@@ -163,7 +164,10 @@ void main() {
             if (!ok) {
                 char log[4096];
                 glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
-                fprintf(stderr, "[opengl] shader compile failed:\n%s\n", log);
+                if (error)
+                    *error = log;
+                else
+                    fprintf(stderr, "[opengl] shader compile failed:\n%s\n", log);
                 glDeleteShader(shader);
                 return 0;
             }
@@ -186,8 +190,11 @@ void main() {
         indices_.reset();
         target_.reset();
         depth_target_.reset();
+        pixel_shader_.reset();
         if (program_)
             glDeleteProgram(program_);
+        if (vertex_shader_)
+            glDeleteShader(vertex_shader_);
         if (uniform_buffer_)
             glDeleteBuffers(1, &uniform_buffer_);
         if (vertex_array_)
@@ -266,7 +273,7 @@ void main() {
         glAttachShader(program_, vs);
         glAttachShader(program_, fs);
         glLinkProgram(program_);
-        glDeleteShader(vs);
+        vertex_shader_ = vs;
         glDeleteShader(fs);
         GLint ok = 0;
         glGetProgramiv(program_, GL_LINK_STATUS, &ok);
@@ -763,9 +770,18 @@ void main() {
         if (binding_epoch_seen_ != binding_epoch) {
             forget_bindings();
         }
-        if (bound_program_ != program_) {
-            glUseProgram(program_);
-            bound_program_ = program_;
+        const GLuint program = pixel_shader_ ? pixel_shader_->program : program_;
+        if (bound_program_ != program) {
+            glUseProgram(program);
+            bound_program_ = program;
+            pixel_shader_params_dirty_ = true;
+        }
+        if (pixel_shader_ && pixel_shader_params_dirty_) {
+            const pixel_shader_params &params = pixel_shader_params_;
+            glUniform1f(pixel_shader_->time_location, params.time);
+            glUniform2f(pixel_shader_->size_location, params.width, params.height);
+            glUniform4fv(pixel_shader_->user_location, 4, params.user.data());
+            pixel_shader_params_dirty_ = false;
         }
         if (bound_vertex_array_ != vertex_array_) {
             glBindVertexArray(vertex_array_);
@@ -928,6 +944,50 @@ void main() {
         // as in Direct3D, stream 0 is unset afterwards
         streams_[0].buffer.reset();
         return true;
+    }
+
+    gl_pixel_shader::~gl_pixel_shader() {
+        if (program)
+            glDeleteProgram(program);
+    }
+
+    auto gl_device::create_pixel_shader(std::string_view body, std::string &error) -> std::shared_ptr<pixel_shader> {
+        const std::string source = pixel_shader_source(body);
+        const GLuint fs = compile_shader(GL_FRAGMENT_SHADER, source.c_str(), &error);
+        if (!fs)
+            return nullptr;
+        auto shader = std::make_shared<gl_pixel_shader>();
+        shader->program = glCreateProgram();
+        glAttachShader(shader->program, vertex_shader_);
+        glAttachShader(shader->program, fs);
+        glLinkProgram(shader->program);
+        glDetachShader(shader->program, vertex_shader_);
+        glDeleteShader(fs);
+        GLint ok = 0;
+        glGetProgramiv(shader->program, GL_LINK_STATUS, &ok);
+        if (!ok) {
+            char log[4096];
+            glGetProgramInfoLog(shader->program, sizeof(log), nullptr, log);
+            error = log;
+            return nullptr;
+        }
+        // The vertex stage reads the fixed-function block, bound at 0 as for the main program.
+        glUniformBlockBinding(shader->program, glGetUniformBlockIndex(shader->program, "FFP"), 0);
+        glUseProgram(shader->program);
+        glUniform1i(glGetUniformLocation(shader->program, "uImage"), 0);
+        glUniform1i(glGetUniformLocation(shader->program, "uMask"), 1);
+        shader->time_location = glGetUniformLocation(shader->program, "uTime");
+        shader->size_location = glGetUniformLocation(shader->program, "uSize");
+        shader->user_location = glGetUniformLocation(shader->program, "uUser");
+        // prepare_draw binds its program again.
+        bound_program_ = shader->program;
+        return shader;
+    }
+
+    void gl_device::set_pixel_shader(pixel_shader *shader, const pixel_shader_params &params) {
+        pixel_shader_ = shader ? std::static_pointer_cast<gl_pixel_shader>(shader->shared_from_this()) : nullptr;
+        pixel_shader_params_ = params;
+        pixel_shader_params_dirty_ = true;
     }
 
     auto gl_device::create_blit_program() -> bool {

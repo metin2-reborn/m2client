@@ -93,6 +93,16 @@ namespace metin2::gpu::opengl {
         GLuint framebuffer_ = 0;
     };
 
+    class gl_pixel_shader final : public pixel_shader {
+      public:
+        ~gl_pixel_shader() override;
+
+        GLuint program = 0;
+        GLint time_location = -1;
+        GLint size_location = -1;
+        GLint user_location = -1;
+    };
+
     class gl_depth_buffer final : public depth_buffer {
       public:
         gl_depth_buffer(uint32_t width, uint32_t height, format fmt);
@@ -121,6 +131,7 @@ namespace metin2::gpu::opengl {
         auto create_depth_buffer(uint32_t width, uint32_t height, format fmt) -> std::shared_ptr<depth_buffer> override;
         auto create_vertex_layout(std::span<const vertex_element> elements) -> uint32_t override;
         void destroy_vertex_layout(uint32_t handle) override;
+        auto create_pixel_shader(std::string_view body, std::string &error) -> std::shared_ptr<pixel_shader> override;
 
         auto reset(const device_settings &settings) -> bool override;
         auto back_buffer_width() const -> uint32_t override { return settings_.width; }
@@ -143,6 +154,7 @@ namespace metin2::gpu::opengl {
         void set_vertex_format(uint32_t format_or_handle) override;
         void set_stream(uint32_t stream, vertex_buffer *buffer, uint32_t stride) override;
         void set_indices(index_buffer *buffer, uint32_t base_vertex) override;
+        void set_pixel_shader(pixel_shader *shader, const pixel_shader_params &params) override;
 
         auto set_render_target(texture *color, depth_buffer *depth) -> bool override;
         auto render_target() const -> texture * override { return target_.get(); }
@@ -203,6 +215,10 @@ namespace metin2::gpu::opengl {
         bool flip_y_ = false;
 
         GLuint program_ = 0;
+        GLuint vertex_shader_ = 0; // kept to link the pixel shaders with
+        std::shared_ptr<gl_pixel_shader> pixel_shader_;
+        pixel_shader_params pixel_shader_params_;
+        bool pixel_shader_params_dirty_ = false;
         GLuint uniform_buffer_ = 0;
         GLuint vertex_array_ = 0;
         GLuint user_vertices_ = 0;

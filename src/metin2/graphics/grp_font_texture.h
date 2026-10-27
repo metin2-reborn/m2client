@@ -6,6 +6,7 @@
 #include "grp_texture.h"
 
 #include <map>
+#include <string>
 #include <vector>
 
 namespace metin2::inline graphics {
@@ -37,7 +38,9 @@ namespace metin2::inline graphics {
         ~graphic_font_texture() override;
 
         void destroy();
-        auto create(const char *font_name, int font_size, bool italic) -> bool;
+        // The atlas of the font file at the em size (interface pixels), rasterized at the current
+        // interface pixel scale.
+        auto create(const std::string &file, int size) -> bool;
 
         auto create_device_objects() -> bool;
         void destroy_device_objects();
@@ -57,6 +60,8 @@ namespace metin2::inline graphics {
         auto pixel_scale() const -> float { return face_.pixel_scale(); }
         auto generation() const -> uint32_t { return generation_; }
         auto line_height() const -> int { return face_.cell_height(); }
+        auto ascent() const -> float { return face_.ascent(); }
+        auto baseline() const -> int { return face_.baseline(); }
 
       protected:
         void initialize();
@@ -80,8 +85,5 @@ namespace metin2::inline graphics {
         int step_;
         bool is_dirty_;
         uint32_t generation_ = 0;
-
-        int32_t font_size_;
-        bool italic_;
     };
 }

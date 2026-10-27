@@ -47,6 +47,32 @@ namespace metin2::inline ui::widgets {
     void edit_line::set_size(int32_t width_value, int32_t height_value) {
         text_line::set_size(width_value, height_value);
         background_.set_size(width_value, height_value);
+        place_text();
+    }
+
+    void edit_line::set_padding(int padding) {
+        padding_ = std::max(0, padding);
+        place_text();
+        scroll_to_caret();
+    }
+
+    void edit_line::place_text() {
+        if (multi_line_ || height_ <= 0) {
+            text_instance_.set_position(static_cast<float>(rect_.left + padding_), static_cast<float>(rect_.top));
+        } else {
+            text_instance_.set_vertical_align(graphic_text_instance::VERTICAL_ALIGN_CENTER);
+            text_instance_.set_position(static_cast<float>(rect_.left + padding_), static_cast<float>(rect_.top) + static_cast<float>(height_) / 2.0f);
+        }
+        if (!multi_line_ && width_ > 0)
+            text_instance_.set_limit_width(text_right() - text_left());
+    }
+
+    auto edit_line::text_left() const -> float {
+        return static_cast<float>(rect_.left + padding_);
+    }
+
+    auto edit_line::text_right() const -> float {
+        return std::max(text_left(), static_cast<float>(rect_.right - padding_));
     }
 
     void edit_line::set_max_bytes(int bytes) {
@@ -71,6 +97,9 @@ namespace metin2::inline ui::widgets {
         text_line::set_multi_line(on);
         multi_line_ = on;
         scroll_x_ = 0.0f;
+        if (on)
+            text_instance_.set_vertical_align(graphic_text_instance::VERTICAL_ALIGN_TOP);
+        place_text();
     }
 
     void edit_line::set_caret(int visible_index) {
@@ -199,7 +228,7 @@ namespace metin2::inline ui::widgets {
         }
         text_instance_.update();
         const float caret_x = text_instance_.character_x(buffer_.caret());
-        const float visible = static_cast<float>(width_ - 2);
+        const float visible = text_right() - text_left() - 2.0f;
         if (caret_x - scroll_x_ > visible)
             scroll_x_ = caret_x - visible;
         if (caret_x < scroll_x_)
@@ -212,8 +241,7 @@ namespace metin2::inline ui::widgets {
     void edit_line::on_change_position() {
         text_line::on_change_position();
         background_.set_position(static_cast<float>(rect_.left), static_cast<float>(rect_.top));
-        if (!multi_line_ && width_ > 0)
-            text_instance_.set_limit_width(static_cast<float>(width_));
+        place_text();
     }
 
     void edit_line::on_set_focus() {
@@ -290,8 +318,8 @@ namespace metin2::inline ui::widgets {
         int text_width = 0, text_height = 0;
         text_instance_.text_size(&text_width, &text_height);
         const auto line_height = static_cast<float>(text_height);
-        const float clip_left = static_cast<float>(rect_.left);
-        const float clip_right = width_ > 0 ? static_cast<float>(rect_.right) : origin_x + static_cast<float>(text_width) + 1.0f;
+        const float clip_left = text_left();
+        const float clip_right = width_ > 0 ? text_right() : origin_x + static_cast<float>(text_width) + 1.0f;
 
         if (focused_ && buffer_.has_selection()) {
             const auto [begin, end] = buffer_.selection();

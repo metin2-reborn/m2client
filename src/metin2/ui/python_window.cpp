@@ -757,14 +757,9 @@ namespace metin2::inline ui {
         void text_line::set_multi_line(bool flag) {
             text_instance_.set_multi_line(flag ? true : false);
         }
-        void text_line::set_font_name(const char *c_sz_font_name) {
-            std::string st_font_name = c_sz_font_name;
-            st_font_name += ".fnt";
-
-            resource_manager &res_mgr = get_resource_manager();
-            resource *res = res_mgr.type_resource_pointer(st_font_name.c_str());
-            auto *res_font = static_cast<graphic_text *>(res);
-            text_instance_.set_text_pointer(res_font);
+        void text_line::set_font(const font_spec &font) {
+            resource *res = get_resource_manager().type_resource_pointer(graphic_text::resource_name(font).c_str());
+            text_instance_.set_text_pointer(static_cast<graphic_text *>(res));
         }
         void text_line::set_font_color(uint32_t color) {
             text_instance_.set_color(color);
@@ -1096,7 +1091,9 @@ namespace metin2::inline ui {
                 return;
 
             ((graphic_expanded_image_instance *)image_instance_)->set_scale(fx, fy);
-            ui_window::set_size(int32_t(float(width()) * fx), int32_t(float(height()) * fy));
+            // With a fit mode the window is the box and the scale only mirrors the image.
+            if (fit_mode_ == graphic_expanded_image_instance::FIT_NONE)
+                ui_window::set_size(int32_t(float(width()) * fx), int32_t(float(height()) * fy));
         }
         void expanded_image_box::fill_screen(int32_t width_value, int32_t height_value) {
             // width()/height() are the image's own size, so this stretches the image to exactly the screen.
@@ -1130,6 +1127,49 @@ namespace metin2::inline ui {
                 static_cast<graphic_expanded_image_instance *>(image_instance_)->set_rendering_mode(mode);
         }
 
+        void expanded_image_box::set_fit(int mode) {
+            fit_mode_ = mode;
+            apply_fit();
+        }
+
+        void expanded_image_box::set_size(int32_t width_value, int32_t height_value) {
+            image_box::set_size(width_value, height_value);
+            apply_fit();
+        }
+
+        auto expanded_image_box::set_shader(const char *shader_name, const char *mask_name) -> bool {
+            shader_.clear();
+            mask_.clear();
+            if (shader_name[0]) {
+                resource *shader = get_resource_manager().resource_pointer(shader_name);
+                if (!shader || !shader->is_type(graphic_pixel_shader::type()))
+                    return false;
+                shader_.set_pointer(shader);
+                if (shader_->is_empty()) {
+                    shader_.clear();
+                    return false;
+                }
+                if (mask_name[0]) {
+                    resource *mask = get_resource_manager().resource_pointer(mask_name);
+                    if (!mask || !mask->is_type(graphic_image::type())) {
+                        shader_.clear();
+                        return false;
+                    }
+                    mask_.set_pointer(mask);
+                }
+            }
+            apply_fit();
+            return true;
+        }
+
+        void expanded_image_box::apply_fit() {
+            if (!image_instance_)
+                return;
+            auto *instance = static_cast<graphic_expanded_image_instance *>(image_instance_);
+            instance->set_fit(fit_mode_, float(width_), float(height_));
+            instance->set_shader(shader_.pointer(), mask_.pointer());
+        }
+
         void expanded_image_box::on_update() {
         }
         void expanded_image_box::on_render() {
@@ -1138,6 +1178,88 @@ namespace metin2::inline ui {
 
             if (is_show())
                 image_instance_->render();
+        }
+
+        auto expanded_image_box::image_fit(float (&out)[8]) -> bool {
+            if (!image_instance_ || image_instance_->is_empty()) {
+                return false;
+            }
+            const auto image_width = float(image_instance_->width());
+            const auto image_height = float(image_instance_->height());
+            using instance = graphic_expanded_image_instance;
+            const auto mode = static_cast<instance::fit_mode>(fit_mode_);
+            if (mode == instance::FIT_NONE || mode == instance::FIT_TILE) {
+                out[0] = 0.0f;
+                out[1] = 0.0f;
+                out[2] = float(width_);
+                out[3] = float(height_);
+                out[4] = 0.0f;
+                out[5] = 0.0f;
+                out[6] = 1.0f;
+                out[7] = 1.0f;
+                return true;
+            }
+            const instance::fit_rect box = instance::fit(mode, image_width, image_height, float(width_), float(height_));
+            out[0] = box.x;
+            out[1] = box.y;
+            out[2] = box.width;
+            out[3] = box.height;
+            out[4] = box.u0;
+            out[5] = box.v0;
+            out[6] = box.u1;
+            out[7] = box.v1;
+            return true;
+        }
+
+        particle_box::particle_box(PyObject *ppy_object) : ui_window(ppy_object) {
+            add_flag(FLAG_NOT_PICK);
+        }
+
+        particle_box::~particle_box() = default;
+
+        auto particle_box::load(const char *file_name) -> bool {
+            resource *resource = get_resource_manager().resource_pointer(file_name);
+            if (!resource || !resource->is_type(graphic_particles::type())) {
+                return false;
+            }
+            particles_ = resource;
+            if (particles_->is_empty()) {
+                particles_.clear();
+                return false;
+            }
+            emitter_.set_settings(particles_->settings());
+            emitter_.set_image(particles_->image());
+            update_box();
+            return true;
+        }
+
+        void particle_box::reset() {
+            emitter_.reset();
+        }
+
+        void particle_box::set_size(int32_t width_value, int32_t height_value) {
+            ui_window::set_size(width_value, height_value);
+            update_box();
+        }
+
+        void particle_box::update_box() {
+            emitter_.set_box(float(rect_.left), float(rect_.top), float(width_), float(height_));
+        }
+
+        void particle_box::on_update() {
+            if (!particles_.is_null()) {
+                emitter_.update(get_timer().elapsed_second());
+            }
+        }
+
+        void particle_box::on_render() {
+            if (!particles_.is_null() && is_show()) {
+                emitter_.render();
+            }
+        }
+
+        void particle_box::on_change_position() {
+            update_box();
         }
 
         auto ani_image_box::type() -> uint32_t {

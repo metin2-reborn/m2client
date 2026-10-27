@@ -2,12 +2,14 @@
 
 #include <metin2/gpu/fixed_function.h>
 #include <metin2/gpu/format.h>
+#include <metin2/gpu/pixel_shader.h>
 #include <metin2/gpu/vertex_layout.h>
 #include <metin2/graphics/dxtc_image.h>
 #include <metin2/graphics/image_file.h>
 
 #include <cmath>
 #include <cstring>
+#include <string>
 #include <vector>
 
 using namespace metin2;
@@ -215,4 +217,14 @@ TEST(uncompressed_dds_decodes) {
     CHECK_EQ(image.pixels[2], uint8_t(0x30));
     CHECK_EQ(image.pixels[3], uint8_t(0x80));
     CHECK_EQ(image.pixels[4], uint8_t(0x40));
+}
+
+TEST(pixel_shader_source_puts_the_body_after_the_header_at_line_one) {
+    const std::string source = gpu::pixel_shader_source("void main() {\n    fragColor = vColor;\n}");
+    CHECK(source.starts_with("#version 330 core\n"));
+    CHECK(source.find("uniform sampler2D uMask;") != std::string::npos);
+    // The compiler numbers the body from 1, as in the file.
+    const size_t line = source.find("#line 1\nvoid main() {\n");
+    CHECK(line != std::string::npos);
+    CHECK(source.ends_with("}\n"));
 }

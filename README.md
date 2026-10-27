@@ -18,14 +18,14 @@ OpenAL Soft and runs the Python 2.7 game scripts maintained in the `m2game` repo
 - CMake 3.25+ and Ninja
 - [just](https://github.com/casey/just) and [bubblewrap](https://github.com/containers/bubblewrap)
   (for the recipes and the sandbox below)
-- Development packages for zlib, LZO 2, expat, fontconfig, OpenGL, X11 or Wayland, and ALSA,
+- Development packages for zlib, LZO 2, expat, OpenGL, X11 or Wayland, and ALSA,
   PulseAudio or PipeWire
 
 On Debian or Ubuntu:
 
 ```sh
 sudo apt install build-essential clang-22 cmake ninja-build pkgconf just bubblewrap \
-    zlib1g-dev liblzo2-dev libexpat1-dev libfontconfig-dev libgl-dev \
+    zlib1g-dev liblzo2-dev libexpat1-dev libgl-dev \
     libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
     libwayland-dev wayland-protocols libxkbcommon-dev \
     libasound2-dev libpulse-dev libpipewire-0.3-dev
@@ -61,10 +61,34 @@ ctest --test-dir build
 ```
 
 Nothing has to be installed besides the toolchain: zlib, LZO and Python 2.7.18 are built from
-source, Python as a static library like on Linux, so `client.exe` has no DLLs beside it. Fonts are
-looked up in the Windows font folders by family name instead of through fontconfig, and the
+source, Python as a static library like on Linux, so `client.exe` has no DLLs beside it. The
 settings, logs and screenshots live in `%APPDATA%\metin2`. The automation harness runs scripts on
 Windows too, but its command socket is Linux only.
+
+#### Releases
+
+The `Windows release` workflow (`.github/workflows/release-windows.yml`, started by hand with a
+version `X.Y.Z` and an m2game ref) builds a Release `client.exe`, which uses the GUI subsystem so no
+console window opens. It lays out the release folder with `scripts/package_release.py`:
+
+| Path              | Contents                                                     |
+|-------------------|--------------------------------------------------------------|
+| `Metin2.exe`      | the client                                                   |
+| `data/<pack>.zip` | one zip per folder of m2game's `data/`, paths relative to it |
+| `lib/`            | m2game's `lib/` as it is (the Python standard library)       |
+
+Files whose extension is in `EXCLUDE_EXTENSIONS` in the script (`.ase`) stay out of the packs. The
+folder becomes `Metin2-<version>-windows-x64.zip` and an MSI built with WiX v5 from
+`packaging/windows/metin2.wxs` (installs to Program Files, Start menu shortcut). Both are attached to
+the release `v<version>` of m2game, tagged on the m2game commit that was packed. The workflow needs
+the repository secret `M2GAME_TOKEN`: a token for `metin2-reborn/m2game` with Contents read and
+write (m2game is private). The script runs on Linux too:
+`scripts/package_release.py --exe build/bin/client --game ../m2game --out release`, then
+`METIN2_CLIENT_DIR=$PWD/release just smoke` runs the client from the packs.
+
+The data deflates to about 1.5 GB, against GitHub's 2 GiB limit per release asset and the 2 GB
+limit of an MSI with an embedded cabinet; past that the packs have to be split or the cabinets
+moved out of the MSI.
 
 ## Running
 
@@ -175,6 +199,11 @@ Scripts, commands and their results are logged to `run/automation.log`.
 | `checksum`, `verify-gamedir` | record and check a manifest of the game directory        |
 | `format`          | format the sources with clang-format                                |
 | `clean`           | remove the build and everything the client wrote under `run/`       |
+
+The build also produces `build/bin/eter_unpack`, which extracts an original client's `pack/*.eix`
++ `*.epk` archives: `eter_unpack <out dir> <pack dir or .eix files>` writes one folder per pack,
+decodes the plain, compressed and key-encrypted entries and lists the Panama and hybrid-crypt
+entries (their keys only ever came from the login server) in `<out dir>/unsupported.txt`.
 
 ## Contributing
 

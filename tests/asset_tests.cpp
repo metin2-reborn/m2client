@@ -478,28 +478,33 @@ TEST(nine_patch_reads_the_region_and_margins) {
     std::string image;
     int region[4] = {};
     graphic_nine_patch::margins margins;
-    CHECK(graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"ui:default/sheet.png\"\nregion_rect = [32, 0, 32, 32]\npatch_margins = [5, 6, 7, 8]\n", "a.toml", image, region, margins));
+    bool tile = false;
+    CHECK(graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"ui:default/sheet.png\"\nregion_rect = [32, 0, 32, 32]\npatch_margins = [5, 6, 7, 8]\n", "a.toml", image, region, margins, tile));
     CHECK_EQ(image, std::string("ui:default/sheet.png"));
+    CHECK(tile); // repeated unless the asset says otherwise
     CHECK_EQ(region[0], 32);
     CHECK_EQ(region[2], 32);
     CHECK_EQ(margins.left, 5);
     CHECK_EQ(margins.top, 6);
     CHECK_EQ(margins.right, 7);
     CHECK_EQ(margins.bottom, 8);
+    CHECK(graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [5, 5, 5, 5]\ntile = false\n", "a.toml", image, region, margins, tile));
+    CHECK(!tile);
 }
 
 TEST(nine_patch_rejects_bad_scripts) {
     std::string image;
     int region[4] = {};
     graphic_nine_patch::margins margins;
+    bool tile = true;
     // A sub image, a region without a size, margins wider than the region, a missing key, a negative margin.
-    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nimage = \"a.png\"\nrect = [0, 0, 1, 2]\n", "a.toml", image, region, margins));
-    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 0, 32]\npatch_margins = [0, 0, 0, 0]\n", "a.toml", image, region, margins));
-    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [20, 0, 20, 0]\n", "a.toml", image, region, margins));
-    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\n", "a.toml", image, region, margins));
-    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [5, -1, 5, 5]\n", "a.toml", image, region, margins));
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"SubImage\"\n[sub_image]\nimage = \"a.png\"\nrect = [0, 0, 1, 2]\n", "a.toml", image, region, margins, tile));
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 0, 32]\npatch_margins = [0, 0, 0, 0]\n", "a.toml", image, region, margins, tile));
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [20, 0, 20, 0]\n", "a.toml", image, region, margins, tile));
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\n", "a.toml", image, region, margins, tile));
+    CHECK(!graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [5, -1, 5, 5]\n", "a.toml", image, region, margins, tile));
     // An unknown key is only warned about, as for every asset.
-    CHECK(graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [5, 5, 5, 5]\ntile = true\n", "a.toml", image, region, margins));
+    CHECK(graphic_nine_patch::load("[asset]\ntype = \"NinePatch\"\n[nine_patch]\nimage = \"a.png\"\nregion_rect = [0, 0, 32, 32]\npatch_margins = [5, 5, 5, 5]\nstretch = true\n", "a.toml", image, region, margins, tile));
 }
 
 TEST(nine_patch_cuts_keep_the_margins_and_shrink_them_when_they_do_not_fit) {

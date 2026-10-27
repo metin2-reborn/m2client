@@ -15,15 +15,12 @@ target_link_libraries(metin2 PUBLIC
     raylib OpenAL minimp3 dr_libs freetype ZLIB::ZLIB Threads::Threads ${CMAKE_DL_LIBS})
 if(WIN32)
     target_link_libraries(metin2 PUBLIC dbghelp) # the crash handler's symbols
-else()
-    target_link_libraries(metin2 PUBLIC PkgConfig::FONTCONFIG)
 endif()
 target_compile_options(metin2 PRIVATE ${M2_CLEAN_WARNINGS})
 # The window code calls GLFW (raylib's window backend) for the pointer lock and custom cursors, and
-# the OpenGL renderer calls GL through raylib's glad; the cursor files are read from the source tree.
+# the OpenGL renderer calls GL through raylib's glad.
 FetchContent_GetProperties(raylib)
 target_include_directories(metin2 PRIVATE "${raylib_SOURCE_DIR}/src/external/glfw/include" "${raylib_SOURCE_DIR}/src")
-target_compile_definitions(metin2 PRIVATE "M2_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\"")
 # The Python headers are installed by the Python build.
 add_dependencies(metin2 python27_ep)
 
@@ -31,4 +28,7 @@ add_executable(client metin2/main.cpp)
 target_link_libraries(client PRIVATE metin2)
 target_compile_options(client PRIVATE ${M2_CLEAN_WARNINGS})
 target_link_options(client PRIVATE ${M2_EXE_LINK_OPTIONS})
+# Windows Release builds are what players run: no console window beside the game (main() stays the
+# entry point). The other configurations keep the console for the log output.
+target_link_options(client PRIVATE "$<$<AND:$<PLATFORM_ID:Windows>,$<CONFIG:Release>>:LINKER:/SUBSYSTEM:WINDOWS,/ENTRY:mainCRTStartup>")
 set_target_properties(client PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

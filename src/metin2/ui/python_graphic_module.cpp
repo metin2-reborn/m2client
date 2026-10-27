@@ -1,8 +1,11 @@
 #include "python_graphic.h"
 
+#include <metin2/client/app/game_type.h>
 #include <metin2/config/state_dir.h>
 #include <metin2/core/time_utils.h>
 #include <metin2/graphics/camera.h>
+#include <metin2/graphics/font_family.h>
+#include <metin2/graphics/resource_manager.h>
 #include <metin2/graphics/text_bar.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_header.h>
@@ -14,13 +17,26 @@
 #include <string>
 
 namespace metin2::inline ui {
+    namespace {
+        // The default font's file of the weight, for the text bars (which draw with font_face directly).
+        auto default_font_file(int weight) -> std::string {
+            const font_spec &spec = default_font_spec();
+            resource *asset = get_resource_manager().resource_pointer(spec.family.c_str());
+            if (!asset || !asset->is_type(font_family::type())) {
+                metin2::log::error("{} is not a Font asset", spec.family);
+                return {};
+            }
+            return static_cast<font_family *>(asset)->file_for(spec.italic, weight);
+        }
+    }
+
     auto grp_create_text_bar(PyObject *self, PyObject *args) -> PyObject * {
         int width_value, height_value;
         if (!PyArg_ParseTuple(args, "ii", &width_value, &height_value)) {
             return nullptr;
         }
 
-        auto *new_text_bar = new text_bar(12, false);
+        auto *new_text_bar = new text_bar(default_font_file(400), 12);
         if (!new_text_bar->create(width_value, height_value)) {
             delete new_text_bar;
 
@@ -36,7 +52,7 @@ namespace metin2::inline ui {
             return nullptr;
         }
 
-        auto *text_bar_value = new text_bar(font_size, true);
+        auto *text_bar_value = new text_bar(default_font_file(700), font_size);
         if (!text_bar_value->create(width_value, height_value)) {
             delete text_bar_value;
 

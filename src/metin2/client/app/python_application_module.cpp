@@ -594,13 +594,17 @@ namespace metin2::inline client::inline app {
         return Py_BuildValue("f", get_degree_difference(source, target));
     }
 
-    auto app_set_default_font_name(PyObject *self, PyObject *args) -> PyObject * {
-        char *font_name;
-        if (!PyArg_ParseTuple(args, "s", &font_name)) {
+    // set_default_font(font_asset, size, weight, italic)
+    auto app_set_default_font(PyObject *self, PyObject *args) -> PyObject * {
+        char *family;
+        int size;
+        int weight;
+        int italic;
+        if (!PyArg_ParseTuple(args, "siii", &family, &size, &weight, &italic)) {
             return nullptr;
         }
 
-        default_font_set_name(font_name);
+        default_font_set(font_spec{family, size, weight, italic != 0});
         Py_RETURN_NONE;
     }
 
@@ -917,7 +921,7 @@ namespace metin2::inline client::inline app {
 
             {"get_rotating_direction", app_get_rotating_direction, METH_VARARGS},
             {"get_degree_difference", app_get_degree_difference, METH_VARARGS},
-            {"set_default_font_name", app_set_default_font_name, METH_VARARGS},
+            {"set_default_font", app_set_default_font, METH_VARARGS},
             {"set_guild_symbol_path", app_set_guild_symbol_path, METH_VARARGS},
 
             {"enable_special_camera_mode", app_enable_special_camera_mode, METH_VARARGS},

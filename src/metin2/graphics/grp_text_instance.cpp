@@ -126,11 +126,13 @@ namespace metin2::inline graphics {
     }
 
     // The aligned origin in texels: the interface position, aligned by the text size, rounded to a
-    // whole texel once so every glyph lands on framebuffer pixels.
+    // whole texel once so every glyph lands on framebuffer pixels. Vertically the rounding happens
+    // at the baseline, which is what the eye centres; rounding the line top and the ascent apart
+    // can push the glyphs a pixel down.
     void graphic_text_instance::aligned_origin_texels(int *x, int *y) {
         const float scale = pixel_scale();
         float fx = position_value_.x * scale;
-        float fy = (position_value_.y + 1.0f) * scale;
+        float fy = position_value_.y * scale;
 
         switch (h_align_) {
         case HORIZONTAL_ALIGN_RIGHT:
@@ -151,7 +153,12 @@ namespace metin2::inline graphics {
         }
 
         *x = static_cast<int>(lroundf(fx));
-        *y = static_cast<int>(lroundf(fy));
+        graphic_font_texture *font_texture = ro_text_.is_null() ? nullptr : ro_text_->font_texture_pointer();
+        if (font_texture && !font_texture->is_empty()) {
+            *y = static_cast<int>(lroundf(fy + font_texture->ascent())) - font_texture->baseline();
+        } else {
+            *y = static_cast<int>(lroundf(fy));
+        }
     }
 
     void graphic_text_instance::aligned_origin(float *x, float *y) {

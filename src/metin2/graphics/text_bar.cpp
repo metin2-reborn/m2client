@@ -17,14 +17,11 @@ namespace metin2::inline graphics {
         invalidate();
     }
 
-    // fontconfig substitutes Arial and falls back per character.
     void text_bar::on_create() {
-        face_.open("Arial", font_size_, is_bold_, false);
+        face_.open(file_, size_);
     }
 
-    text_bar::text_bar(int font_size, bool is_bold) {
-        font_size_ = font_size;
-        is_bold_ = is_bold;
+    text_bar::text_bar(std::string file, int size) : file_(std::move(file)), size_(size) {
     }
 
     text_bar::~text_bar() = default;

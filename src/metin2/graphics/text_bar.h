@@ -3,11 +3,15 @@
 #include "dib_bar.h"
 #include "font_face.h"
 
+#include <string>
+#include <utility>
+
 namespace metin2::inline graphics {
 
     class text_bar : public dib_bar {
       public:
-        text_bar(int font_size, bool is_bold);
+        // file is the .ttf (through the file manager), size the em in interface pixels.
+        text_bar(std::string file, int size);
         ~text_bar() override;
 
         void text_out(int ix, int iy, const char *text);
@@ -21,7 +25,7 @@ namespace metin2::inline graphics {
         font_face face_;
         uint32_t text_color_ = 0x00ffffff;
 
-        int font_size_;
-        bool is_bold_;
+        std::string file_;
+        int size_;
     };
 }

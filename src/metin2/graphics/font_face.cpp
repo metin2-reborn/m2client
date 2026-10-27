@@ -1,5 +1,7 @@
 #include "font_face.h"
 
+#include <metin2/core/mapped_file.h>
+#include <metin2/files/eter_file_manager.h>
 #include <metin2/log/log.h>
 
 #include <ft2build.h>
@@ -7,18 +9,8 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdlib>
 #include <cstring>
 #include <memory>
-
-#ifdef _WIN32
-#include <filesystem>
-#include <metin2/core/string_case.h>
-#include <system_error>
-#include <vector>
-#else
-#include <fontconfig/fontconfig.h>
-#endif
 
 namespace metin2::inline graphics {
 
@@ -27,77 +19,51 @@ namespace metin2::inline graphics {
     };
 
     namespace {
-#ifdef _WIN32
-        // One face of an installed font file.
-        struct installed_font {
-            std::string path;
-            int index = 0;
-            std::string family;
-            bool bold = false;
-            bool italic = false;
-        };
-#endif
-
         struct library {
             FT_Library ft = nullptr;
-#ifdef _WIN32
-            std::vector<installed_font> installed;                     // every face of the Windows font folders
-            std::map<char32_t, std::pair<std::string, int>> fallbacks; // per character: the file that has it
-#else
-            FcConfig *fc = nullptr;
-#endif
             bool antialias = false;
             float scale = 1.0f;
-            // Faces are shared by every font of the same file, index and size, and live until exit.
+            // FreeType reads a memory face's bytes for as long as the face exists, and faces are
+            // shared by every font of the same file and size and live until exit; so do the bytes.
+            std::map<std::string, std::vector<uint8_t>> files;
             std::map<std::string, std::unique_ptr<font_face::face>> faces;
 
             library() {
                 FT_Init_FreeType(&ft);
-#ifdef _WIN32
-                scan_installed_fonts();
-#else
-                fc = FcInitLoadConfigAndFonts();
-#endif
             }
-
-#ifdef _WIN32
-            // Windows has no fontconfig: the system and per-user font folders are read once with
-            // FreeType for the family name and style of every face.
-            void scan_installed_fonts() {
-                std::vector<std::string> folders;
-                if (const char *windir = std::getenv("WINDIR"); windir && *windir)
-                    folders.push_back(std::string(windir) + "\\Fonts");
-                if (const char *local = std::getenv("LOCALAPPDATA"); local && *local)
-                    folders.push_back(std::string(local) + "\\Microsoft\\Windows\\Fonts");
-                for (const std::string &folder : folders) {
-                    std::error_code error;
-                    for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(folder, error)) {
-                        const std::string extension = entry.path().extension().string();
-                        if (!(iequals(extension, ".ttf") || iequals(extension, ".ttc") || iequals(extension, ".otf")))
-                            continue;
-                        const std::string path = entry.path().string();
-                        FT_Face probe = nullptr;
-                        if (FT_New_Face(ft, path.c_str(), -1, &probe) != 0)
-                            continue;
-                        const long count = probe->num_faces;
-                        FT_Done_Face(probe);
-                        for (long index = 0; index < count; ++index) {
-                            FT_Face face = nullptr;
-                            if (FT_New_Face(ft, path.c_str(), index, &face) != 0)
-                                continue;
-                            if (face->family_name)
-                                installed.push_back({path, static_cast<int>(index), face->family_name, (face->style_flags & FT_STYLE_FLAG_BOLD) != 0, (face->style_flags & FT_STYLE_FLAG_ITALIC) != 0});
-                            FT_Done_Face(face);
-                        }
-                    }
-                }
-            }
-#endif
         };
 
         auto get_library() -> library & {
             static library instance;
             return instance;
+        }
+
+        auto load_face(std::span<const uint8_t> bytes, const std::string &key, int pixel_size) -> font_face::face * {
+            library &lib = get_library();
+            const std::string face_key = key + ":" + std::to_string(pixel_size);
+            if (auto it = lib.faces.find(face_key); it != lib.faces.end())
+                return it->second.get();
+
+            auto [stored, inserted] = lib.files.try_emplace(key);
+            if (inserted)
+                stored->second.assign(bytes.begin(), bytes.end());
+            const std::vector<uint8_t> &data = stored->second;
+
+            FT_Face ft = nullptr;
+            if (FT_New_Memory_Face(lib.ft, data.data(), static_cast<FT_Long>(data.size()), 0, &ft) != 0) {
+                metin2::log::error("{} is not a font file FreeType can read", key);
+                return nullptr;
+            }
+            if (FT_Set_Pixel_Sizes(ft, 0, static_cast<FT_UInt>(pixel_size)) != 0) {
+                metin2::log::error("{} cannot be set to {} pixels", key, pixel_size);
+                FT_Done_Face(ft);
+                return nullptr;
+            }
+            auto f = std::make_unique<font_face::face>();
+            f->ft = ft;
+            font_face::face *raw = f.get();
+            lib.faces[face_key] = std::move(f);
+            return raw;
         }
     }
 
@@ -107,143 +73,55 @@ namespace metin2::inline graphics {
         lib.scale = scale > 0.1f ? scale : 1.0f;
     }
 
-    namespace {
+    auto font_face::open(const std::string &file, int size, float pixel_scale) -> bool {
+        // The face cache is keyed by the file, so the bytes are read only for the first size.
+        const std::string key = eter_file_manager::canonical_name(file);
+        if (library &lib = get_library(); lib.files.contains(key))
+            return open_face({}, key, size, pixel_scale);
 
-        auto load_face(const std::string &path, int index, int pixel_size) -> font_face::face * {
-            library &lib = get_library();
-            const std::string key = path + ":" + std::to_string(index) + ":" + std::to_string(pixel_size);
-            if (auto it = lib.faces.find(key); it != lib.faces.end())
-                return it->second.get();
-
-            FT_Face ft = nullptr;
-            if (FT_New_Face(lib.ft, path.c_str(), index, &ft) != 0)
-                return nullptr;
-            if (FT_Set_Pixel_Sizes(ft, 0, static_cast<FT_UInt>(pixel_size)) != 0) {
-                FT_Done_Face(ft);
-                return nullptr;
-            }
-            auto f = std::make_unique<font_face::face>();
-            f->ft = ft;
-            font_face::face *raw = f.get();
-            lib.faces[key] = std::move(f);
-            return raw;
-        }
-
-#ifdef _WIN32
-        // The best file for the family and style, or for the one character when it is given: the
-        // family in the wanted style, the family in any style, then (for a character) the first
-        // installed face that has it, then the usual UI families.
-        auto match_font(const std::string &family, bool bold, bool italic, std::optional<char32_t> codepoint, std::string &path, int &index) -> bool {
-            library &lib = get_library();
-            auto pick = [&](const installed_font &font) -> bool {
-                path = font.path;
-                index = font.index;
-                return true;
-            };
-            auto find_family = [&](std::string_view name, bool exact_style) -> const installed_font * {
-                for (const installed_font &font : lib.installed)
-                    if (iequals(font.family, name) && (!exact_style || (font.bold == bold && font.italic == italic)))
-                        return &font;
-                return nullptr;
-            };
-            if (codepoint) {
-                if (auto it = lib.fallbacks.find(*codepoint); it != lib.fallbacks.end()) {
-                    path = it->second.first;
-                    index = it->second.second;
-                    return !path.empty();
-                }
-                for (const installed_font &font : lib.installed) {
-                    FT_Face face = nullptr;
-                    if (FT_New_Face(lib.ft, font.path.c_str(), font.index, &face) != 0)
-                        continue;
-                    const bool has = FT_Get_Char_Index(face, *codepoint) != 0;
-                    FT_Done_Face(face);
-                    if (has) {
-                        lib.fallbacks[*codepoint] = {font.path, font.index};
-                        return pick(font);
-                    }
-                }
-                lib.fallbacks[*codepoint] = {};
-                return false;
-            }
-            if (const installed_font *font = find_family(family, true))
-                return pick(*font);
-            if (const installed_font *font = find_family(family, false))
-                return pick(*font);
-            for (const char *fallback : {"Tahoma", "Segoe UI", "Arial", "Verdana"}) {
-                if (const installed_font *font = find_family(fallback, true))
-                    return pick(*font);
-                if (const installed_font *font = find_family(fallback, false))
-                    return pick(*font);
-            }
-            return !lib.installed.empty() && pick(lib.installed.front());
-        }
-#else
-        // The best file for the family and style, or for the one character when it is given.
-        auto match_font(const std::string &family, bool bold, bool italic, std::optional<char32_t> codepoint, std::string &path, int &index) -> bool {
-            library &lib = get_library();
-            FcPattern *pattern = FcPatternCreate();
-            FcPatternAddString(pattern, FC_FAMILY, reinterpret_cast<const FcChar8 *>(family.c_str()));
-            FcPatternAddInteger(pattern, FC_WEIGHT, bold ? FC_WEIGHT_BOLD : FC_WEIGHT_REGULAR);
-            FcPatternAddInteger(pattern, FC_SLANT, italic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
-            FcCharSet *charset = nullptr;
-            if (codepoint) {
-                charset = FcCharSetCreate();
-                FcCharSetAddChar(charset, *codepoint);
-                FcPatternAddCharSet(pattern, FC_CHARSET, charset);
-            }
-            FcConfigSubstitute(lib.fc, pattern, FcMatchPattern);
-            FcDefaultSubstitute(pattern);
-            FcResult result;
-            FcPattern *match = FcFontMatch(lib.fc, pattern, &result);
-            FcPatternDestroy(pattern);
-            if (charset)
-                FcCharSetDestroy(charset);
-            if (!match)
-                return false;
-
-            FcChar8 *file = nullptr;
-            int file_index = 0;
-            const bool found = FcPatternGetString(match, FC_FILE, 0, &file) == FcResultMatch;
-            FcPatternGetInteger(match, FC_INDEX, 0, &file_index);
-            if (found) {
-                path = reinterpret_cast<const char *>(file);
-                index = file_index;
-            }
-            FcPatternDestroy(match);
-            return found;
-        }
-#endif
-    }
-
-    auto font_face::open(const char *family, int height, bool bold, bool italic, float pixel_scale) -> bool {
-        library &lib = get_library();
-
-        family_ = family && *family ? family : "Tahoma";
-        bold_ = bold;
-        italic_ = italic;
-        pixel_scale_ = pixel_scale > 0.0f ? pixel_scale : 1.0f;
-        faces_.clear();
-        glyphs_.clear();
-
-        // Tahoma's cell is 1.207 em, so "Tahoma 12" is a 10 px em; the same ratio keeps the UI's
-        // proportions with whatever font fontconfig picked.
-        const float em = height > 0 ? static_cast<float>(height) * 2048.0f / 2472.0f : height < 0 ? static_cast<float>(-height)
-                                                                                                  : 10.0f;
-        pixel_size_ = std::max(1, static_cast<int>(lroundf(em * lib.scale * pixel_scale_)));
-
-        std::string path;
-        int index = 0;
-        face *f = match_font(family_, bold_, italic_, std::nullopt, path, index) ? load_face(path, index, pixel_size_) : nullptr;
-        if (!f) {
-            metin2::log::error("No usable font for {}", family_);
+        mapped_file mapped;
+        const void *data = nullptr;
+        if (!get_file_manager().get(mapped, file.c_str(), &data)) {
+            metin2::log::error("Font file {} not found", file);
+            face_ = nullptr;
+            glyphs_.clear();
             return false;
         }
+        return open_face(std::span(static_cast<const uint8_t *>(data), mapped.size()), key, size, pixel_scale);
+    }
 
-        faces_.push_back(f);
-        ascent_ = static_cast<int>(ceilf(f->ft->size->metrics.ascender / 64.0f));
-        descent_ = static_cast<int>(ceilf(-f->ft->size->metrics.descender / 64.0f));
+    auto font_face::open(std::span<const uint8_t> bytes, std::string_view key, int size, float pixel_scale) -> bool {
+        return open_face(bytes, key, size, pixel_scale);
+    }
+
+    auto font_face::open_face(std::span<const uint8_t> bytes, std::string_view key, int size, float pixel_scale) -> bool {
+        library &lib = get_library();
+
+        pixel_scale_ = pixel_scale > 0.0f ? pixel_scale : 1.0f;
+        face_ = nullptr;
+        glyphs_.clear();
+
+        const float em = size > 0 ? static_cast<float>(size) : 12.0f;
+        pixel_size_ = std::max(1, static_cast<int>(lroundf(em * lib.scale * pixel_scale_)));
+
+        face_ = load_face(bytes, std::string(key), pixel_size_);
+        if (!face_)
+            return false;
+
+        // size->metrics.ascender/descender come rounded up to whole pixels; the design values
+        // scaled by hand keep the fraction, so the baseline can be rounded once where it is used.
+        const FT_Size_Metrics &metrics = face_->ft->size->metrics;
+        ascent_ = static_cast<float>(FT_MulFix(face_->ft->ascender, metrics.y_scale)) / 64.0f;
+        descent_ = static_cast<float>(-FT_MulFix(face_->ft->descender, metrics.y_scale)) / 64.0f;
         return true;
+    }
+
+    auto font_face::baseline() const -> int {
+        return static_cast<int>(lroundf(ascent_));
+    }
+
+    auto font_face::cell_height() const -> int {
+        return static_cast<int>(ceilf(ascent_ + descent_));
     }
 
     auto font_face::glyph_of(char32_t codepoint) -> const glyph & {
@@ -251,42 +129,20 @@ namespace metin2::inline graphics {
             return it->second;
 
         glyph &g = glyphs_[codepoint];
-        if (faces_.empty())
+        if (!face_)
             return g;
 
-        face *use = nullptr;
-        FT_UInt glyph_index = 0;
-        for (face *f : faces_) {
-            glyph_index = FT_Get_Char_Index(f->ft, codepoint);
-            if (glyph_index) {
-                use = f;
-                break;
-            }
-        }
-        if (!use) {
-            std::string path;
-            int index = 0;
-            if (match_font(family_, bold_, italic_, codepoint, path, index)) {
-                if (face *f = load_face(path, index, pixel_size_)) {
-                    glyph_index = FT_Get_Char_Index(f->ft, codepoint);
-                    if (glyph_index) {
-                        use = f;
-                        faces_.push_back(f);
-                    }
-                }
-            }
-        }
-        if (!use) {
-            use = faces_.front();
-            glyph_index = 0;
-        }
+        // Index 0 is the font's .notdef glyph: a character the file lacks draws that box.
+        const FT_UInt glyph_index = FT_Get_Char_Index(face_->ft, codepoint);
 
-        // Light hinting snaps only vertically, so antialiased glyphs keep their designed widths.
-        const FT_Int32 flags = FT_LOAD_RENDER | (get_library().antialias ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_MONO);
-        if (FT_Load_Glyph(use->ft, glyph_index, flags) != 0)
+        // The auto-hinter in normal mode snaps stems to whole pixels in both directions, so at the
+        // interface sizes (12 to 16 px) verticals are one solid column instead of two grey ones.
+        // Light hinting (vertical only) and the font's own bytecode both leave them grey.
+        const FT_Int32 flags = FT_LOAD_RENDER | (get_library().antialias ? FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_NORMAL : FT_LOAD_TARGET_MONO);
+        if (FT_Load_Glyph(face_->ft, glyph_index, flags) != 0)
             return g;
 
-        const FT_GlyphSlot slot = use->ft->glyph;
+        const FT_GlyphSlot slot = face_->ft->glyph;
         const FT_Bitmap &bitmap = slot->bitmap;
         g.left = slot->bitmap_left;
         g.top = slot->bitmap_top;
@@ -325,7 +181,7 @@ namespace metin2::inline graphics {
             }
 
             const int origin_x = pen_x + g.left;
-            const int origin_y = y + ascent_ - g.top;
+            const int origin_y = y + baseline() - g.top;
             for (int gy = 0; gy < g.rows; ++gy) {
                 const int dy = origin_y + gy;
                 if (dy < 0 || dy >= height)

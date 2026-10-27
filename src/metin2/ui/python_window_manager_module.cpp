@@ -1138,6 +1138,18 @@ namespace metin2::inline ui {
         }
         Py_RETURN_NONE;
     }
+    auto wnd_edit_set_padding(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        int padding;
+        if (!PyArg_ParseTuple(args, "O&i", window_converter, &window, &padding)) {
+            return nullptr;
+        }
+        widgets::edit_line *line = as_edit_line(window);
+        if (!line)
+            return nullptr;
+        line->set_padding(padding);
+        Py_RETURN_NONE;
+    }
     auto wnd_edit_set_user_max(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *window;
         int bytes;
@@ -1296,18 +1308,23 @@ namespace metin2::inline ui {
         typed->set_multi_line(flag);
         Py_RETURN_NONE;
     }
-    auto wnd_text_set_font_name(PyObject *self, PyObject *args) -> PyObject * {
+    // set_font(window, font_asset, size, weight, italic): the Font asset's file of that weight and
+    // style at the em size in interface pixels.
+    auto wnd_text_set_font(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *window;
-        char *font_name;
+        char *family;
+        int size;
+        int weight;
+        int italic;
 
-        if (!PyArg_ParseTuple(args, "O&s", window_converter, &window, &font_name)) {
+        if (!PyArg_ParseTuple(args, "O&siii", window_converter, &window, &family, &size, &weight, &italic)) {
             return nullptr;
         }
 
         auto *typed = window_cast<widgets::text_line>(window);
         if (!typed)
             return nullptr;
-        typed->set_font_name(font_name);
+        typed->set_font(font_spec{family, size, weight, italic != 0});
         Py_RETURN_NONE;
     }
     auto wnd_text_set_font_color(PyObject *self, PyObject *args) -> PyObject * {
@@ -1597,6 +1614,88 @@ namespace metin2::inline ui {
         if (!typed)
             return nullptr;
         typed->set_scale(fx, fy);
+
+        Py_RETURN_NONE;
+    }
+    auto wnd_image_set_fit(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        int mode;
+
+        if (!PyArg_ParseTuple(args, "O&i", window_converter, &window, &mode)) {
+            return nullptr;
+        }
+
+        auto *typed = window_cast<widgets::expanded_image_box>(window);
+        if (!typed)
+            return nullptr;
+        if (mode < graphic_expanded_image_instance::FIT_NONE || mode > graphic_expanded_image_instance::FIT_TILE) {
+            PyErr_Format(PyExc_ValueError, "unknown fit mode %d", mode);
+            return nullptr;
+        }
+        typed->set_fit(mode);
+
+        Py_RETURN_NONE;
+    }
+    auto wnd_image_get_image_fit(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        if (!PyArg_ParseTuple(args, "O&", window_converter, &window)) {
+            return nullptr;
+        }
+        auto *typed = window_cast<widgets::expanded_image_box>(window);
+        if (!typed)
+            return nullptr;
+        float fit[8];
+        if (!typed->image_fit(fit)) {
+            PyErr_SetString(PyExc_ValueError, "the image box has no image");
+            return nullptr;
+        }
+        return Py_BuildValue("(ffffffff)", fit[0], fit[1], fit[2], fit[3], fit[4], fit[5], fit[6], fit[7]);
+    }
+
+    auto wnd_particles_load(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        char *file_name;
+        if (!PyArg_ParseTuple(args, "O&s", window_converter, &window, &file_name)) {
+            return nullptr;
+        }
+        auto *typed = window_cast<widgets::particle_box>(window);
+        if (!typed)
+            return nullptr;
+        if (!typed->load(file_name)) {
+            PyErr_Format(PyExc_IOError, "Cannot load particles %s", file_name);
+            return nullptr;
+        }
+        Py_RETURN_NONE;
+    }
+
+    auto wnd_particles_reset(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        if (!PyArg_ParseTuple(args, "O&", window_converter, &window)) {
+            return nullptr;
+        }
+        auto *typed = window_cast<widgets::particle_box>(window);
+        if (!typed)
+            return nullptr;
+        typed->reset();
+        Py_RETURN_NONE;
+    }
+
+    auto wnd_image_set_shader(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        char *shader;
+        char *mask = nullptr;
+
+        if (!PyArg_ParseTuple(args, "O&s|s", window_converter, &window, &shader, &mask)) {
+            return nullptr;
+        }
+
+        auto *typed = window_cast<widgets::expanded_image_box>(window);
+        if (!typed)
+            return nullptr;
+        if (!typed->set_shader(shader, mask ? mask : "")) {
+            PyErr_Format(PyExc_IOError, "Cannot load pixel shader %s (mask %s)", shader, mask ? mask : "none");
+            return nullptr;
+        }
 
         Py_RETURN_NONE;
     }
@@ -1898,6 +1997,7 @@ namespace metin2::inline ui {
                 {"register_image_box", wnd_mgr_register_window<widgets::image_box>, METH_VARARGS},
                 {"register_expanded_image_box", wnd_mgr_register_window<widgets::expanded_image_box>, METH_VARARGS},
                 {"register_ani_image_box", wnd_mgr_register_window<widgets::ani_image_box>, METH_VARARGS},
+                {"register_particle_box", wnd_mgr_register_window<widgets::particle_box>, METH_VARARGS},
                 {"register_button", wnd_mgr_register_window<widgets::button>, METH_VARARGS},
                 {"register_radio_button", wnd_mgr_register_window<widgets::radio_button>, METH_VARARGS},
                 {"register_toggle_button", wnd_mgr_register_window<widgets::toggle_button>, METH_VARARGS},
@@ -1995,7 +2095,7 @@ namespace metin2::inline ui {
                 {"set_outline", wnd_text_set_outline, METH_VARARGS},
                 {"set_multi_line", wnd_text_set_multi_line, METH_VARARGS},
                 {"set_text", wnd_text_set_text, METH_VARARGS},
-                {"set_font_name", wnd_text_set_font_name, METH_VARARGS},
+                {"set_font", wnd_text_set_font, METH_VARARGS},
                 {"set_font_color", wnd_text_set_font_color, METH_VARARGS},
                 {"set_limit_width", wnd_text_set_limit_width, METH_VARARGS},
                 {"get_text", wnd_text_get_text, METH_VARARGS},
@@ -2003,6 +2103,7 @@ namespace metin2::inline ui {
                 // EditLine
                 {"set_max", wnd_edit_set_max, METH_VARARGS},
                 {"set_background", wnd_edit_set_background, METH_VARARGS},
+                {"set_padding", wnd_edit_set_padding, METH_VARARGS},
                 {"set_user_max", wnd_edit_set_user_max, METH_VARARGS},
                 {"set_number_mode", wnd_edit_set_number_mode, METH_VARARGS},
                 {"set_caret", wnd_edit_set_caret, METH_VARARGS},
@@ -2030,6 +2131,12 @@ namespace metin2::inline ui {
                 {"get_height", wnd_image_get_height, METH_VARARGS},
                 // ExpandedImageBox
                 {"set_scale", wnd_image_set_scale, METH_VARARGS},
+                {"set_fit", wnd_image_set_fit, METH_VARARGS},
+                {"set_shader", wnd_image_set_shader, METH_VARARGS},
+                {"get_image_fit", wnd_image_get_image_fit, METH_VARARGS},
+                // ParticleBox
+                {"load_particles", wnd_particles_load, METH_VARARGS},
+                {"reset_particles", wnd_particles_reset, METH_VARARGS},
                 {"set_origin", wnd_image_set_origin, METH_VARARGS},
                 {"set_rotation", wnd_image_set_rotation, METH_VARARGS},
                 {"set_rendering_rect", wnd_image_set_rendering_rect, METH_VARARGS},

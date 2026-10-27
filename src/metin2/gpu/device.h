@@ -2,6 +2,7 @@
 
 #include "fixed_function.h"
 #include "format.h"
+#include "pixel_shader.h"
 #include "types.h"
 #include "vertex_layout.h"
 
@@ -168,6 +169,8 @@ namespace metin2::gpu {
         virtual auto create_depth_buffer(uint32_t width, uint32_t height, format fmt) -> std::shared_ptr<depth_buffer> = 0;
         virtual auto create_vertex_layout(std::span<const vertex_element> elements) -> uint32_t = 0;
         virtual void destroy_vertex_layout(uint32_t handle) = 0;
+        // A body as described in pixel_shader.h; null with the compiler's message in error.
+        virtual auto create_pixel_shader(std::string_view body, std::string &error) -> std::shared_ptr<pixel_shader> = 0;
 
         // The back buffer follows the window; reset after it changed size.
         virtual auto reset(const device_settings &settings) -> bool = 0;
@@ -192,6 +195,9 @@ namespace metin2::gpu {
         virtual void set_vertex_format(uint32_t format_or_handle) = 0;
         virtual void set_stream(uint32_t stream, vertex_buffer *buffer, uint32_t stride) = 0;
         virtual void set_indices(index_buffer *buffer, uint32_t base_vertex) = 0;
+        // The draws from now on use this pixel shader instead of the fixed-function one (null goes
+        // back to it); the params are read at each draw.
+        virtual void set_pixel_shader(pixel_shader *shader, const pixel_shader_params &params) = 0;
 
         // A null colour target is the back buffer; a null depth buffer with the back buffer is its own
         // depth. The viewport is reset to cover the target.

@@ -5,6 +5,7 @@
 #include <metin2/graphics/grp_expanded_image_instance.h>
 #include <metin2/graphics/grp_image_instance.h>
 #include <metin2/graphics/grp_mark_instance.h>
+#include <metin2/graphics/grp_particle_emitter.h>
 #include <metin2/graphics/grp_text_instance.h>
 #include <metin2/script/python_header.h>
 
@@ -275,7 +276,7 @@ namespace metin2::inline ui {
             virtual void set_secret(bool flag);
             void set_outline(bool flag);
             virtual void set_multi_line(bool flag);
-            void set_font_name(const char *font_name);
+            void set_font(const font_spec &font);
             void set_font_color(uint32_t color);
             void set_limit_width(float width_value);
 
@@ -384,6 +385,17 @@ namespace metin2::inline ui {
             void set_rotation(float rotation);
             void set_rendering_rect(float left, float top, float right, float bottom);
             void set_rendering_mode(int mode);
+            // How the image fills the window (graphic_expanded_image_instance::fit_mode); with a
+            // mode the window size is the box, the scale is not used.
+            void set_fit(int mode);
+            // A pixel shader (.glsl) for the fitted image and its mask image ("" for none); false
+            // when a file does not load. An empty shader name clears it.
+            auto set_shader(const char *shader_name, const char *mask_name) -> bool;
+            // Where the fitted image is drawn in the window (x, y, width, height) and the part of
+            // the image it shows (u0, v0, u1, v1 as fractions); the whole window and the whole
+            // image without a fit mode. False without an image.
+            auto image_fit(float (&out)[8]) -> bool;
+            void set_size(int32_t width_value, int32_t height) override;
             // A screen background: the image is scaled to the new size.
             void fill_screen(int32_t width_value, int32_t height) override;
 
@@ -395,6 +407,36 @@ namespace metin2::inline ui {
             void on_render() override;
 
             auto on_is_type(uint32_t type) -> bool override;
+
+          private:
+            void apply_fit();
+
+            int fit_mode_ = 0;
+            graphic_pixel_shader::ref shader_;
+            graphic_image::ref mask_;
+        };
+
+        // A particle effect (a Particles asset, grp_particles.h) running in the window's box.
+        class particle_box : public ui_window {
+          public:
+            explicit particle_box(PyObject *ppy_object);
+            ~particle_box() override;
+
+            auto load(const char *file_name) -> bool;
+            // Starts the effect over.
+            void reset();
+            void set_size(int32_t width_value, int32_t height) override;
+
+          protected:
+            void on_update() override;
+            void on_render() override;
+            void on_change_position() override;
+
+          private:
+            void update_box();
+
+            graphic_particles::ref particles_;
+            particle_emitter emitter_;
         };
 
         class ani_image_box : public ui_window {

@@ -20,7 +20,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends build-essential clang-22 clang-format cmake ninja-build git ca-certificates \
-            pkgconf zlib1g-dev liblzo2-dev libexpat1-dev libfontconfig-dev libgl-dev \
+            pkgconf zlib1g-dev liblzo2-dev libexpat1-dev libgl-dev \
             libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
             libwayland-dev wayland-protocols libxkbcommon-dev \
             libasound2-dev libpulse-dev libpipewire-0.3-dev

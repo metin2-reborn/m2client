@@ -42,7 +42,7 @@ namespace metin2::inline graphics {
         return {0.0f, a, size - b, size};
     }
 
-    auto graphic_nine_patch::load(std::string_view text, std::string_view name, std::string &image, int (&region)[4], margins &margins) -> bool {
+    auto graphic_nine_patch::load(std::string_view text, std::string_view name, std::string &image, int (&region)[4], margins &margins, bool &tile) -> bool {
         const auto table = parse_asset_toml(text, name, "NinePatch");
         if (!table) {
             return false;
@@ -58,6 +58,8 @@ namespace metin2::inline graphics {
 
         asset_table values(*patch, name);
         bool ok = values.required("image", image);
+        tile = true;
+        values.optional("tile", tile);
         int edges[4] = {};
         if (read_four(values, "region_rect", region, "must be four whole numbers: x, y, width, height")) {
             if (region[2] <= 0 || region[3] <= 0) {
@@ -91,7 +93,8 @@ namespace metin2::inline graphics {
         int region[4] = {};
         std::string image;
         margins margins;
-        if (!load(std::string_view(static_cast<const char *>(buf), size), file_name_string(), image, region, margins)) {
+        bool tile = true;
+        if (!load(std::string_view(static_cast<const char *>(buf), size), file_name_string(), image, region, margins, tile)) {
             return false;
         }
 
@@ -100,12 +103,14 @@ namespace metin2::inline graphics {
         }
         set_rect_position(region[0], region[1], region[0] + region[2], region[1] + region[3]);
         margins_ = margins;
+        tile_ = tile;
         return true;
     }
 
     void graphic_nine_patch::on_clear() {
         graphic_sub_image::on_clear();
         margins_ = {};
+        tile_ = true;
     }
 
     auto graphic_nine_patch::on_is_type(type_type type) -> bool {
