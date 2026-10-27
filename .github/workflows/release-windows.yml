@@ -1,0 +1,97 @@
+name: Windows release
+
+# Builds a Release Metin2.exe, packs it with the game data of m2game (scripts/package_release.py)
+# into a zip and an MSI (packaging/windows/metin2.wxs) and publishes both as the release
+# v<version> of metin2-reborn/m2game, tagged on the m2game commit that was packed.
+# Needs the secret M2GAME_TOKEN: a token for metin2-reborn/m2game with Contents read and write.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version (X.Y.Z, also the MSI version)
+        required: true
+      m2game_ref:
+        description: m2game branch, tag or commit to pack
+        required: true
+        default: master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-windows
+
+jobs:
+  release:
+    name: Build and publish the Windows release
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - name: Check the version
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "version must be X.Y.Z, got '$VERSION'" >&2; exit 1; }
+          echo "NAME=Metin2-$VERSION-windows-x64" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+
+      # clang-cl and lld-link from the Visual Studio installation, with the Windows SDK on the path.
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Restore third-party downloads
+        uses: actions/cache/restore@v4
+        with:
+          path: .deps
+          key: deps-windows-${{ hashFiles('vendor/*.cmake') }}
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER=lld-link -DFETCHCONTENT_BASE_DIR="${{ github.workspace }}/.deps"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Check out m2game
+        uses: actions/checkout@v4
+        with:
+          repository: metin2-reborn/m2game
+          ref: ${{ inputs.m2game_ref }}
+          token: ${{ secrets.M2GAME_TOKEN }}
+          path: m2game
+          fetch-depth: 1
+
+      - name: Package
+        run: |
+          echo "M2GAME_SHA=$(git -C m2game rev-parse HEAD)" >> "$GITHUB_ENV"
+          python scripts/package_release.py --exe build/bin/client.exe --game m2game --out release --archive "$NAME.zip"
+
+      - name: Build the MSI
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          wix build packaging/windows/metin2.wxs -arch x64 -d Version="$VERSION" -d ReleaseDir="$(cygpath -w "$PWD/release")" -o "$NAME.msi"
+
+      - name: Publish the release on m2game
+        env:
+          GH_TOKEN: ${{ secrets.M2GAME_TOKEN }}
+        run: |
+          gh release create "v$VERSION" "$NAME.zip" "$NAME.msi" \
+            --repo metin2-reborn/m2game \
+            --target "$M2GAME_SHA" \
+            --title "Metin2 $VERSION" \
+            --notes "Client metin2-reborn/m2client@$GITHUB_SHA, game data metin2-reborn/m2game@$M2GAME_SHA."
+
+      - name: Keep the release folder of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release
+          retention-days: 3
+          if-no-files-found: ignore

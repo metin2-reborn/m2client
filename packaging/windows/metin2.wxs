@@ -1,0 +1,25 @@
+<!-- MSI for a client release, built by .github/workflows/release-windows.yml with WiX v5:
+     wix build metin2.wxs -arch x64 -d Version=1.2.3 -d ReleaseDir=<release folder> -o Metin2.msi
+     The release folder is laid out by scripts/package_release.py. -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Metin2" Manufacturer="metin2-reborn" Version="$(Version)"
+           UpgradeCode="b6b74dab-cbfc-46fb-9c80-df75ab3bc054" Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Metin2 is already installed." />
+    <!-- The packs are deflated already; compressing them again only costs build time. -->
+    <MediaTemplate EmbedCab="yes" CompressionLevel="none" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Metin2" />
+    </StandardDirectory>
+
+    <Files Directory="INSTALLFOLDER" Include="$(ReleaseDir)\**" />
+
+    <!-- The client finds data\ and lib\ through the working directory. -->
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut">
+        <Shortcut Id="Metin2Shortcut" Name="Metin2" Target="[INSTALLFOLDER]Metin2.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKMU" Key="Software\metin2-reborn\Metin2" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+  </Package>
+</Wix>

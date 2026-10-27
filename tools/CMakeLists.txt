@@ -13,3 +13,5 @@ m2_add_tool(grn_dump)
 m2_add_tool(proto_convert)
 # spt_stats: generates the trees of .spt files and prints the geometry sizes.
 m2_add_tool(spt_stats)
+# eter_unpack: extracts the original client's EterPack archives (.eix/.epk) into a directory.
+m2_add_tool(eter_unpack)
