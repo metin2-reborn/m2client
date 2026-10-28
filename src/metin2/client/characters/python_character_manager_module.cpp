@@ -525,6 +525,8 @@ namespace metin2::inline client::inline characters {
         PyModule_AddIntConstant(module, "NAMECOLOR_PARTY", instance_base::NAMECOLOR_PARTY);
         PyModule_AddIntConstant(module, "NAMECOLOR_WARP", instance_base::NAMECOLOR_WARP);
         PyModule_AddIntConstant(module, "NAMECOLOR_WAYPOINT", instance_base::NAMECOLOR_WAYPOINT);
+        PyModule_AddIntConstant(module, "NAMECOLOR_MOB_PASSIVE", instance_base::NAMECOLOR_MOB_PASSIVE);
+        PyModule_AddIntConstant(module, "NAMECOLOR_MOB_LOW_LEVEL", instance_base::NAMECOLOR_MOB_LOW_LEVEL);
         PyModule_AddIntConstant(module, "NAMECOLOR_EXTRA", instance_base::NAMECOLOR_EXTRA);
 
         PyModule_AddIntConstant(module, "EFFECT_SPAWN_DISAPPEAR", instance_base::EFFECT_SPAWN_DISAPPEAR);

@@ -74,6 +74,7 @@ namespace metin2::inline client::inline characters {
         auto instance_ptr(uint32_t virtual_id) -> instance_base * override;
 
         void refresh_all_pc_text_tail();
+        void refresh_all_mob_text_tail();
         void refresh_all_guild_mark();
 
       protected:

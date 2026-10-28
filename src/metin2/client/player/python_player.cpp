@@ -407,6 +407,8 @@ namespace metin2::inline client::inline player {
                 player->set_level(value);
                 player->update_text_tail_level(value);
             }
+            // Monster names grey out ten levels below the player.
+            get_python_character_manager().refresh_all_mob_text_tail();
         }
 
         switch (type) {

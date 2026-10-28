@@ -5,6 +5,7 @@
 #include <metin2/client/social/python_text_tail.h>
 #include <metin2/log/log.h>
 #include "instance_base.h"
+#include "python_non_player.h"
 
 #include <algorithm>
 #include <format>
@@ -474,13 +475,27 @@ namespace metin2::inline client::inline characters {
 
         } else if (is_npc()) {
             return NAMECOLOR_NPC;
-        } else if (is_enemy()) {
-            return NAMECOLOR_MOB;
-        } else if (is_poly()) {
-            return NAMECOLOR_MOB;
+        } else if (is_enemy() || is_poly()) {
+            return mob_name_color_index();
         }
 
-        return math::color(0xffffffff);
+        return NAMECOLOR_NUM; // out of range: indexed_name_color gives white
+    }
+
+    auto instance_base::mob_name_color_index() -> uint32_t {
+        // Ten levels under the player a monster is no threat and worth no experience, so it fades
+        // to grey whether it would attack or not. The level comes from the mob table, like the
+        // flags, so a monster the table lacks is treated as aggressive.
+        constexpr uint32_t LOW_LEVEL_GAP = 10;
+        if (is_exist_main_instance()) {
+            instance_base *inst_main = main_instance_ptr_impl();
+            if (inst_main && level_value_ > 0 && inst_main->level() >= level_value_ + LOW_LEVEL_GAP)
+                return NAMECOLOR_MOB_LOW_LEVEL;
+        }
+
+        const python_non_player::mob_table *table = get_python_non_player().table(race());
+        const bool aggressive = !table || (table->ai_flag & python_non_player::AIFLAG_AGGRESSIVE) != 0;
+        return aggressive ? NAMECOLOR_MOB : NAMECOLOR_MOB_PASSIVE;
     }
 
     auto instance_base::title_color() -> const math::color & {

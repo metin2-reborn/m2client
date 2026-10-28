@@ -95,6 +95,8 @@ namespace metin2::inline client::inline characters {
         if (!inst_main_)
             return false;
 
+        // Monsters that arrived before the player are coloured against the player's level now.
+        refresh_all_mob_text_tail();
         return true;
     }
 
@@ -568,6 +570,14 @@ namespace metin2::inline client::inline characters {
                 continue;
 
             instance->refresh_text_tail();
+        }
+    }
+
+    void python_character_manager::refresh_all_mob_text_tail() {
+        for (character_iterator it = character_instance_begin(); it != character_instance_end(); ++it) {
+            instance_base *instance = *it;
+            if (instance->is_enemy() || instance->is_poly())
+                instance->refresh_text_tail();
         }
     }
 

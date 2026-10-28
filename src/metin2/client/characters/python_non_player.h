@@ -20,6 +20,12 @@ namespace metin2::inline client::inline characters {
             ON_CLICK_EVENT_MAX_NUM,
         };
 
+        // The bits of mob_table::ai_flag, as the server's mob_types.h defines them. Only the first
+        // matters to the client: it decides a monster's name colour.
+        enum ai_flags : uint32_t {
+            AIFLAG_AGGRESSIVE = 1u << 0,
+        };
+
         enum mob_enchants {
             MOB_ENCHANT_CURSE,
             MOB_ENCHANT_SLOW,

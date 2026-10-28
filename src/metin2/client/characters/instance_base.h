@@ -234,6 +234,8 @@ namespace metin2::inline client::inline characters {
             NAMECOLOR_PARTY,
             NAMECOLOR_WARP,
             NAMECOLOR_WAYPOINT,
+            NAMECOLOR_MOB_PASSIVE,   // a monster that does not attack on sight
+            NAMECOLOR_MOB_LOW_LEVEL, // a monster ten or more levels below the player
             NAMECOLOR_EXTRA = NAMECOLOR_FUNC + 10,
             NAMECOLOR_NUM = NAMECOLOR_EXTRA + 10,
         };
@@ -982,6 +984,8 @@ namespace metin2::inline client::inline characters {
         static void insert_duel_key(uint32_t src_vid, uint32_t dst_vid);
 
         auto name_color_index() -> uint32_t;
+        auto mob_name_color_index() -> uint32_t;
+        auto level() const -> uint32_t { return level_value_; }
 
         auto name_color() -> const math::color &;
         auto title_color() -> const math::color &;
