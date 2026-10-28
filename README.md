@@ -92,8 +92,8 @@ moved out of the MSI.
 
 ## Running
 
-The client needs the game directory: `data/` (the bootstrap in `data/system`, the game scripts in
-`data/game`, the `data/ui` package, the archives) and `lib/`, the Python 2.7 standard library as
+The client needs the game directory: `data/` (the bootstrap in `data/system`, the `data/ui` pack with
+the game scripts, the UI package and the locale data, the other archives) and `lib/`, the Python 2.7 standard library as
 `.pyc` files, which is the only standard library the embedded Python ever sees (no `PYTHONHOME`,
 no `site`). An installation is the executable, `data/` and `lib/`, nothing else. `just run` starts
 it from the game directory as a normal process, with your own `~/.metin2`. The game directory defaults to an `m2game` checkout

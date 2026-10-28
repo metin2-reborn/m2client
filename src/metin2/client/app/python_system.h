@@ -7,7 +7,7 @@
 
 namespace metin2::inline client::inline app {
     // English is the only locale shipped; the scripts and the loaders below read everything from here.
-    inline constexpr std::string_view LOCALE_DIR = "locale:";
+    inline constexpr std::string_view LOCALE_DIR = "ui:";
 
     class python_system {
       public:
