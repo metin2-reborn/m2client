@@ -205,6 +205,11 @@ The build also produces `build/bin/eter_unpack`, which extracts an original clie
 decodes the plain, compressed and key-encrypted entries and lists the Panama and hybrid-crypt
 entries (their keys only ever came from the login server) in `<out dir>/unsupported.txt`.
 
+`scripts/python_stubs.py` writes `.pyi` stubs for the `metin2.*` modules the game scripts call
+(functions with their arguments from the `PyArg_ParseTuple` formats, return types, constants) into
+`../m2game/typings/`, where m2game's `pyrightconfig.json` finds them; run it after changing an
+export table and commit the result in m2game.
+
 ## Contributing
 
 Code style is defined by `.clang-format` and `.clang-tidy` in the repository root. Names follow the
