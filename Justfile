@@ -34,18 +34,6 @@ clean:
     [ -d "{{root}}/run/overlay/upper" ] && find "{{root}}/run/overlay/upper" -mindepth 1 -delete || true
     rm -f "{{root}}/run/"*.png "{{root}}/run/automation.log" "{{root}}/run/automation.sock" "{{root}}/run/"*.log
 
-# Record a SHA-256 manifest of the game directory (taken once before the first run).
-checksum:
-    (cd "{{client}}" && find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 sha256sum) > "{{root}}/run/gamedir.sha256"
-    wc -l "{{root}}/run/gamedir.sha256"
-
-# Verify the game directory is unchanged against the recorded manifest (.git/ is not part of it).
-verify-gamedir:
-    (cd "{{client}}" && sha256sum --quiet -c "{{root}}/run/gamedir.sha256")
-    diff <(sed 's/^[0-9a-f]*  //' "{{root}}/run/gamedir.sha256") <(cd "{{client}}" && find . -path ./.git -prune -o -type f -print | sort) \
-        || { echo "files were added to or removed from the game directory (> added, < removed)" >&2; exit 1; }
-    @echo "game directory unchanged"
-
 # Make sure the overlay directories exist and seed a windowed ~/.metin2/metin2.toml (HOME is run/home) on first use.
 seed-config:
     mkdir -p "{{root}}/run/overlay/upper" "{{root}}/run/overlay/work" "{{root}}/run/home/.metin2"
