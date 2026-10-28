@@ -2,236 +2,57 @@
 
 [![CI](https://github.com/metin2-reborn/m2client/actions/workflows/ci.yml/badge.svg)](https://github.com/metin2-reborn/m2client/actions/workflows/ci.yml)
 ![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=cplusplus)
-![Platform](https://img.shields.io/badge/platform-Linux-FCC624?logo=linux&logoColor=black)
+![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-FCC624)
 [![Last commit](https://img.shields.io/github/last-commit/metin2-reborn/m2client)](https://github.com/metin2-reborn/m2client/commits)
 [![Issues](https://img.shields.io/github/issues/metin2-reborn/m2client)](https://github.com/metin2-reborn/m2client/issues)
 
-The Metin2 game client, ported to Linux and cleaned up to the same standard as the server. It builds
-with Clang and CMake, renders through its own renderer interface on OpenGL, plays sound through
-OpenAL Soft and runs the Python 2.7 game scripts maintained in the `m2game` repository.
+The game client of Metin2 Reborn: the classic Metin2 client, ported from its 2000s Windows and
+DirectX 8 code base to Linux and Windows, and cleaned up to the standard of the rest of the project.
 
-## Requirements
+It is part of a family of repositories:
 
-- Linux on x86-64
-- Clang with C++23 support (developed with Clang 23; CI uses Clang 22). Clang 19 cannot build
-  OpenAL Soft. Clang is the only supported compiler.
-- CMake 3.25+ and Ninja
-- [just](https://github.com/casey/just) and [bubblewrap](https://github.com/containers/bubblewrap)
-  (for the recipes and the sandbox below)
-- Development packages for zlib, LZO 2, expat, OpenGL, X11 or Wayland, and ALSA,
-  PulseAudio or PipeWire
+| Repository   | What it is                                                     |
+|--------------|----------------------------------------------------------------|
+| `m2client`   | this client                                                    |
+| `m2game`     | the game data: scripts, interface, maps, models, sounds        |
+| `m2server`   | the game server                                                |
+| `m2launcher` | the launcher and patcher players start the game with           |
+| `m2web`      | the account website and its API                                |
 
-On Debian or Ubuntu:
+## What it does
 
-```sh
-sudo apt install build-essential clang-22 cmake ninja-build pkgconf just bubblewrap \
-    zlib1g-dev liblzo2-dev libexpat1-dev libgl-dev \
-    libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
-    libwayland-dev wayland-protocols libxkbcommon-dev \
-    libasound2-dev libpulse-dev libpipewire-0.3-dev
-CC=clang-22 CXX=clang++-22 just build
-```
+- Renders the original world, characters and effects through its own renderer on OpenGL.
+- Runs the original game logic, written in Python, from the `m2game` data.
+- Plays music and sounds through OpenAL.
+- Talks to `m2server` over an encrypted connection.
+- Keeps its settings, logs and screenshots in `~/.metin2` (`%APPDATA%\metin2` on Windows) and
+  never writes into the game data.
 
-raylib, OpenAL Soft, OpenGr2ndma (Granny), FreeType, minimp3, dr_libs, Monocypher, toml++, asio and
-Python 2.7 are downloaded and built by CMake on the first configure.
+## Getting started
 
-## Building
+You need a Linux machine with Clang, CMake, Ninja and [just](https://github.com/casey/just), and an
+`m2game` checkout next to this repository.
 
 ```sh
-just build                    # RelWithDebInfo build into build/
-BUILD_TYPE=Debug just build   # Debug, with -Werror
-CC=clang-22 CXX=clang++-22 just build   # a specific Clang (the default is `clang`)
-SANITIZE=1 just build         # AddressSanitizer + UndefinedBehaviorSanitizer into build-sanitize/
-just test                     # build, then run the unit tests
-just clean
+just build   # fetches the dependencies, builds build/bin/client
+just run     # starts the client from ../m2game
 ```
 
-The client ends up in `build/bin/client`.
+The exact packages, the Windows build and the release packaging are in
+[docs/building.md](docs/building.md).
 
-### Windows
+## Documentation
 
-The same sources build on Windows with clang-cl, the MSVC-compatible Clang driver that ships with
-Visual Studio (Desktop development with C++, with the "C++ Clang tools for Windows" component), CMake
-and Ninja. From a Visual Studio developer prompt:
-
-```sh
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER=lld-link
-cmake --build build
-ctest --test-dir build
-```
-
-Nothing has to be installed besides the toolchain: zlib, LZO and Python 2.7.18 are built from
-source, Python as a static library like on Linux, so `client.exe` has no DLLs beside it. The
-settings, logs and screenshots live in `%APPDATA%\metin2`. The automation harness runs scripts on
-Windows too, but its command socket is Linux only.
-
-#### Releases
-
-The `Windows release` workflow (`.github/workflows/release-windows.yml`, started by hand with a
-version `X.Y.Z` and an m2game ref) builds a Release `client.exe`, which uses the GUI subsystem so no
-console window opens. It lays out the release folder with `scripts/package_release.py`:
-
-| Path              | Contents                                                     |
-|-------------------|--------------------------------------------------------------|
-| `Metin2.exe`      | the client                                                   |
-| `data/<pack>.zip` | one zip per folder of m2game's `data/`, paths relative to it |
-| `lib/`            | m2game's `lib/` as it is (the Python standard library)       |
-
-Files whose extension is in `EXCLUDE_EXTENSIONS` in the script (`.ase`) stay out of the packs. The
-folder becomes `Metin2-<version>-windows-x64.zip` and an MSI built with WiX v5 from
-`packaging/windows/metin2.wxs` (installs to Program Files, Start menu shortcut). Both are attached to
-the release `v<version>` of m2game, tagged on the m2game commit that was packed. The workflow needs
-the repository secret `M2GAME_TOKEN`: a token for `metin2-reborn/m2game` with Contents read and
-write (m2game is private). The script runs on Linux too:
-`scripts/package_release.py --exe build/bin/client --game ../m2game --out release`, then
-`METIN2_CLIENT_DIR=$PWD/release just smoke` runs the client from the packs.
-
-The data deflates to about 1.5 GB, against GitHub's 2 GiB limit per release asset and the 2 GB
-limit of an MSI with an embedded cabinet; past that the packs have to be split or the cabinets
-moved out of the MSI.
-
-## Running
-
-The client needs the game directory: `data/` (the bootstrap in `data/system`, the `data/ui` pack with
-the game scripts, the UI package and the locale data, the other archives) and `lib/`, the Python 2.7 standard library as
-`.pyc` files, which is the only standard library the embedded Python ever sees (no `PYTHONHOME`,
-no `site`). An installation is the executable, `data/` and `lib/`, nothing else. `just run` starts
-it from the game directory as a normal process, with your own `~/.metin2`. The game directory defaults to an `m2game` checkout
-next to this repository; set `METIN2_CLIENT_DIR` to use another one:
-
-```sh
-just run
-METIN2_CLIENT_DIR=/path/to/client-data just run
-```
-
-`just run-sandbox` starts it in a bubblewrap sandbox instead: the game directory is mounted as an
-overlay, so nothing can modify it, and `HOME` is `run/home` (a windowed
-`run/home/.metin2/metin2.toml` is written on first use). The automation recipes below use the
-sandbox. The server address is part of the game scripts' server list.
-
-### ~/.metin2
-
-| Path                       | Contents                                                          |
-|----------------------------|-------------------------------------------------------------------|
-| `metin2.toml`              | settings (display, graphics, sound, interface, login, log level)  |
-| `interface.dat`            | window positions and UI state                                     |
-| `log/client.log`           | log of the current run (the previous five are kept as `.1`-`.5`)  |
-| `log/syserr.log`           | warnings and errors with file and line, Python tracebacks         |
-| `log/crash.log`            | stack trace of a crash                                            |
-| `mark/`                    | guild marks downloaded from the server                            |
-| `screenshots/`             | screenshots                                                       |
-
-A minimal `metin2.toml`:
-
-```toml
-[display]
-width = 1280
-height = 720             # the window size; windowed = false is a borderless full screen on the
-windowed = true          # current monitor at the desktop's resolution (no mode switch, no chrome)
-vsync = true
-fps_limit = 0            # 0: no cap beyond vsync; e.g. 144
-gamma = 3                # 1 (darker) to 5 (brighter), 3 is neutral
-
-[graphics]
-antialias = true         # FXAA on the 3D scene
-shadow_level = 3
-terrain_detail = 1       # relief shading from the terrain textures: 0 off, 1 low, 2 high
-grass_density = 1        # grass on grass and field tiles: 0 off to 3
-
-[interface]
-font_scale = 1.0         # text size factor
-font_antialias = true    # false gives the original 1-bit glyphs
-ui_scale = 0             # interface magnification 1-3; 0 picks it from the window height
-                         # (text is rasterized at the magnified size, not enlarged; on a scaled
-                         # desktop the window is high-DPI and the automatic choice sees real pixels)
-chat_timestamps = false  # prefix spoken chat lines with [HH:MM]
-
-[keys]                   # optional: rebind game actions (names as in DIK_*, e.g. "F", "NUMPAD1", "GRAVE")
-inventory = "I"
-pick_up = "Z"
-
-[sound]
-music_volume = 0.5
-voice_volume = 1.0
-
-[log]
-level = "info"           # "debug", "info", "warn" or "error"
-```
-
-Rebindable actions and their original keys: `attack` (SPACE), `move_up`/`move_down`/`move_left`/
-`move_right` (arrows) and their `_alt` twins (W/S/A/D), `camera_left`/`camera_right` (Q/E),
-`camera_zoom_in`/`camera_zoom_out` (R/F), `camera_pitch_up`/`camera_pitch_down` (T/G), `pick_up`
-(Z) and `pick_up_alt` (`), `sprint` (LSHIFT, held), `character` (C), `skills` (V), `quests` (N),
-`inventory` (I), `dragon_soul` (O), `map` (M), `chat_log` (L), `mount` (J), `help` (H), `emotions`
-(B). Two actions bound to one key both fire.
-
-A key with a wrong type or an unknown key is reported in `syserr.log` with its line and keeps its
-default; the rest of the file still applies. `python_system::load_config` in
-`src/metin2/client/app/python_system.cpp` reads every option.
-
-### Development builds
-
-Debug and RelWithDebInfo builds (`M2_DEV_TOOLS`) include an automation harness that drives
-the client from a script or a socket: mouse and keyboard input, screenshots, Python execution and
-frame stepping. Release and MinSizeRel builds contain none of it.
-
-```sh
-just smoke                       # start, reach the login screen, quit
-just login                       # log-in screen checks
-just world                       # load a map
-just run-auto scripts/smoke.m2a  # any automation script
-just send 'screenshot shot.png'  # one command to a running client (needs socat)
-```
-
-Scripts, commands and their results are logged to `run/automation.log`.
-
-## Recipes
-
-| Recipe            | Does                                                                |
-|-------------------|---------------------------------------------------------------------|
-| `build`           | configure if needed, then build                                     |
-| `test`            | build, then run the unit tests                                      |
-| `run`             | run the client from the game directory                              |
-| `run-sandbox`     | run the client in the overlay sandbox with `HOME=run/home`          |
-| `run-auto SCRIPT` | run in the sandbox with an automation script                        |
-| `smoke`, `login`, `world` | the automation smoke tests                                  |
-| `grn-dump`        | load every Granny file in the game data and summarize failures       |
-| `checksum`, `verify-gamedir` | record and check a manifest of the game directory        |
-| `format`          | format the sources with clang-format                                |
-| `clean`           | remove the build and everything the client wrote under `run/`       |
-
-The build also produces `build/bin/eter_unpack`, which extracts an original client's `pack/*.eix`
-+ `*.epk` archives: `eter_unpack <out dir> <pack dir or .eix files>` writes one folder per pack,
-decodes the plain, compressed and key-encrypted entries and lists the Panama and hybrid-crypt
-entries (their keys only ever came from the login server) in `<out dir>/unsupported.txt`.
-
-`scripts/python_stubs.py` writes `.pyi` stubs for the `metin2.*` modules the game scripts call
-(functions with their arguments from the `PyArg_ParseTuple` formats, return types, constants) into
-`../m2game/typings/`, where m2game's `pyrightconfig.json` finds them; run it after changing an
-export table and commit the result in m2game.
+| Document                                   | Covers                                                              |
+|--------------------------------------------|---------------------------------------------------------------------|
+| [docs/building.md](docs/building.md)       | requirements, building on Linux and Windows, release packaging      |
+| [docs/running.md](docs/running.md)         | the game directory, `~/.metin2`, every setting of `metin2.toml`     |
+| [docs/development.md](docs/development.md) | the `just` recipes, the automation harness, tools, code conventions |
 
 ## Contributing
 
-Code style is defined by `.clang-format` and `.clang-tidy` in the repository root. Names follow the
-standard library: `snake_case` for namespaces, types, functions and variables, a trailing `_` for private
-and protected data members, `UPPER_CASE` for constants and enumerators. `clang-tidy` checks this.
-
-- Format with `just format`. The files in `src/metin2/dev` keep their own style;
-  `.clang-format-ignore` excludes them.
-- Don't add trace or debug switches to the client. Tracing is added for one investigation and
-  removed again; `.claude/skills/trace/SKILL.md` describes how.
-- Keep headers self-contained, with `#pragma once`, and include what you use.
-- Read game assets through `get_file_manager()` (`files/eter_file_manager.h`), never by path: asset
-  names are case-insensitive and may live in the zip or the loose-file folder.
-- The Python modules live under the root package `metin2` (`metin2.app`, `metin2.graphics.text`,
-  `metin2.trade.shop`, ...); register a new one with `init_python_module` (`script/python_module.h`),
-  which creates the parent packages. Export names (the strings in the module tables) are
-  `snake_case`; the game scripts call them, so an export and its call sites in `m2game/data` change
-  together.
-- Wire structures in `client/protocol/packet.h` are packed and checked with `static_assert`; their
-  sizes must match the server's.
-- Comments explain what the code cannot: pitfalls, ordering, lifetimes, protocol facts.
-- Build in Debug (`-Werror`), run `just test`, and run the smoke tests before sending a change.
+Pull requests are welcome. Please read [docs/development.md](docs/development.md) first: it has the
+code style, the build-and-test checklist and the rules the code base follows.
 
 ## Third-party software
 
