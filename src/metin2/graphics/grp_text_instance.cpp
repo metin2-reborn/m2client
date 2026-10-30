@@ -49,6 +49,7 @@ namespace metin2::inline graphics {
         if (ins_char_info) {
             color_info_vector_.push_back(color);
             char_info_vector_.push_back(ins_char_info);
+            space_vector_.push_back(text == L' ');
 
             text_width_ += ins_char_info->advance;
             return ins_char_info->advance;
@@ -57,12 +58,104 @@ namespace metin2::inline graphics {
         return 0.0f;
     }
 
-    // Whether glyph `index` starts a new row when the pen (texels from the row start) is in front
-    // of it. Only multi-line text wraps; a glyph that does not fit on an empty row is drawn anyway.
-    auto graphic_text_instance::wraps(std::size_t index, float pen) -> bool {
-        if (!is_multi_line_ || pen <= 0.0f)
-            return false;
-        return pen + char_info_vector_[index]->advance > limit_width_ * pixel_scale();
+    // Breaks multi-line text into rows of at most limit_width_: a row ends at a newline or at the
+    // last space that fits (the spaces stay on it, past the edge if need be), and a word wider
+    // than a whole row is broken where it reaches the edge. A glyph that does not fit on an empty
+    // row is drawn anyway.
+    void graphic_text_instance::layout_rows() {
+        if (rows_valid_)
+            return;
+        rows_valid_ = true;
+        rows_.clear();
+
+        if (!is_multi_line_) {
+            rows_.push_back({0, text_width_});
+            return;
+        }
+
+        const float limit = limit_width_ * pixel_scale();
+        std::size_t begin = 0;
+        float pen = 0.0f;
+        std::size_t break_at = 0;  // the first glyph after the row's last run of spaces
+        float break_width = 0.0f;  // the row's width in front of that run
+        std::size_t next_line = 0; // in line_breaks_
+        const auto new_line = [&](std::size_t i) {
+            rows_.push_back({begin, pen});
+            begin = i;
+            pen = 0.0f;
+            break_at = begin;
+            break_width = 0.0f;
+        };
+        for (std::size_t i = 0; i < char_info_vector_.size(); ++i) {
+            for (; next_line < line_breaks_.size() && line_breaks_[next_line] == i; ++next_line)
+                new_line(i);
+            const float advance = char_info_vector_[i]->advance;
+            if (space_vector_[i]) {
+                if (i == begin || !space_vector_[i - 1])
+                    break_width = pen;
+                pen += advance;
+                break_at = i + 1;
+                continue;
+            }
+            while (pen > 0.0f && pen + advance > limit) {
+                if (break_at > begin && break_width > 0.0f) {
+                    rows_.push_back({begin, break_width});
+                    pen = 0.0f;
+                    for (std::size_t j = break_at; j < i; ++j)
+                        pen += char_info_vector_[j]->advance;
+                    begin = break_at;
+                } else {
+                    rows_.push_back({begin, pen});
+                    pen = 0.0f;
+                    begin = i;
+                }
+                break_at = begin;
+                break_width = 0.0f;
+            }
+            pen += advance;
+        }
+        for (; next_line < line_breaks_.size(); ++next_line)
+            new_line(char_info_vector_.size());
+        rows_.push_back({begin, pen});
+    }
+
+    // The row glyph `index` is on; the end of the text is on the last row.
+    auto graphic_text_instance::row_of(std::size_t index) -> std::size_t {
+        layout_rows();
+        std::size_t row = 0;
+        while (row + 1 < rows_.size() && rows_[row + 1].begin <= index)
+            ++row;
+        return row;
+    }
+
+    // Texels from the aligned origin to the start of `row`: multi-line rows are aligned within
+    // the widest one, on whole texels.
+    auto graphic_text_instance::row_offset(std::size_t row) -> float {
+        if (!is_multi_line_)
+            return 0.0f;
+        const float space = layout_width() - rows_[row].width;
+        switch (h_align_) {
+        case HORIZONTAL_ALIGN_RIGHT:
+            return std::floor(space);
+        case HORIZONTAL_ALIGN_CENTER:
+            return std::floor(space / 2.0f);
+        }
+        return 0.0f;
+    }
+
+    auto graphic_text_instance::layout_width() -> float {
+        layout_rows();
+        if (!is_multi_line_)
+            return text_width_;
+        float width = 0.0f;
+        for (const row &r : rows_)
+            width = std::max(width, r.width);
+        return width;
+    }
+
+    auto graphic_text_instance::layout_height() -> int {
+        layout_rows();
+        return text_height_ * static_cast<int>(rows_.size());
     }
 
     // The pen in front of glyph `index` in texels relative to the aligned origin: x along the row
@@ -70,22 +163,13 @@ namespace metin2::inline graphics {
     void graphic_text_instance::pen_at(std::size_t index, float *x, int *y) {
         index = std::min(index, char_info_vector_.size());
 
-        float pen = 0.0f;
-        int row = 0;
-        for (std::size_t i = 0; i < index; ++i) {
-            if (wraps(i, pen)) {
-                pen = 0.0f;
-                row += text_height_;
-            }
+        const std::size_t row = row_of(index);
+        float pen = row_offset(row);
+        for (std::size_t i = rows_[row].begin; i < index; ++i)
             pen += char_info_vector_[i]->advance;
-        }
-        if (index < char_info_vector_.size() && wraps(index, pen)) {
-            pen = 0.0f;
-            row += text_height_;
-        }
 
         *x = pen;
-        *y = row;
+        *y = static_cast<int>(row) * text_height_;
     }
 
     void graphic_text_instance::character_position(std::size_t index, float *x, float *y) {
@@ -108,21 +192,20 @@ namespace metin2::inline graphics {
         x *= scale;
         y *= scale;
 
-        float pen = 0.0f;
-        int row = 0;
-        for (std::size_t i = 0; i < char_info_vector_.size(); ++i) {
+        layout_rows();
+        std::size_t row = 0;
+        if (y > 0.0f && text_height_ > 0)
+            row = std::min(static_cast<std::size_t>(y / static_cast<float>(text_height_)), rows_.size() - 1);
+        const std::size_t end = row + 1 < rows_.size() ? rows_[row + 1].begin : char_info_vector_.size();
+
+        float pen = row_offset(row);
+        for (std::size_t i = rows_[row].begin; i < end; ++i) {
             const float advance = char_info_vector_[i]->advance;
-            if (wraps(i, pen)) {
-                if (y < static_cast<float>(row + text_height_))
-                    return i; // the point is right of this row
-                pen = 0.0f;
-                row += text_height_;
-            }
-            if (y < static_cast<float>(row + text_height_) && x < pen + advance / 2.0f)
+            if (x < pen + advance / 2.0f)
                 return i;
             pen += advance;
         }
-        return char_info_vector_.size();
+        return end; // right of the row: the start of the next one, or the end of the text
     }
 
     // The aligned origin in texels: the interface position, aligned by the text size, rounded to a
@@ -136,19 +219,19 @@ namespace metin2::inline graphics {
 
         switch (h_align_) {
         case HORIZONTAL_ALIGN_RIGHT:
-            fx -= text_width_;
+            fx -= layout_width();
             break;
         case HORIZONTAL_ALIGN_CENTER:
-            fx -= text_width_ / 2.0f;
+            fx -= layout_width() / 2.0f;
             break;
         }
 
         switch (v_align_) {
         case VERTICAL_ALIGN_BOTTOM:
-            fy -= static_cast<float>(text_height_);
+            fy -= static_cast<float>(layout_height());
             break;
         case VERTICAL_ALIGN_CENTER:
-            fy -= static_cast<float>(text_height_) / 2.0f;
+            fy -= static_cast<float>(layout_height()) / 2.0f;
             break;
         }
 
@@ -192,7 +275,10 @@ namespace metin2::inline graphics {
 
         char_info_vector_.clear();
         color_info_vector_.clear();
+        space_vector_.clear();
+        line_breaks_.clear();
         hyperlink_vector_.clear();
+        rows_valid_ = false;
 
         text_width_ = 0.0f;
         text_height_ = font_texture->line_height();
@@ -215,7 +301,10 @@ namespace metin2::inline graphics {
             for (int i = 0; i < text_len;) {
                 int ret = get_text_tag(&text[i], text_len - i, len, hyperlink_buffer);
 
-                if (ret == TEXT_TAG_PLAIN || ret == TEXT_TAG_TAG) {
+                if (ret == TEXT_TAG_PLAIN && text[i] == L'\n') {
+                    // A new row in multi-line text (layout_rows); nothing is drawn for it.
+                    line_breaks_.push_back(char_info_vector_.size());
+                } else if (ret == TEXT_TAG_PLAIN || ret == TEXT_TAG_TAG) {
                     if (hyperlink_step == 1)
                         hyperlink_buffer.append(1, text[i]);
                     else {
@@ -362,25 +451,25 @@ namespace metin2::inline graphics {
 
             // Walks the glyphs as laid out, with the cell origin of each one that is drawn.
             auto each_glyph = [&](auto &&draw) {
-                float pen = 0.0f;
-                int row = 0;
-                for (std::size_t i = 0; i < char_info_vector_.size(); ++i) {
-                    const graphic_font_texture::character_infomation &info = *char_info_vector_[i];
-                    if (wraps(i, pen)) {
-                        pen = 0.0f;
-                        row += text_height_;
+                layout_rows();
+                for (std::size_t r = 0; r < rows_.size(); ++r) {
+                    const std::size_t end = r + 1 < rows_.size() ? rows_[r + 1].begin : char_info_vector_.size();
+                    const int row = static_cast<int>(r) * text_height_;
+                    float pen = row_offset(r);
+                    for (std::size_t i = rows_[r].begin; i < end; ++i) {
+                        const graphic_font_texture::character_infomation &info = *char_info_vector_[i];
+                        const int x = static_cast<int>(lroundf(pen)) - scroll;
+                        pen += info.advance;
+                        if (x < 0)
+                            continue; // scrolled out to the left
+                        if (!is_multi_line_ && static_cast<float>(x) + info.advance > limit)
+                            break; // single-line text is clipped at limit_width_
+                        if (clip_rect && origin_y + row <= clip_top)
+                            continue;
+                        if (info.width == 0)
+                            continue;
+                        draw(i, info, x + info.bearing_x, row + info.bearing_y);
                     }
-                    const int x = static_cast<int>(lroundf(pen)) - scroll;
-                    pen += info.advance;
-                    if (x < 0)
-                        continue; // scrolled out to the left
-                    if (!is_multi_line_ && static_cast<float>(x) + info.advance > limit)
-                        break; // single-line text is clipped at limit_width_
-                    if (clip_rect && origin_y + row <= clip_top)
-                        continue;
-                    if (info.width == 0)
-                        continue;
-                    draw(i, info, x + info.bearing_x, row + info.bearing_y);
                 }
             };
 
@@ -466,6 +555,8 @@ namespace metin2::inline graphics {
     }
 
     void graphic_text_instance::set_multi_line(bool value) {
+        if (is_multi_line_ != value)
+            rows_valid_ = false;
         is_multi_line_ = value;
     }
 
@@ -478,6 +569,8 @@ namespace metin2::inline graphics {
     }
 
     void graphic_text_instance::set_limit_width(float width_value) {
+        if (limit_width_ != width_value)
+            rows_valid_ = false;
         limit_width_ = width_value;
     }
 
@@ -512,23 +605,18 @@ namespace metin2::inline graphics {
     }
 
     auto graphic_text_instance::text_line_count() -> uint16_t {
-        float pen = 0.0f;
-        uint16_t line_count = 1;
-        for (std::size_t i = 0; i < char_info_vector_.size(); ++i) {
-            if (wraps(i, pen)) {
-                pen = 0.0f;
-                ++line_count;
-            }
-            pen += char_info_vector_[i]->advance;
-        }
-
-        return line_count;
+        layout_rows();
+        return static_cast<uint16_t>(rows_.size());
     }
 
     void graphic_text_instance::text_size(int *ret_width, int *ret_height) {
         const float scale = pixel_scale();
-        *ret_width = static_cast<int>(ceilf(text_width_ / scale - 0.001f));
-        *ret_height = static_cast<int>(ceilf(static_cast<float>(text_height_) / scale - 0.001f));
+        *ret_width = static_cast<int>(ceilf(layout_width() / scale - 0.001f));
+        *ret_height = static_cast<int>(ceilf(static_cast<float>(layout_height()) / scale - 0.001f));
+    }
+
+    auto graphic_text_instance::line_height() -> int {
+        return static_cast<int>(ceilf(static_cast<float>(text_height_) / pixel_scale() - 0.001f));
     }
 
     auto graphic_text_instance::get_horizontal_align() -> int {
@@ -554,6 +642,7 @@ namespace metin2::inline graphics {
 
         text_width_ = 0.0f;
         text_height_ = 0;
+        rows_valid_ = false;
 
         position_value_.x = position_value_.y = position_value_.z = 0.0f;
 
@@ -564,6 +653,8 @@ namespace metin2::inline graphics {
         text_ = "";
         char_info_vector_.clear();
         color_info_vector_.clear();
+        space_vector_.clear();
+        line_breaks_.clear();
         hyperlink_vector_.clear();
 
         initialize_impl();

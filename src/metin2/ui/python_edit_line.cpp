@@ -317,7 +317,7 @@ namespace metin2::inline ui::widgets {
         origin_x -= scroll_x_;
         int text_width = 0, text_height = 0;
         text_instance_.text_size(&text_width, &text_height);
-        const auto line_height = static_cast<float>(text_height);
+        const auto line_height = static_cast<float>(text_instance_.line_height());
         const float clip_left = text_left();
         const float clip_right = width_ > 0 ? text_right() : origin_x + static_cast<float>(text_width) + 1.0f;
 

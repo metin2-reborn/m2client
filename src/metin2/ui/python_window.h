@@ -10,7 +10,10 @@
 #include <metin2/script/python_header.h>
 
 #include <list>
+#include <memory>
 #include <vector>
+
+#include "hit_mask.h"
 
 namespace metin2::inline ui {
     namespace widgets {
@@ -96,6 +99,8 @@ namespace metin2::inline ui {
             void set_top(ui_window *win);
 
             auto is_in(int32_t x, int32_t y) -> bool;
+            // Restricts is_in to the opaque pixels of an image (see hit_mask); "" removes the mask.
+            auto set_hit_mask(const char *name) -> bool;
             auto is_in() -> bool;
             auto pick_window(int32_t x, int32_t y) -> ui_window *;
             auto pick_top_window(int32_t x, int32_t y) -> ui_window *; // Checks only this level, without descending into the children.
@@ -177,6 +182,7 @@ namespace metin2::inline ui {
             uint32_t flag_;
 
             PyObject *handler_;
+            std::unique_ptr<hit_mask> hit_mask_;
             // Whether the handler defines on_update / on_render. Most widgets do not, and a failed
             // attribute lookup per window per frame (with its AttributeError) is what the per-frame
             // calls would otherwise cost.
@@ -279,6 +285,7 @@ namespace metin2::inline ui {
             void set_font(const font_spec &font);
             void set_font_color(uint32_t color);
             void set_limit_width(float width_value);
+            void set_size(int32_t width_value, int32_t height) override;
 
             void set_text(const char *text);
             auto get_text() -> const char *;

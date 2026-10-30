@@ -1680,6 +1680,21 @@ namespace metin2::inline ui {
         Py_RETURN_NONE;
     }
 
+    auto wnd_set_hit_mask(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *window;
+        char *name;
+
+        if (!PyArg_ParseTuple(args, "O&s", window_converter, &window, &name)) {
+            return nullptr;
+        }
+
+        if (!window->set_hit_mask(name)) {
+            PyErr_Format(PyExc_IOError, "Cannot load hit mask %s", name);
+            return nullptr;
+        }
+
+        Py_RETURN_NONE;
+    }
     auto wnd_image_set_shader(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *window;
         char *shader;
@@ -2133,6 +2148,7 @@ namespace metin2::inline ui {
                 {"set_scale", wnd_image_set_scale, METH_VARARGS},
                 {"set_fit", wnd_image_set_fit, METH_VARARGS},
                 {"set_shader", wnd_image_set_shader, METH_VARARGS},
+                {"set_hit_mask", wnd_set_hit_mask, METH_VARARGS},
                 {"get_image_fit", wnd_image_get_image_fit, METH_VARARGS},
                 // ParticleBox
                 {"load_particles", wnd_particles_load, METH_VARARGS},

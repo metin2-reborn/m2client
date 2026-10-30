@@ -54,11 +54,17 @@ namespace metin2::inline graphics {
         void set_multi_line(bool value);
         void set_limit_width(float width_value);
 
+        // The laid out text in interface pixels: multi-line text is as wide as its widest row and as
+        // tall as all rows together.
         void text_size(int *ret_width, int *ret_height);
+        // The height of one row in interface pixels.
+        auto line_height() -> int;
         auto value_string_reference() -> const std::string &;
         auto text_line_count() -> uint16_t;
 
         auto get_horizontal_align() -> int;
+        auto get_vertical_align() -> int { return v_align_; }
+        auto is_multi_line() const -> bool { return is_multi_line_; }
 
         // Glyph geometry for edit lines, in interface pixels relative to the aligned origin (see
         // aligned_origin): the pen in front of glyph `index` (glyph_count() gives the end of the
@@ -78,7 +84,11 @@ namespace metin2::inline graphics {
         auto draw_character(graphic_font_texture *font_texture, wchar_t text, uint32_t color) -> float;
         auto pixel_scale() -> float;
         void aligned_origin_texels(int *x, int *y);
-        auto wraps(std::size_t index, float pen) -> bool;
+        void layout_rows();
+        auto row_of(std::size_t index) -> std::size_t;
+        auto row_offset(std::size_t row) -> float;
+        auto layout_width() -> float;
+        auto layout_height() -> int;
         void pen_at(std::size_t index, float *x, int *y);
 
       protected:
@@ -94,7 +104,7 @@ namespace metin2::inline graphics {
         uint32_t text_color_;
         uint32_t out_line_color_;
 
-        float text_width_; // texels
+        float text_width_; // texels: all glyphs on one row
         int text_height_;  // texels: the line height
 
         uint8_t h_align_;
@@ -118,6 +128,17 @@ namespace metin2::inline graphics {
         graphic_text::ref ro_text_;
         graphic_font_texture::p_character_infomation_vector char_info_vector_;
         std::vector<uint32_t> color_info_vector_;
+        std::vector<bool> space_vector_;       // per glyph: a space, where multi-line text may wrap
+        std::vector<std::size_t> line_breaks_; // glyphs after a newline, in order (rows of multi-line text)
+
+        // Rows of the laid out text, recomputed when the glyphs, the limit width or the multi-line
+        // flag change. Single-line text is one row.
+        struct row {
+            std::size_t begin; // first glyph
+            float width;       // texels, without the spaces a wrapped row ends with
+        };
+        std::vector<row> rows_;
+        bool rows_valid_ = false;
         std::vector<hyperlink> hyperlink_vector_;
 
       public:

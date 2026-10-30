@@ -3,6 +3,7 @@
 #include <metin2/client/guilds/mark_image.h>
 #include <metin2/graphics/grp_expanded_image_instance.h>
 #include <metin2/graphics/image_file.h>
+#include <metin2/ui/hit_mask.h>
 
 #include <chrono>
 #include <cstdlib>
@@ -103,4 +104,39 @@ TEST(image_fit_stretches_covers_and_contains) {
     CHECK_EQ(contained.v1, 1.0f);
 
     CHECK_EQ(fit::fit(fit::FIT_COVER, 0, 768, 1280, 720).width, 0.0f);
+}
+
+TEST(hit_mask_follows_alpha_of_the_rect) {
+    // 4x2 image; the rect is the right three columns: opaque, clear, opaque / clear, opaque, clear.
+    rgba_image image;
+    image.width = 4;
+    image.height = 2;
+    image.has_alpha = true;
+    const uint8_t alpha[] = {0, 255, 0, 200, 255, 0, 255, 10};
+    for (const uint8_t a : alpha) {
+        image.pixels.insert(image.pixels.end(), {1, 2, 3, a});
+    }
+    hit_mask mask;
+    mask.assign(image, 1, 0, 4, 2);
+    CHECK(mask.hit(0, 0, 3, 2));
+    CHECK(!mask.hit(1, 0, 3, 2));
+    CHECK(mask.hit(2, 0, 3, 2));
+    CHECK(!mask.hit(0, 1, 3, 2));
+    CHECK(mask.hit(1, 1, 3, 2));
+    // Stretched over a window twice the size, and nothing outside it.
+    CHECK(mask.hit(3, 3, 6, 4));
+    CHECK(!mask.hit(5, 3, 6, 4));
+    CHECK(!mask.hit(6, 0, 6, 4));
+    CHECK(!mask.hit(-1, 0, 6, 4));
+}
+
+TEST(hit_mask_without_alpha_is_the_whole_rect) {
+    rgba_image image;
+    image.width = 2;
+    image.height = 2;
+    image.pixels.assign(16, 0);
+    hit_mask mask;
+    mask.assign(image, 0, 0, 2, 2);
+    CHECK(mask.hit(0, 0, 2, 2));
+    CHECK(mask.hit(1, 1, 2, 2));
 }

@@ -610,9 +610,21 @@ namespace metin2::inline ui {
         auto ui_window::is_in(int32_t x, int32_t y) -> bool {
             if (x >= rect_.left && x <= rect_.right)
                 if (y >= rect_.top && y <= rect_.bottom)
-                    return true;
+                    return !hit_mask_ || hit_mask_->hit(x - rect_.left, y - rect_.top, width_, height_);
 
             return false;
+        }
+
+        auto ui_window::set_hit_mask(const char *name) -> bool {
+            if (!name || !*name) {
+                hit_mask_.reset();
+                return true;
+            }
+            auto mask = std::make_unique<hit_mask>();
+            if (!mask->load(name))
+                return false;
+            hit_mask_ = std::move(mask);
+            return true;
         }
 
         auto ui_window::is_in() -> bool {
@@ -744,9 +756,11 @@ namespace metin2::inline ui {
 
         void text_line::set_horizontal_align(int type) {
             text_instance_.set_horizonal_align(type);
+            text_line::on_change_position();
         }
         void text_line::set_vertical_align(int type) {
             text_instance_.set_vertical_align(type);
+            text_line::on_change_position();
         }
         void text_line::set_secret(bool flag) {
             text_instance_.set_secret(flag ? true : false);
@@ -756,6 +770,7 @@ namespace metin2::inline ui {
         }
         void text_line::set_multi_line(bool flag) {
             text_instance_.set_multi_line(flag ? true : false);
+            text_line::on_change_position();
         }
         void text_line::set_font(const font_spec &font) {
             resource *res = get_resource_manager().type_resource_pointer(graphic_text::resource_name(font).c_str());
@@ -766,6 +781,10 @@ namespace metin2::inline ui {
         }
         void text_line::set_limit_width(float width_value) {
             text_instance_.set_limit_width(width_value);
+        }
+        void text_line::set_size(int32_t width_value, int32_t height) {
+            ui_window::set_size(width_value, height);
+            text_line::on_change_position();
         }
         void text_line::set_text(const char *text) {
             on_set_text(text);
@@ -791,8 +810,24 @@ namespace metin2::inline ui {
                 text_instance_.render();
         }
 
+        // Multi-line text in a sized window is aligned within the window (its rows wrap at the limit
+        // width); otherwise the alignment is around the window's top left corner.
         void text_line::on_change_position() {
-            text_instance_.set_position(rect_.left, rect_.top);
+            float x = static_cast<float>(rect_.left);
+            float y = static_cast<float>(rect_.top);
+            if (text_instance_.is_multi_line() && width_ > 0 && height_ > 0) {
+                const int h_align = text_instance_.get_horizontal_align();
+                if (h_align == graphic_text_instance::HORIZONTAL_ALIGN_CENTER)
+                    x += static_cast<float>(width_) / 2.0f;
+                else if (h_align == graphic_text_instance::HORIZONTAL_ALIGN_RIGHT)
+                    x += static_cast<float>(width_);
+                const int v_align = text_instance_.get_vertical_align();
+                if (v_align == graphic_text_instance::VERTICAL_ALIGN_CENTER)
+                    y += static_cast<float>(height_) / 2.0f;
+                else if (v_align == graphic_text_instance::VERTICAL_ALIGN_BOTTOM)
+                    y += static_cast<float>(height_);
+            }
+            text_instance_.set_position(x, y);
         }
 
         number_line::number_line(PyObject *ppy_object) : ui_window(ppy_object) {
