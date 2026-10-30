@@ -525,11 +525,12 @@ namespace metin2::inline client::inline player {
             return nullptr;
         }
 
-        uint32_t slot_index;
-        if (!get_python_player().skill_slot_index(skill_index, &slot_index)) {
-            PyErr_Format(PyExc_ValueError, "Skill %d is not in a slot", skill_index);
-            return nullptr;
-        }
+        // 0 when the skill has no slot, which is normal: the support skills (riding, leadership)
+        // get theirs only once the character has a skill group. Slots start at 1, and slot 0 is
+        // the empty one the grade and level getters answer 0 for.
+        uint32_t slot_index = 0;
+        if (!get_python_player().skill_slot_index(skill_index, &slot_index))
+            slot_index = 0;
 
         return Py_BuildValue("i", slot_index);
     }
