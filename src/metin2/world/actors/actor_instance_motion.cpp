@@ -27,11 +27,12 @@ namespace metin2::inline world::inline actors {
             return;
         }
 
-        // Event frames (footsteps and the like) are game_fps ticks of real time, not rendered frames;
-        // after a stall only a few are caught up instead of firing a burst of sounds.
+        // Event frames (footsteps and the like) are game_fps ticks of motion time, not rendered frames:
+        // real time scaled by the motion's speed, so a faster run steps faster. After a stall only a
+        // few are caught up instead of firing a burst of sounds.
         constexpr float MAX_CATCH_UP = 0.1f;
         const float tick = 1.0f / game_fps;
-        motion_tick_time_ = std::min(motion_tick_time_ + get_timer().elapsed_second(), MAX_CATCH_UP);
+        motion_tick_time_ = std::min(motion_tick_time_ + get_timer().elapsed_second() * cur_mot_node_.speed_ratio, MAX_CATCH_UP);
         for (; motion_tick_time_ >= tick; motion_tick_time_ -= tick) {
             motion_event_process();
             sound_event_process(!is_pc);
@@ -139,7 +140,7 @@ namespace metin2::inline world::inline actors {
         cur_mot_node_.end_time = end_time;
         cur_mot_node_.motion_key = real_motion_key;
         cur_mot_node_.dwcur_frame = 0;
-        cur_mot_node_.frame_count = duration_time / (1.0f / game_fps);
+        cur_mot_node_.frame_count = motion_duration(real_motion_key) / (1.0f / game_fps); // event frames count motion time
     }
 
     void actor_instance::current_motion_process() {
@@ -341,7 +342,7 @@ namespace metin2::inline world::inline actors {
         cur_mot_node_.end_time = cur_mot_node_.start_time + duration;
         cur_mot_node_.motion_key = real_motion_key;
         cur_mot_node_.dwcur_frame = 0;
-        cur_mot_node_.frame_count = duration / (1.0f / game_fps);
+        cur_mot_node_.frame_count = motion_duration(real_motion_key) / (1.0f / game_fps); // event frames count motion time
         cur_mot_node_.skill = skill;
         cur_mot_node_.speed_ratio = speed_ratio;
 
@@ -541,6 +542,7 @@ namespace metin2::inline world::inline actors {
         motion_deque_value_.clear();
         cur_mot_node_.dwcur_frame = 0;
         cur_mot_node_.frame_count = 0;
+        cur_mot_node_.speed_ratio = 1.0f;
         cur_mot_node_.skill = 0;
         cur_mot_node_.loop_count = 0;
         cur_mot_node_.motion_type_value = MOTION_TYPE_NONE;
@@ -622,6 +624,7 @@ namespace metin2::inline world::inline actors {
 
             horse_->cur_mot_node_.frame_count = horse_->motion_duration(child_mot_key) / (1.0f / game_fps);
             horse_->cur_mot_node_.dwcur_frame = 0;
+            horse_->cur_mot_node_.speed_ratio = set_mot_data.speed_ratio;
             horse_->cur_mot_node_.motion_key = child_mot_key;
         } else {
             graphic_thing_instance::set_motion(mot_key, set_mot_data.blend_time, set_mot_data.loop_count, set_mot_data.speed_ratio);
