@@ -7,6 +7,8 @@
 #include "camera.h"
 #include "state_manager.h"
 
+#include <cmath>
+
 namespace metin2::inline graphics {
 
     void pixel_position_to_vector3(const math::vector3 &p_pos_src, math::vector3 *dst) {
@@ -30,6 +32,7 @@ namespace metin2::inline graphics {
 
     math::matrix graphic_base::identity_;
     float graphic_base::interface_pixel_scale_ = 1.0f;
+    std::vector<rectangle> graphic_base::clip_stack_;
 
     math::matrix graphic_base::view_;
     math::matrix graphic_base::proj_;
@@ -260,4 +263,42 @@ namespace metin2::inline graphics {
     graphic_base::graphic_base() = default;
 
     graphic_base::~graphic_base() = default;
+
+    auto graphic_base::push_clip(const rectangle &rect) -> bool {
+        rectangle clip = rect;
+        if (!clip_stack_.empty()) {
+            const rectangle &outer = clip_stack_.back();
+            clip.left = std::max(clip.left, outer.left);
+            clip.top = std::max(clip.top, outer.top);
+            clip.right = std::min(clip.right, outer.right);
+            clip.bottom = std::min(clip.bottom, outer.bottom);
+        }
+        clip.right = std::max(clip.right, clip.left);
+        clip.bottom = std::max(clip.bottom, clip.top);
+        clip_stack_.push_back(clip);
+
+        const float scale = interface_pixel_scale_;
+        const rectangle pixels = {
+            static_cast<int32_t>(std::floor(clip.left * scale)),
+            static_cast<int32_t>(std::floor(clip.top * scale)),
+            static_cast<int32_t>(std::ceil(clip.right * scale)),
+            static_cast<int32_t>(std::ceil(clip.bottom * scale)),
+        };
+        device().set_scissor(&pixels);
+        return clip.right > clip.left && clip.bottom > clip.top;
+    }
+
+    void graphic_base::pop_clip() {
+        if (clip_stack_.empty())
+            return;
+        clip_stack_.pop_back();
+        if (clip_stack_.empty()) {
+            device().set_scissor(nullptr);
+            return;
+        }
+        // Back to the enclosing clip.
+        const rectangle outer = clip_stack_.back();
+        clip_stack_.pop_back();
+        push_clip(outer);
+    }
 }

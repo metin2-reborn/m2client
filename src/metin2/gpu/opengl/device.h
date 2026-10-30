@@ -151,6 +151,7 @@ namespace metin2::gpu::opengl {
         void enable_light(uint32_t index, bool enable) override;
         void set_viewport(const viewport &vp) override;
         auto get_viewport() const -> viewport override { return state_.view_port; }
+        void set_scissor(const rectangle *rect) override;
         void set_vertex_format(uint32_t format_or_handle) override;
         void set_stream(uint32_t stream, vertex_buffer *buffer, uint32_t stride) override;
         void set_indices(index_buffer *buffer, uint32_t base_vertex) override;
@@ -185,6 +186,7 @@ namespace metin2::gpu::opengl {
         auto current_layout() -> const vertex_layout *;
         void bind_target();
         void apply_viewport();
+        void apply_scissor();
         void apply_pipeline_state();
         void apply_sampler(int stage);
         void prepare_draw(const vertex_layout &layout, const GLuint *buffers, const uint32_t *strides, const uint32_t *offsets);
@@ -213,6 +215,8 @@ namespace metin2::gpu::opengl {
         uint32_t target_width_ = 0;
         uint32_t target_height_ = 0;
         bool flip_y_ = false;
+        bool scissor_ = false;
+        rectangle scissor_rect_ = {};
 
         GLuint program_ = 0;
         GLuint vertex_shader_ = 0; // kept to link the pixel shaders with

@@ -159,9 +159,15 @@ namespace metin2::inline graphics {
         static auto interface_pixel_scale() -> float { return interface_pixel_scale_; }
         static auto half_pixel() -> float { return 0.5f / interface_pixel_scale_; }
 
+        // Interface drawing from now on stays inside rect (interface pixels) and the clip already in
+        // force; every push_clip is paired with a pop_clip. False when nothing of rect is visible.
+        static auto push_clip(const rectangle &rect) -> bool;
+        static void pop_clip();
+
       protected:
         static math::matrix identity_;
         static float interface_pixel_scale_;
+        static std::vector<rectangle> clip_stack_;
 
         static math::matrix view_;
         static math::matrix proj_;

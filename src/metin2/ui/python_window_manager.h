@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <functional>
 #include <list>
 #include <map>
 #include <metin2/script/python_header.h>
@@ -35,6 +36,11 @@ namespace metin2::inline ui {
             }
 
             void set_mouse_handler(PyObject *mouse_handler);
+
+            // The cursor over an edge or corner of a resizable window (FLAG_RESIZABLE), set by the
+            // application, which owns the cursors; NONE when the mouse leaves the edge.
+            enum class resize_cursor { NONE, HORIZONTAL, VERTICAL, DIAGONAL };
+            void set_resize_cursor_handler(std::function<void(resize_cursor)> handler) { resize_cursor_handler_ = std::move(handler); }
             auto screen_width() -> int32_t { return width_; }
             auto screen_height() -> int32_t { return height_; }
             void mouse_position(int32_t &rx, int32_t &ry);
@@ -106,6 +112,17 @@ namespace metin2::inline ui {
 
             void clear_reserve_delete_window_list();
 
+            enum : uint32_t {
+                EDGE_LEFT = 1 << 0,
+                EDGE_TOP = 1 << 1,
+                EDGE_RIGHT = 1 << 2,
+                EDGE_BOTTOM = 1 << 3,
+            };
+            // The edges of the nearest resizable window around the picked one that (x, y) is on.
+            auto resize_edges_at(int32_t x, int32_t y, ui_window **window) -> uint32_t;
+            void show_resize_cursor(uint32_t edges);
+            void resize_window();
+
           private:
             int32_t width_;
             int32_t height_;
@@ -136,6 +153,13 @@ namespace metin2::inline ui {
             ui_window *left_capture_window_;
             ui_window *right_capture_window_;
             ui_window *middle_capture_window_;
+
+            ui_window *resize_window_ = nullptr;
+            uint32_t resize_edges_ = 0;
+            uint32_t hover_edges_ = 0;
+            int32_t resize_mouse_x_ = 0, resize_mouse_y_ = 0;
+            int32_t resize_x_ = 0, resize_y_ = 0, resize_width_ = 0, resize_height_ = 0;
+            std::function<void(resize_cursor)> resize_cursor_handler_;
             key_capture_window_map key_capture_window_map_value_;
             window_container reserve_delete_window_list_;
             window_container pick_always_window_list_;

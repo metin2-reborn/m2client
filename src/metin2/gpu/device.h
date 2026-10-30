@@ -192,6 +192,9 @@ namespace metin2::gpu {
         virtual void enable_light(uint32_t index, bool enable) = 0;
         virtual void set_viewport(const viewport &vp) = 0;
         virtual auto get_viewport() const -> viewport = 0;
+        // The draws from now on only touch this rectangle of the target, in its pixels from the top
+        // left; null draws everywhere again. Clears keep their own areas.
+        virtual void set_scissor(const rectangle *rect) = 0;
         virtual void set_vertex_format(uint32_t format_or_handle) = 0;
         virtual void set_stream(uint32_t stream, vertex_buffer *buffer, uint32_t stride) = 0;
         virtual void set_indices(index_buffer *buffer, uint32_t base_vertex) = 0;

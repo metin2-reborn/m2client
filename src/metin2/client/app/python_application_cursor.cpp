@@ -3,6 +3,7 @@
 #include "resource_ids.h"
 
 #include <metin2/script/python_utils.h>
+#include <metin2/ui/python_window_manager.h>
 
 namespace metin2::inline client::inline app {
     auto python_application::create_cursors() -> bool {
@@ -40,10 +41,29 @@ namespace metin2::inline client::inline app {
             cursors_.emplace(i, std::move(cursor));
         }
 
+        using resize_cursor = widgets::window_manager::resize_cursor;
+        widgets::get_window_manager().set_resize_cursor_handler([this](resize_cursor cursor) {
+            switch (cursor) {
+            case resize_cursor::HORIZONTAL:
+                set_cursor_num(CURSOR_SHAPE_HSIZE);
+                break;
+            case resize_cursor::VERTICAL:
+                set_cursor_num(CURSOR_SHAPE_VSIZE);
+                break;
+            case resize_cursor::DIAGONAL:
+                set_cursor_num(CURSOR_SHAPE_HVSIZE);
+                break;
+            case resize_cursor::NONE:
+                set_cursor_num(CURSOR_SHAPE_NORMAL);
+                break;
+            }
+        });
+
         return true;
     }
 
     void python_application::destroy_cursors() {
+        widgets::get_window_manager().set_resize_cursor_handler(nullptr);
         window::set_cursor(nullptr);
         cursors_.clear();
     }

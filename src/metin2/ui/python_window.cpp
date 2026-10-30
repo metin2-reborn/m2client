@@ -3,6 +3,7 @@
 #include <metin2/core/random.h>
 #include <metin2/core/timer.h>
 #include <metin2/core/util.h>
+#include <metin2/graphics/grp_base.h>
 #include <metin2/graphics/resource_manager.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
@@ -114,9 +115,18 @@ namespace metin2::inline ui {
             if (!is_show())
                 return;
 
+            const bool clip = is_flag(FLAG_CLIP);
+            if (clip && !graphic_base::push_clip(rect_)) {
+                graphic_base::pop_clip();
+                return;
+            }
+
             on_render();
 
             std::for_each(child_list_.begin(), child_list_.end(), std::mem_fn(&ui_window::render));
+
+            if (clip)
+                graphic_base::pop_clip();
         }
 
         void ui_window::on_update() {
@@ -300,6 +310,11 @@ namespace metin2::inline ui {
 
         void ui_window::on_mouse_drag(int32_t lx, int32_t ly) {
             py_call_class_member_func(handler_, "on_mouse_drag", Py_BuildValue("(ii)", lx, ly));
+        }
+
+        void ui_window::on_resize() {
+            if (handler_ && PyObject_HasAttrString(handler_, "on_resize"))
+                py_call_class_member_func(handler_, "on_resize", Py_BuildValue("(ii)", width_, height_));
         }
 
         void ui_window::on_move_window(int32_t lx, int32_t ly) {

@@ -590,7 +590,27 @@ void main() {
         state_.view_port = {0, 0, target_width_, target_height_, 0.0f, 1.0f};
         viewport_dirty_ = pipeline_dirty_ = uniforms_dirty_ = true;
         bind_target();
+        apply_scissor();
         return true;
+    }
+
+    void gl_device::set_scissor(const rectangle *rect) {
+        scissor_ = rect != nullptr;
+        if (rect)
+            scissor_rect_ = *rect;
+        apply_scissor();
+    }
+
+    void gl_device::apply_scissor() {
+        if (!scissor_) {
+            glDisable(GL_SCISSOR_TEST);
+            return;
+        }
+        const int32_t width = std::max<int32_t>(0, scissor_rect_.right - scissor_rect_.left);
+        const int32_t height = std::max<int32_t>(0, scissor_rect_.bottom - scissor_rect_.top);
+        const GLint y = flip_y_ ? scissor_rect_.top : static_cast<GLint>(target_height_) - scissor_rect_.bottom;
+        glScissor(scissor_rect_.left, y, width, height);
+        glEnable(GL_SCISSOR_TEST);
     }
 
     void gl_device::bind_target() {
@@ -639,7 +659,7 @@ void main() {
                 if (scissor(r.left, r.top, r.right, r.bottom))
                     glClear(mask);
         }
-        glDisable(GL_SCISSOR_TEST);
+        apply_scissor();
         pipeline_dirty_ = true; // the colour and depth masks were touched
     }
 

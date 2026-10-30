@@ -48,6 +48,8 @@ namespace metin2::inline ui {
                 FLAG_NOT_PICK = (1 << 9), // not picked by the mouse
                 FLAG_IGNORE_SIZE = (1 << 10),
                 FLAG_RTL = (1 << 11), // Right-to-left
+                FLAG_RESIZABLE = (1 << 12), // its edges and corners resize it (window_manager)
+                FLAG_CLIP = (1 << 13),      // it and its children draw only inside its rect
             };
 
           public:
@@ -129,6 +131,16 @@ namespace metin2::inline ui {
             virtual void on_ime_update();
 
             virtual void on_move_window(int32_t x, int32_t y);
+            // The script's on_resize(width, height), after the window manager resized the window.
+            void on_resize();
+
+            // The smallest size resizing by the edges leaves (FLAG_RESIZABLE).
+            void set_minimum_size(int32_t width_value, int32_t height) {
+                min_width_ = width_value;
+                min_height_ = height;
+            }
+            auto minimum_width() const -> int32_t { return min_width_; }
+            auto minimum_height() const -> int32_t { return min_height_; }
 
             auto run_ime_tab_event() -> bool;
             auto run_ime_return_event() -> bool;
@@ -183,6 +195,8 @@ namespace metin2::inline ui {
 
             PyObject *handler_;
             std::unique_ptr<hit_mask> hit_mask_;
+            int32_t min_width_ = 32;
+            int32_t min_height_ = 32;
             // Whether the handler defines on_update / on_render. Most widgets do not, and a failed
             // attribute lookup per window per frame (with its AttributeError) is what the per-frame
             // calls would otherwise cost.

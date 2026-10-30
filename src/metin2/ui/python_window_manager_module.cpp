@@ -223,6 +223,18 @@ namespace metin2::inline ui {
         Py_RETURN_NONE;
     }
 
+    auto wnd_mgr_set_minimum_size(PyObject *self, PyObject *args) -> PyObject * {
+        widgets::ui_window *win;
+        int width_value, height;
+
+        if (!PyArg_ParseTuple(args, "O&ii", window_converter, &win, &width_value, &height)) {
+            return nullptr;
+        }
+
+        win->set_minimum_size(width_value, height);
+        Py_RETURN_NONE;
+    }
+
     auto wnd_mgr_set_wnd_position(PyObject *self, PyObject *args) -> PyObject * {
         widgets::ui_window *win;
         int x, y;
@@ -410,6 +422,10 @@ namespace metin2::inline ui {
                 win->add_flag(widgets::ui_window::FLAG_IGNORE_SIZE);
             else if (iequals(flag, "rtl"))
                 win->add_flag(widgets::ui_window::FLAG_RTL);
+            else if (iequals(flag, "resizable"))
+                win->add_flag(widgets::ui_window::FLAG_RESIZABLE);
+            else if (iequals(flag, "clip"))
+                win->add_flag(widgets::ui_window::FLAG_CLIP);
             else if (iequals(flag, "ltr"))
                 win->remove_flag(widgets::ui_window::FLAG_RTL);
             else
@@ -2044,6 +2060,7 @@ namespace metin2::inline ui {
                 {"unlock", wnd_mgr_unlock, METH_VARARGS},
 
                 {"set_window_size", wnd_mgr_set_wnd_size, METH_VARARGS},
+                {"set_minimum_size", wnd_mgr_set_minimum_size, METH_VARARGS},
                 {"set_window_position", wnd_mgr_set_wnd_position, METH_VARARGS},
                 {"get_window_width", wnd_mgr_get_wnd_width, METH_VARARGS},
                 {"get_window_height", wnd_mgr_get_wnd_height, METH_VARARGS},

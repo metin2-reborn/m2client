@@ -4,6 +4,7 @@
 #include <metin2/input/keys.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
+#include <algorithm>
 #include <vector>
 #include "python_grid_slot_window.h"
 #include "python_slot_window.h"
@@ -83,6 +84,9 @@ namespace metin2::inline ui {
 
             if (window == left_capture_window_)
                 left_capture_window_ = nullptr;
+
+            if (window == resize_window_)
+                resize_window_ = nullptr;
 
             if (window == middle_capture_window_)
                 middle_capture_window_ = nullptr;
@@ -358,6 +362,84 @@ namespace metin2::inline ui {
             return true;
         }
 
+        auto window_manager::resize_edges_at(int32_t x, int32_t y, ui_window **window) -> uint32_t {
+            constexpr int32_t BORDER = 6;
+
+            *window = nullptr;
+            for (ui_window *win = pick_window_impl(x, y); win && win->has_parent() && win->parent() != root_window_; win = win->parent()) {
+                if (!win->is_flag(ui_window::FLAG_RESIZABLE))
+                    continue;
+                const rectangle &rect = win->rect();
+                uint32_t edges = 0;
+                if (x < rect.left + BORDER)
+                    edges |= EDGE_LEFT;
+                else if (x >= rect.right - BORDER)
+                    edges |= EDGE_RIGHT;
+                if (y < rect.top + BORDER)
+                    edges |= EDGE_TOP;
+                else if (y >= rect.bottom - BORDER)
+                    edges |= EDGE_BOTTOM;
+                if (edges)
+                    *window = win;
+                return edges;
+            }
+            return 0;
+        }
+
+        void window_manager::show_resize_cursor(uint32_t edges) {
+            if (edges == hover_edges_)
+                return;
+            hover_edges_ = edges;
+            if (!resize_cursor_handler_)
+                return;
+            const bool horizontal = edges & (EDGE_LEFT | EDGE_RIGHT);
+            const bool vertical = edges & (EDGE_TOP | EDGE_BOTTOM);
+            if (horizontal && vertical)
+                resize_cursor_handler_(resize_cursor::DIAGONAL);
+            else if (horizontal)
+                resize_cursor_handler_(resize_cursor::HORIZONTAL);
+            else if (vertical)
+                resize_cursor_handler_(resize_cursor::VERTICAL);
+            else
+                resize_cursor_handler_(resize_cursor::NONE);
+        }
+
+        void window_manager::resize_window() {
+            ui_window *win = resize_window_;
+            const int32_t dx = mouse_x_ - resize_mouse_x_;
+            const int32_t dy = mouse_y_ - resize_mouse_y_;
+            const int32_t min_width = std::max(1, win->minimum_width());
+            const int32_t min_height = std::max(1, win->minimum_height());
+
+            // The screen in the parent's coordinates: the window is not dragged past its edges.
+            const int32_t screen_left = win->has_parent() ? -win->parent()->rect().left : 0;
+            const int32_t screen_top = win->has_parent() ? -win->parent()->rect().top : 0;
+            const int32_t screen_right = screen_left + width_;
+            const int32_t screen_bottom = screen_top + height_;
+
+            int32_t x = resize_x_, y = resize_y_, width = resize_width_, height = resize_height_;
+            if (resize_edges_ & EDGE_RIGHT)
+                width = std::max(min_width, std::min(resize_width_ + dx, screen_right - resize_x_));
+            if (resize_edges_ & EDGE_LEFT) {
+                const int32_t right = resize_x_ + resize_width_;
+                x = std::min(std::max(resize_x_ + dx, screen_left), right - min_width);
+                width = right - x;
+            }
+            if (resize_edges_ & EDGE_BOTTOM)
+                height = std::max(min_height, std::min(resize_height_ + dy, screen_bottom - resize_y_));
+            if (resize_edges_ & EDGE_TOP) {
+                const int32_t bottom = resize_y_ + resize_height_;
+                y = std::min(std::max(resize_y_ + dy, screen_top), bottom - min_height);
+                height = bottom - y;
+            }
+
+            if (width == win->width() && height == win->height() && x == win->position_x() && y == win->position_y())
+                return;
+            win->set_size(width, height);
+            win->set_position(x, y);
+            win->on_resize();
+        }
+
         void window_manager::clear_reserve_delete_window_list() {
             for (auto itor = reserve_delete_window_list_.begin(); itor != reserve_delete_window_list_.end(); ++itor) {
                 ui_window *win = *itor;
@@ -424,7 +506,17 @@ namespace metin2::inline ui {
             }
 
             set_mouse_position(x, y);
+            if (resize_window_) {
+                resize_window();
+                return;
+            }
+
             ui_window *point_window = pick_window_impl(mouse_x_, mouse_y_);
+
+            if (!left_capture_window_) {
+                ui_window *resizable = nullptr;
+                show_resize_cursor(resize_edges_at(mouse_x_, mouse_y_, &resizable));
+            }
 
             if (left_capture_window_) {
                 ui_window *win = left_capture_window_;
@@ -491,6 +583,19 @@ namespace metin2::inline ui {
             set_top_ui_window();
 
             set_mouse_position(x, y);
+
+            ui_window *resizable = nullptr;
+            if (const uint32_t edges = resize_edges_at(mouse_x_, mouse_y_, &resizable)) {
+                resize_window_ = resizable;
+                resize_edges_ = edges;
+                resize_mouse_x_ = mouse_x_;
+                resize_mouse_y_ = mouse_y_;
+                resizable->get_position(&resize_x_, &resize_y_);
+                resize_width_ = resizable->width();
+                resize_height_ = resizable->height();
+                return;
+            }
+
             ui_window *win = point_window();
 
             if (!win)
@@ -520,6 +625,13 @@ namespace metin2::inline ui {
             }
 
             set_mouse_position(x, y);
+
+            if (resize_window_) {
+                resize_window_ = nullptr;
+                ui_window *resizable = nullptr;
+                show_resize_cursor(resize_edges_at(mouse_x_, mouse_y_, &resizable));
+                return;
+            }
 
             if (left_capture_window_) {
                 if (left_capture_window_->on_mouse_left_button_up()) {
