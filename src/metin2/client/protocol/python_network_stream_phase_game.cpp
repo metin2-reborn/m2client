@@ -3301,7 +3301,7 @@ namespace metin2::inline client::inline protocol {
             rkpy_bg.create_target_effect(target_create.id, target_create.vid);
         }
 
-        py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "open_atlas_window", Py_BuildValue("()"));
+        // The large map stays as it is: quests mark their targets at every login.
         return true;
     }
 

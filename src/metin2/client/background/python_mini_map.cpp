@@ -13,12 +13,14 @@
 #include <metin2/files/eter_file_manager.h>
 #include <metin2/gpu/types.h>
 #include <metin2/graphics/camera.h>
+#include <metin2/graphics/grp_base.h>
 #include <metin2/graphics/grp_sub_image.h>
 #include <metin2/graphics/state_manager.h>
 #include <metin2/log/log.h>
 #include <metin2/script/python_utils.h>
 #include <metin2/ui/python_window_manager.h>
 
+#include <algorithm>
 #include <format>
 
 namespace metin2::inline client::inline background {
@@ -829,9 +831,8 @@ namespace metin2::inline client::inline background {
                 rotation += 360.0f;
             }
 
-            atlas_player_mark_.set_position(
-                inst_pos.x / atlas_max_x_ * atlas_image_size_x_ - (float)atlas_player_mark_.width() / 2.0f,
-                inst_pos.y / atlas_max_y_ * atlas_image_size_y_ - (float)atlas_player_mark_.height() / 2.0f);
+            atlas_player_x_ = inst_pos.x / atlas_max_x_ * atlas_image_size_x_;
+            atlas_player_y_ = inst_pos.y / atlas_max_y_ * atlas_image_size_y_;
             atlas_player_mark_.set_rotation(rotation);
         }
 
@@ -846,65 +847,95 @@ namespace metin2::inline client::inline background {
         }
     }
 
+    void python_mini_map::set_atlas_view(float width, float height, float scale, float offset_x, float offset_y) {
+        atlas_view_width_ = width;
+        atlas_view_height_ = height;
+        atlas_scale_ = scale > 0.0f ? scale : 1.0f;
+        atlas_offset_x_ = offset_x;
+        atlas_offset_y_ = offset_y;
+    }
+
+    auto python_mini_map::atlas_to_screen(float image_x, float image_y, float *screen_x, float *screen_y) const -> bool {
+        const float x = (image_x - atlas_offset_x_) * atlas_scale_;
+        const float y = (image_y - atlas_offset_y_) * atlas_scale_;
+        *screen_x = atlas_screen_x_ + x;
+        *screen_y = atlas_screen_y_ + y;
+        return x >= 0.0f && y >= 0.0f && x < atlas_view_width_ && y < atlas_view_height_;
+    }
+
     void python_mini_map::render_atlas(float screen_x, float screen_y) {
         if (!show_atlas_) {
             return;
         }
 
-        if (atlas_screen_x_ != screen_x || atlas_screen_y_ != screen_y) {
-            world_atlas_._41 = screen_x;
-            world_atlas_._42 = screen_y;
-            atlas_screen_x_ = screen_x;
-            atlas_screen_y_ = screen_y;
-        }
+        atlas_screen_x_ = screen_x;
+        atlas_screen_y_ = screen_y;
 
-        STATEMANAGER.set_transform(gpu::transform::WORLD, &world_atlas_);
-        STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::MIN_FILTER, gpu::filter::POINT);
-        STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::MAG_FILTER, gpu::filter::POINT);
-        atlas_image_instance_.render();
+        // The image is drawn scaled by the world transform, cropped to the part inside the view;
+        // the marks are placed in screen pixels afterwards and keep their size at every zoom.
+        const float left = std::clamp(atlas_offset_x_, 0.0f, atlas_image_size_x_);
+        const float top = std::clamp(atlas_offset_y_, 0.0f, atlas_image_size_y_);
+        const float right = std::clamp(atlas_offset_x_ + atlas_view_width_ / atlas_scale_, 0.0f, atlas_image_size_x_);
+        const float bottom = std::clamp(atlas_offset_y_ + atlas_view_height_ / atlas_scale_, 0.0f, atlas_image_size_y_);
+        const bool smooth = atlas_scale_ != 1.0f;
+
+        STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::MIN_FILTER, smooth ? gpu::filter::LINEAR : gpu::filter::POINT);
+        STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::MAG_FILTER, smooth ? gpu::filter::LINEAR : gpu::filter::POINT);
+        if (right > left && bottom > top) {
+            world_atlas_ = math::matrix_identity();
+            world_atlas_._11 = atlas_scale_;
+            world_atlas_._22 = atlas_scale_;
+            // The image steps half a pixel back itself; scaled, that would be scale halves.
+            const float half = graphic_base::half_pixel() * (atlas_scale_ - 1.0f);
+            world_atlas_._41 = screen_x - atlas_offset_x_ * atlas_scale_ + half;
+            world_atlas_._42 = screen_y - atlas_offset_y_ * atlas_scale_ + half;
+            STATEMANAGER.set_transform(gpu::transform::WORLD, &world_atlas_);
+            atlas_image_instance_.set_position(0.0f, 0.0f);
+            atlas_image_instance_.set_rendering_rect(-left / atlas_image_size_x_, -top / atlas_image_size_y_,
+                -(atlas_image_size_x_ - right) / atlas_image_size_x_, -(atlas_image_size_y_ - bottom) / atlas_image_size_y_);
+            atlas_image_instance_.render();
+            STATEMANAGER.set_transform(gpu::transform::WORLD, &identity_);
+        }
+        STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::MIN_FILTER, gpu::filter::POINT);
+        STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::MAG_FILTER, gpu::filter::POINT);
 
         STATEMANAGER.save_render_state(gpu::state::TEXTURE_FACTOR, 0xFFFFFFFF);
         STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::COLOR_ARG1, gpu::texture_arg::TFACTOR);
         STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::COLOR_ARG2, gpu::texture_arg::TEXTURE);
         STATEMANAGER.save_texture_stage_state(0, gpu::stage_state::COLOR_OP, gpu::texture_op::MODULATE);
 
-        STATEMANAGER.set_render_state(gpu::state::TEXTURE_FACTOR, instance_base::indexed_name_color(instance_base::NAMECOLOR_NPC));
-        atlas_mark_info_vector_iterator_value_ = atlas_npc_info_vector_.begin();
-        while (atlas_mark_info_vector_iterator_value_ != atlas_npc_info_vector_.end()) {
-            atlas_mark_info &atlas_mark_info_value = *atlas_mark_info_vector_iterator_value_;
-            white_mark_.set_position(atlas_mark_info_value.screen_x, atlas_mark_info_value.screen_y);
-            white_mark_.render();
-            ++atlas_mark_info_vector_iterator_value_;
-        }
-
-        STATEMANAGER.set_render_state(gpu::state::TEXTURE_FACTOR, instance_base::indexed_name_color(instance_base::NAMECOLOR_WARP));
-        atlas_mark_info_vector_iterator_value_ = atlas_warp_info_vector_.begin();
-        while (atlas_mark_info_vector_iterator_value_ != atlas_warp_info_vector_.end()) {
-            atlas_mark_info &atlas_mark_info_value = *atlas_mark_info_vector_iterator_value_;
-            white_mark_.set_position(atlas_mark_info_value.screen_x, atlas_mark_info_value.screen_y);
-            white_mark_.render();
-            ++atlas_mark_info_vector_iterator_value_;
-        }
+        const float mark_width = static_cast<float>(white_mark_.width());
+        const float mark_height = static_cast<float>(white_mark_.height());
+        const auto render_marks = [&](const atlas_mark_info_vector &marks, uint32_t color) {
+            STATEMANAGER.set_render_state(gpu::state::TEXTURE_FACTOR, color);
+            for (const atlas_mark_info &mark : marks) {
+                float x, y;
+                // screen_x/screen_y are the mark's top left in image pixels.
+                if (atlas_to_screen(mark.screen_x + mark_width / 2.0f, mark.screen_y + mark_height / 2.0f, &x, &y)) {
+                    white_mark_.set_position(x - mark_width / 2.0f, y - mark_height / 2.0f);
+                    white_mark_.render();
+                }
+            }
+        };
+        render_marks(atlas_npc_info_vector_, instance_base::indexed_name_color(instance_base::NAMECOLOR_NPC));
+        render_marks(atlas_warp_info_vector_, instance_base::indexed_name_color(instance_base::NAMECOLOR_WARP));
 
         STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::MIN_FILTER, gpu::filter::LINEAR);
         STATEMANAGER.set_texture_stage_state(0, gpu::stage_state::MAG_FILTER, gpu::filter::LINEAR);
         STATEMANAGER.set_render_state(gpu::state::TEXTURE_FACTOR, instance_base::indexed_name_color(instance_base::NAMECOLOR_WAYPOINT));
-        atlas_mark_info_vector_iterator_value_ = atlas_way_point_info_vector_.begin();
-        for (; atlas_mark_info_vector_iterator_value_ != atlas_way_point_info_vector_.end(); ++atlas_mark_info_vector_iterator_value_) {
-            atlas_mark_info &atlas_mark_info_value = *atlas_mark_info_vector_iterator_value_;
-
-            if (atlas_mark_info_value.screen_x <= 0.0f) {
+        for (const atlas_mark_info &mark : atlas_way_point_info_vector_) {
+            if (mark.screen_x <= 0.0f || mark.screen_y <= 0.0f) {
                 continue;
             }
-
-            if (atlas_mark_info_value.screen_y <= 0.0f) {
+            // Way points keep their centre in screen_x/screen_y.
+            float x, y;
+            if (!atlas_to_screen(mark.screen_x, mark.screen_y, &x, &y)) {
                 continue;
             }
-
-            if (TYPE_TARGET == atlas_mark_info_value.type_value) {
-                render_mini_way_point_mark(atlas_mark_info_value.screen_x, atlas_mark_info_value.screen_y);
+            if (TYPE_TARGET == mark.type_value) {
+                render_mini_way_point_mark(static_cast<int>(x), static_cast<int>(y));
             } else {
-                render_way_point_mark(atlas_mark_info_value.screen_x, atlas_mark_info_value.screen_y);
+                render_way_point_mark(static_cast<int>(x), static_cast<int>(y));
             }
         }
 
@@ -914,22 +945,20 @@ namespace metin2::inline client::inline background {
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::COLOR_ARG2);
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::COLOR_OP);
 
-        if ((el_timer_get_m_sec() / 500) % 2) {
+        float player_x, player_y;
+        if ((el_timer_get_m_sec() / 500) % 2 && atlas_to_screen(atlas_player_x_, atlas_player_y_, &player_x, &player_y)) {
+            atlas_player_mark_.set_position(player_x - static_cast<float>(atlas_player_mark_.width()) / 2.0f,
+                player_y - static_cast<float>(atlas_player_mark_.height()) / 2.0f);
             atlas_player_mark_.render();
         }
 
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::MIN_FILTER);
         STATEMANAGER.restore_texture_stage_state(0, gpu::stage_state::MAG_FILTER);
-        STATEMANAGER.set_transform(gpu::transform::WORLD, &identity_);
 
-        {
-            auto itor = guild_area_info_vector_value_.begin();
-            for (; itor != guild_area_info_vector_value_.end(); ++itor) {
-                guild_area_info &info = *itor;
-
-                guild_area_flag_image_instance_.set_position(
-                    screen_x + (info.fsx_render + info.fex_render) / 2.0f - guild_area_flag_image_instance_.width() / 2,
-                    screen_y + (info.fsy_render + info.fey_render) / 2.0f - guild_area_flag_image_instance_.height() / 2);
+        for (const guild_area_info &info : guild_area_info_vector_value_) {
+            float x, y;
+            if (atlas_to_screen((info.fsx_render + info.fex_render) / 2.0f, (info.fsy_render + info.fey_render) / 2.0f, &x, &y)) {
+                guild_area_flag_image_instance_.set_position(x - guild_area_flag_image_instance_.width() / 2, y - guild_area_flag_image_instance_.height() / 2);
                 guild_area_flag_image_instance_.render();
             }
         }
@@ -993,11 +1022,17 @@ namespace metin2::inline client::inline background {
     }
 
     auto python_mini_map::atlas_info(float screen_x, float screen_y, std::string &return_string, float *return_pos_x, float *return_pos_y, uint32_t *text_color, uint32_t *guild_id) -> bool {
-        float real_x = (screen_x - atlas_screen_x_) * (atlas_max_x_ / atlas_image_size_x_);
-        float real_y = (screen_y - atlas_screen_y_) * (atlas_max_y_ / atlas_image_size_y_);
+        if (screen_x < atlas_screen_x_ || screen_y < atlas_screen_y_ ||
+            screen_x >= atlas_screen_x_ + atlas_view_width_ || screen_y >= atlas_screen_y_ + atlas_view_height_) {
+            return false;
+        }
 
-        float check_width = (atlas_max_x_ / atlas_image_size_x_) * 5.0f;
-        float check_height = (atlas_max_y_ / atlas_image_size_y_) * 5.0f;
+        float real_x = ((screen_x - atlas_screen_x_) / atlas_scale_ + atlas_offset_x_) * (atlas_max_x_ / atlas_image_size_x_);
+        float real_y = ((screen_y - atlas_screen_y_) / atlas_scale_ + atlas_offset_y_) * (atlas_max_y_ / atlas_image_size_y_);
+
+        // Five screen pixels around a mark, whatever the zoom.
+        float check_width = (atlas_max_x_ / atlas_image_size_x_) * 5.0f / atlas_scale_;
+        float check_height = (atlas_max_y_ / atlas_image_size_y_) * 5.0f / atlas_scale_;
 
         instance_base *inst = get_python_character_manager().main_instance_ptr();
 

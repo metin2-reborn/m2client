@@ -65,6 +65,9 @@ namespace metin2::inline client::inline background {
 
         auto atlas_info(float screen_x, float screen_y, std::string &return_string, float *return_pos_x, float *return_pos_y, uint32_t *text_color, uint32_t *guild_id) -> bool;
         auto atlas_size(float *size_x, float *size_y) -> bool;
+        // The part of the atlas the window shows: a view of width x height screen pixels whose
+        // top left is image pixel (offset_x, offset_y), at scale screen pixels per image pixel.
+        void set_atlas_view(float width, float height, float scale, float offset_x, float offset_y);
 
         void add_way_point(uint8_t type, uint32_t id, float x, float y, std::string text, uint32_t chr_vid = 0);
         void remove_way_point(uint32_t id);
@@ -179,12 +182,23 @@ namespace metin2::inline client::inline background {
         math::matrix mini_map_cover_;
 
         bool show_atlas_;
-        graphic_image_instance atlas_image_instance_;
+        graphic_expanded_image_instance atlas_image_instance_;
         math::matrix world_atlas_;
         graphic_expanded_image_instance atlas_player_mark_;
+        float atlas_player_x_ = 0.0f; // image pixels
+        float atlas_player_y_ = 0.0f;
 
         float atlas_screen_x_;
         float atlas_screen_y_;
+
+        float atlas_view_width_ = 0.0f;
+        float atlas_view_height_ = 0.0f;
+        float atlas_scale_ = 1.0f;
+        float atlas_offset_x_ = 0.0f;
+        float atlas_offset_y_ = 0.0f;
+
+        // Image pixels to screen pixels of the view; false outside it.
+        auto atlas_to_screen(float image_x, float image_y, float *screen_x, float *screen_y) const -> bool;
 
         uint32_t atlas_base_x_;
         uint32_t atlas_base_y_;

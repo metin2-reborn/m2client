@@ -114,6 +114,16 @@ namespace metin2::inline client::inline background {
         Py_RETURN_NONE;
     }
 
+    auto mini_map_set_atlas_view(PyObject *self, PyObject *args) -> PyObject * {
+        float width, height, scale, offset_x, offset_y;
+        if (!PyArg_ParseTuple(args, "fffff", &width, &height, &scale, &offset_x, &offset_y)) {
+            return nullptr;
+        }
+
+        get_python_mini_map().set_atlas_view(width, height, scale, offset_x, offset_y);
+        Py_RETURN_NONE;
+    }
+
     auto mini_map_is_atlas(PyObject *self, PyObject *args) -> PyObject * {
         return Py_BuildValue("b", get_python_mini_map().is_atlas());
     }
@@ -200,6 +210,7 @@ namespace metin2::inline client::inline background {
             {"is_atlas", mini_map_is_atlas, METH_VARARGS},
             {"get_atlas_info", mini_map_get_atlas_info, METH_VARARGS},
             {"get_atlas_size", mini_map_get_atlas_size, METH_VARARGS},
+            {"set_atlas_view", mini_map_set_atlas_view, METH_VARARGS},
 
             {"register_atlas_window", mini_map_register_atlas_window, METH_VARARGS},
             {"unregister_atlas_window", mini_map_unregister_atlas_window, METH_VARARGS},
