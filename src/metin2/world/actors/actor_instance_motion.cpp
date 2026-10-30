@@ -1,4 +1,7 @@
+#include <algorithm>
+
 #include <metin2/core/random.h>
+#include <metin2/core/timer.h>
 #include <metin2/log/log.h>
 #include <metin2/world/flying/fly_handler.h>
 #include "actor_instance.h"
@@ -15,16 +18,27 @@ namespace metin2::inline world::inline actors {
 
     void actor_instance::motion_event_process_impl(bool is_pc) {
         if (is_attacking()) {
+            motion_tick_time_ = 0.0f;
             auto next_frame = uint32_t(attacking_elapsed_time() * game_fps);
             for (; cur_mot_node_.dwcur_frame < next_frame; ++cur_mot_node_.dwcur_frame) {
                 motion_event_process();
                 sound_event_process(!is_pc);
             }
-        } else {
+            return;
+        }
+
+        // Event frames (footsteps and the like) are game_fps ticks of real time, not rendered frames;
+        // after a stall only a few are caught up instead of firing a burst of sounds.
+        constexpr float MAX_CATCH_UP = 0.1f;
+        const float tick = 1.0f / game_fps;
+        motion_tick_time_ = std::min(motion_tick_time_ + get_timer().elapsed_second(), MAX_CATCH_UP);
+        for (; motion_tick_time_ >= tick; motion_tick_time_ -= tick) {
             motion_event_process();
             sound_event_process(!is_pc);
 
             ++cur_mot_node_.dwcur_frame;
+            if (MOTION_TYPE_LOOP == cur_mot_node_.motion_type_value && cur_mot_node_.dwcur_frame >= cur_mot_node_.frame_count)
+                cur_mot_node_.dwcur_frame = 0;
         }
     }
 

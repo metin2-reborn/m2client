@@ -614,6 +614,7 @@ namespace metin2::inline world::inline actors {
       protected:
         motion_deque motion_deque_value_;
         current_motion_node cur_mot_node_;
+        float motion_tick_time_ = 0.0f; // seconds not yet spent on game_fps motion frames
         uint16_t wcur_motion_mode_;
 
         collision_point_instance_list body_point_instance_list_;
