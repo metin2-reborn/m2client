@@ -1563,10 +1563,15 @@ namespace metin2::inline client::inline characters {
         if (is_syncing()) {
         } else {
             if (is_walking() || graphic_thing_instance_value_.is_using_moving_skill()) {
+                // The movement vector is this frame's step. A threshold per frame would take a run at
+                // a high frame rate (under a unit a frame) for standing still, and the wait packet
+                // that follows makes the server stop the move and end a sprint.
+                constexpr float MIN_MOVING_SPEED = 60.0f; // units per second
                 const math::vector3 &movment = graphic_thing_instance_value_.movement_vector_ref();
+                const float min_step = MIN_MOVING_SPEED * get_timer().elapsed_second();
 
                 float len = (movment.x * movment.x) + (movment.y * movment.y);
-                if (len > 1.0f)
+                if (len > min_step * min_step)
                     on_moving();
                 else
                     on_waiting();
