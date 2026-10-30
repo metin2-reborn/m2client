@@ -1484,13 +1484,15 @@ namespace metin2::inline client::inline protocol {
         QUEST_SEND_COUNTER_NAME = 1 << 4, // up to 16 characters
         QUEST_SEND_COUNTER_VALUE = 1 << 5,
         QUEST_SEND_ICON_FILE = 1 << 6, // up to 24 characters
+        QUEST_SEND_STATUS = 1 << 7,    // python_quest::status
+        QUEST_SEND_LETTER = 1 << 8,    // a click opens the letter (when button), not the quest (when info)
     };
 
     struct packet_quest_info {
         uint8_t header_value;
         uint16_t size;
         uint16_t index_value;
-        uint8_t flag;
+        uint16_t flag;
     };
     using packet_gc_quest_info = packet_quest_info;
 
@@ -2164,7 +2166,7 @@ namespace metin2::inline client::inline protocol {
     static_assert(sizeof(packet_gc_target) == 6);
     static_assert(sizeof(packet_gc_damage_info) == 10);
     static_assert(sizeof(packet_gc_move) == 24);
-    static_assert(sizeof(packet_gc_quest_info) == 6);
+    static_assert(sizeof(packet_gc_quest_info) == 7);
     static_assert(sizeof(packet_gc_quest_confirm) == 74);
     static_assert(sizeof(packet_gcc2c) == 3);
     static_assert(sizeof(packet_gc_sync_position_element) == 12);

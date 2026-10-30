@@ -178,6 +178,26 @@ namespace metin2::inline client::inline quest {
         return Py_BuildValue("i", get_python_event_manager().visible_start_line(index));
     }
 
+    auto event_finish(PyObject *self, PyObject *args) -> PyObject * {
+        int index;
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
+
+        get_python_event_manager().finish(index);
+        Py_RETURN_NONE;
+    }
+
+    auto event_set_visible_line_count(PyObject *self, PyObject *args) -> PyObject * {
+        int index, line_count;
+        if (!PyArg_ParseTuple(args, "ii", &index, &line_count)) {
+            return nullptr;
+        }
+
+        get_python_event_manager().set_visible_line_count(index, line_count);
+        Py_RETURN_NONE;
+    }
+
     auto event_quest_button_click(PyObject *self, PyObject *args) -> PyObject * {
         int index;
         if (!PyArg_ParseTuple(args, "i", &index)) {
@@ -234,6 +254,7 @@ namespace metin2::inline client::inline quest {
                 {"set_event_set_width", event_set_event_set_width, METH_VARARGS},
 
                 {"skip", event_skip, METH_VARARGS},
+                {"finish", event_finish, METH_VARARGS},
                 {"is_wait", event_is_wait, METH_VARARGS},
                 {"end_event_process", event_end_event_process, METH_VARARGS},
 
@@ -241,6 +262,7 @@ namespace metin2::inline client::inline quest {
                 {"get_line_count", event_get_line_count, METH_VARARGS},
                 {"set_visible_start_line", event_set_visible_start_line, METH_VARARGS},
                 {"get_visible_start_line", event_get_visible_start_line, METH_VARARGS},
+                {"set_visible_line_count", event_set_visible_line_count, METH_VARARGS},
 
                 {"set_event_handler", event_set_event_handler, METH_VARARGS},
                 {"set_interface_window", event_set_interface_window, METH_VARARGS},

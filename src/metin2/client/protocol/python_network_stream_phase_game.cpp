@@ -1415,28 +1415,16 @@ namespace metin2::inline client::inline protocol {
 
         recv(sizeof(packet_gc_quest_info));
 
-        const uint8_t &flag = quest_info.flag;
+        const uint16_t flag = quest_info.flag;
 
-        enum {
-            QUEST_PACKET_TYPE_NONE,
-            QUEST_PACKET_TYPE_BEGIN,
-            QUEST_PACKET_TYPE_UPDATE,
-            QUEST_PACKET_TYPE_END,
-        };
-
-        uint8_t quest_packet_type = QUEST_PACKET_TYPE_NONE;
-
+        // The fields follow in the order of their flags. A quest that is not ended is updated with
+        // what was sent; "begun" does not reset the rest (q.start() also comes alone).
+        bool end = false;
         if (0 != (flag & QUEST_SEND_IS_BEGIN)) {
             uint8_t is_begin;
             if (!recv(sizeof(is_begin), &is_begin))
                 return false;
-
-            if (is_begin)
-                quest_packet_type = QUEST_PACKET_TYPE_BEGIN;
-            else
-                quest_packet_type = QUEST_PACKET_TYPE_END;
-        } else {
-            quest_packet_type = QUEST_PACKET_TYPE_UPDATE;
+            end = !is_begin;
         }
 
         char title[30 + 1] = "";
@@ -1445,6 +1433,8 @@ namespace metin2::inline client::inline protocol {
         char counter_name[16 + 1] = "";
         int counter_value = 0;
         char icon_file_name[24 + 1] = "";
+        uint8_t status = 0;
+        uint8_t has_letter = 0;
 
         if (0 != (flag & QUEST_SEND_TITLE)) {
             if (!recv(sizeof(title), &title))
@@ -1478,39 +1468,41 @@ namespace metin2::inline client::inline protocol {
 
             icon_file_name[24] = '\0';
         }
+        if (0 != (flag & QUEST_SEND_STATUS)) {
+            if (!recv(sizeof(status), &status))
+                return false;
+        }
+        if (0 != (flag & QUEST_SEND_LETTER)) {
+            if (!recv(sizeof(has_letter), &has_letter))
+                return false;
+        }
 
         python_quest &quest = get_python_quest();
+        const uint32_t index = quest_info.index_value;
 
-        if (QUEST_PACKET_TYPE_END == quest_packet_type) {
-            quest.delete_quest_instance(quest_info.index_value);
-        } else if (QUEST_PACKET_TYPE_UPDATE == quest_packet_type) {
-            if (!quest.is_quest(quest_info.index_value)) {
-                quest.make_quest(quest_info.index_value);
-            }
+        if (end) {
+            quest.delete_quest_instance(index);
+        } else {
+            if (!quest.is_quest(index))
+                quest.make_quest(index);
 
             if (strlen(title) > 0)
-                quest.set_quest_title(quest_info.index_value, title);
+                quest.set_quest_title(index, title);
             if (strlen(clock_name) > 0)
-                quest.set_quest_clock_name(quest_info.index_value, clock_name);
+                quest.set_quest_clock_name(index, clock_name);
             if (strlen(counter_name) > 0)
-                quest.set_quest_counter_name(quest_info.index_value, counter_name);
+                quest.set_quest_counter_name(index, counter_name);
             if (strlen(icon_file_name) > 0)
-                quest.set_quest_icon_file_name(quest_info.index_value, icon_file_name);
+                quest.set_quest_icon_file_name(index, icon_file_name);
 
             if (flag & QUEST_SEND_CLOCK_VALUE)
-                quest.set_quest_clock_value(quest_info.index_value, clock_value);
+                quest.set_quest_clock_value(index, clock_value);
             if (flag & QUEST_SEND_COUNTER_VALUE)
-                quest.set_quest_counter_value(quest_info.index_value, counter_value);
-        } else if (QUEST_PACKET_TYPE_BEGIN == quest_packet_type) {
-            python_quest::quest_instance quest_instance;
-            quest_instance.index_value = quest_info.index_value;
-            quest_instance.title = title;
-            quest_instance.clock_name = clock_name;
-            quest_instance.clock_value = clock_value;
-            quest_instance.counter_name = counter_name;
-            quest_instance.counter_value = counter_value;
-            quest_instance.icon_file_name = icon_file_name;
-            get_python_quest().register_quest_instance(quest_instance);
+                quest.set_quest_counter_value(index, counter_value);
+            if (flag & QUEST_SEND_STATUS)
+                quest.set_quest_status(index, status);
+            if (flag & QUEST_SEND_LETTER)
+                quest.set_quest_letter(index, has_letter != 0);
         }
 
         py_call_class_member_func(apo_phase_wnd_[PHASE_WINDOW_GAME], "refresh_quest", Py_BuildValue("()"));
@@ -1685,14 +1677,10 @@ namespace metin2::inline client::inline protocol {
 
         script_packet.size -= sizeof(packet_gc_script);
 
-        static std::string str;
-        str = "";
-        str.resize(script_packet.size + 1);
-
-        if (!recv(script_packet.size, &str[0]))
+        // Exactly the script: a NUL in the string would be typed as a letter (a box glyph).
+        std::string str(script_packet.size, '\0');
+        if (script_packet.size > 0 && !recv(script_packet.size, &str[0]))
             return false;
-
-        str[str.size() - 1] = '\0';
 
         int index = get_python_event_manager().register_event_set_from_string(str);
 

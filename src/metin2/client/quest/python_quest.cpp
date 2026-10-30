@@ -1,4 +1,5 @@
 #include "python_quest.h"
+#include <metin2/client/protocol/python_network_stream.h>
 #include <metin2/core/timer.h>
 #include <metin2/graphics/grp_image.h>
 #include <metin2/graphics/resource_manager.h>
@@ -7,14 +8,6 @@
 #include <metin2/script/python_utils.h>
 
 namespace metin2::inline client::inline quest {
-
-    void python_quest::register_quest_instance(const quest_instance &c_r_quest_instance) {
-        delete_quest_instance(c_r_quest_instance.index_value);
-        quest_instance_container_value_.push_back(c_r_quest_instance);
-
-        quest_instance &r_quest_instance = *quest_instance_container_value_.rbegin();
-        r_quest_instance.start_time = int(get_timer().current_second());
-    }
 
     struct quest_instance_compare_fn {
         uint32_t search_index;
@@ -93,6 +86,22 @@ namespace metin2::inline client::inline quest {
             return;
 
         quest_instance_value->icon_file_name = icon_file_name;
+    }
+
+    void python_quest::set_quest_status(uint32_t index, uint8_t quest_status) {
+        quest_instance *quest_instance_value;
+        if (!quest_instance_ptr(index, &quest_instance_value))
+            return;
+
+        quest_instance_value->quest_status = quest_status;
+    }
+
+    void python_quest::set_quest_letter(uint32_t index, bool has_letter) {
+        quest_instance *quest_instance_value;
+        if (!quest_instance_ptr(index, &quest_instance_value))
+            return;
+
+        quest_instance_value->has_letter = has_letter;
     }
 
     auto python_quest::quest_count() -> int {
@@ -204,6 +213,57 @@ namespace metin2::inline client::inline quest {
         return Py_BuildValue("si", quest_instance->clock_name.c_str(), last_time);
     }
 
+    auto quest_get_quest_status(PyObject *self, PyObject *args) -> PyObject * {
+        int index;
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
+
+        python_quest::quest_instance *quest_instance;
+        if (!get_python_quest().get_quest_instance_ptr(index, &quest_instance)) {
+            PyErr_Format(PyExc_ValueError, "Unknown quest index %d", index);
+            return nullptr;
+        }
+
+        return Py_BuildValue("i", quest_instance->quest_status);
+    }
+
+    auto quest_has_quest_letter(PyObject *self, PyObject *args) -> PyObject * {
+        int index;
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
+
+        python_quest::quest_instance *quest_instance;
+        if (!get_python_quest().get_quest_instance_ptr(index, &quest_instance)) {
+            PyErr_Format(PyExc_ValueError, "Unknown quest index %d", index);
+            return nullptr;
+        }
+
+        return PyBool_FromLong(quest_instance->has_letter);
+    }
+
+    // Asks the server for the quest's text: its letter (when button) or, without one, the quest
+    // itself (when info, the index with the high bit set).
+    auto quest_open_quest(PyObject *self, PyObject *args) -> PyObject * {
+        int index;
+        if (!PyArg_ParseTuple(args, "i", &index)) {
+            return nullptr;
+        }
+
+        python_quest::quest_instance *quest_instance;
+        if (!get_python_quest().get_quest_instance_ptr(index, &quest_instance)) {
+            PyErr_Format(PyExc_ValueError, "Unknown quest index %d", index);
+            return nullptr;
+        }
+
+        uint32_t button = quest_instance->index_value;
+        if (!quest_instance->has_letter)
+            button |= 0x80000000u;
+        get_python_network_stream().send_script_button_packet(static_cast<int>(button));
+        Py_RETURN_NONE;
+    }
+
     auto quest_clear(PyObject *self, PyObject *args) -> PyObject * {
         get_python_quest().clear();
         Py_RETURN_NONE;
@@ -216,11 +276,17 @@ namespace metin2::inline client::inline quest {
                 {"get_quest_data", quest_get_quest_data, METH_VARARGS},
                 {"get_quest_index", quest_get_quest_index, METH_VARARGS},
                 {"get_quest_last_time", quest_get_quest_last_time, METH_VARARGS},
+                {"get_quest_status", quest_get_quest_status, METH_VARARGS},
+                {"has_quest_letter", quest_has_quest_letter, METH_VARARGS},
+                {"open_quest", quest_open_quest, METH_VARARGS},
                 {"clear", quest_clear, METH_VARARGS},
                 {nullptr, nullptr, 0, nullptr},
         };
 
         PyObject *module = init_python_module("metin2.quest", s_methods);
         PyModule_AddIntConstant(module, "QUEST_MAX_NUM", 5);
+        PyModule_AddIntConstant(module, "STATUS_ACTIVE", python_quest::STATUS_ACTIVE);
+        PyModule_AddIntConstant(module, "STATUS_NEW", python_quest::STATUS_NEW);
+        PyModule_AddIntConstant(module, "STATUS_TURN_IN", python_quest::STATUS_TURN_IN);
     }
 }

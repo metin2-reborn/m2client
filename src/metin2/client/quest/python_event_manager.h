@@ -54,9 +54,7 @@ namespace metin2::inline client::inline quest {
             EVENT_TYPE_ADJUST_MESSAGE_POSITION,
             EVENT_TYPE_SET_CENTER_MAP_POSITION,
 
-            EVENT_TYPE_QUEST_BUTTON,
-
-            EVENT_TYPE_QUEST_BUTTON_CLOSE,
+            EVENT_TYPE_QUEST,
 
             EVENT_TYPE_SLEEP,
             EVENT_TYPE_SET_CAMERA,
@@ -162,6 +160,7 @@ namespace metin2::inline client::inline quest {
         void set_event_set_width(int index, int width_value);
 
         void skip(int index);
+        void finish(int index);
         auto is_wait(int index) -> bool;
         void end_event_process(int index);
 

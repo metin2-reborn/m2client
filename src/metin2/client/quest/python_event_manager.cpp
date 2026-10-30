@@ -518,33 +518,12 @@ namespace metin2::inline client::inline quest {
                 break;
             }
 
-        case EVENT_TYPE_QUEST_BUTTON_CLOSE:
+        case EVENT_TYPE_QUEST:
             {
-                py_call_class_member_func(interface_, "clear_quest",
-                    Py_BuildValue("(i)", metin2::to_number<int>(get_argument("idx", script_command.arg_list_value))));
-                break;
-            }
-
-        case EVENT_TYPE_QUEST_BUTTON:
-            {
-                const std::string &type = get_argument_string("icon_type", script_command.arg_list_value);
-                const std::string &file = get_argument_string("icon_name", script_command.arg_list_value);
-
-                int idx = metin2::to_number<int>(get_argument("idx", script_command.arg_list_value));
-                const char *name = get_argument("name", script_command.arg_list_value);
-
-                // Workaround until the quest UI is reworked: the server sends this Korean quest name
-                // ("broken dragon soul stone?...."), which is shown highlighted.
-                if (!strcmp(name, "조각난 용혼석?....")) {
-                    py_call_class_member_func(interface_, "recv_quest_icon", Py_BuildValue("(isss)", idx, name, "highlight", ""));
-                } else {
-                    if (file.empty()) {
-                        py_call_class_member_func(interface_, "recv_quest", Py_BuildValue("(is)", idx, name));
-                    } else {
-                        py_call_class_member_func(interface_, "recv_quest_icon",
-                            Py_BuildValue("(isss)", idx, name, type.c_str(), file.c_str()));
-                    }
-                }
+                // The quest the dialog belongs to and the NPC speaking (the server's [QUEST idx;N|npc;V]).
+                py_call_class_member_func(event_set_value->event_handler_value, "on_quest",
+                    Py_BuildValue("(ii)", metin2::to_number<int>(get_argument("idx", script_command.arg_list_value)),
+                        metin2::to_number<int>(get_argument("npc", script_command.arg_list_value))));
                 break;
             }
         case EVENT_TYPE_SET_MESSAGE_POSITION:
@@ -781,6 +760,21 @@ namespace metin2::inline client::inline quest {
         } else {
             event_set_value->last_delay_time = -1000;
         }
+    }
+
+    // Runs the script up to where it stops for the player (its buttons, a wait, the end) or for an
+    // effect (a fade): the typing is shown at once.
+    void python_event_manager::finish(int index) {
+        if (!check_event_set_index(index))
+            return;
+
+        event_set *event_set_value = event_set_vector_value_[index];
+        if (!event_set_value)
+            return;
+
+        for (int guard = 0; guard < 100000 && !event_set_value->is_lock && !event_set_value->is_wait_flag; ++guard)
+            process_event_set(event_set_value);
+        event_set_value->last_delay_time = 0;
     }
 
     auto python_event_manager::is_wait(int index) -> bool {
@@ -1034,9 +1028,7 @@ namespace metin2::inline client::inline quest {
         event_type_map_["ADJMSGPOS"] = EVENT_TYPE_ADJUST_MESSAGE_POSITION;
         event_type_map_["SETCMAPPOS"] = EVENT_TYPE_SET_CENTER_MAP_POSITION;
 
-        event_type_map_["QUESTBUTTON"] = EVENT_TYPE_QUEST_BUTTON;
-
-        event_type_map_["QUESTBUTTON_CLOSE"] = EVENT_TYPE_QUEST_BUTTON_CLOSE;
+        event_type_map_["QUEST"] = EVENT_TYPE_QUEST;
 
         event_type_map_["SLEEP"] = EVENT_TYPE_SLEEP;
         event_type_map_["SET_CAMERA"] = EVENT_TYPE_SET_CAMERA;
